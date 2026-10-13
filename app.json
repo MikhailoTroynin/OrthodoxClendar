@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Православний календар",
+    "slug": "orthodox-calendar",
+    "version": "0.4.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "ua.orthodoxcalendar.app"
+    },
+    "android": {
+      "package": "ua.orthodoxcalendar.app"
+    },
+    "plugins": [
+      "expo-asset"
+    ]
+  }
+}
