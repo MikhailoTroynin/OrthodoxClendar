@@ -50,3 +50,9 @@ src/screens/             вкладки та екрани-накладки
 ## Джерело молитов і зображень
 
 Розділи VIII–IX Молитвослова (`src/data/channel.ts`, `assets/channel/`) складено з публічного Telegram-каналу [«Київський Ізвод»](https://t.me/kyiv_izvod): тексти молитов, тропарів і величань та зображення святих (стиснені до ≤480 px). Права на тексти й зображення належать їхнім авторам і каналу; перед публічним випуском варто погодити використання з адміністрацією каналу.
+
+## Веб-прев'ю (GitHub Pages)
+
+Веб-версія збирається через `npx expo export --platform web` і публікується workflow-ом
+`.github/workflows/pages.yml`. Одноразово: **Settings → Pages → Source: GitHub Actions**.
+Адреса: https://mikhailotroynin.github.io/OrthodoxClendar/
