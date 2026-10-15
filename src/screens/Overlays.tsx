@@ -80,7 +80,8 @@ export function OverlayHost() {
 
 const SUP = '⁰¹²³⁴⁵⁶⁷⁸⁹';
 
-/** Кнопки розміру тексту для читання; з read — ще й кнопка читання вголос. */
+/** Кнопки розміру тексту для читання; з read — ще й кнопка читання вголос.
+ *  Українською кнопку поки сховано: системний синтез мовлення ставить хибні наголоси й читає з англійським акцентом. */
 function SizeBtns({ read }: { read?: () => string[] }) {
   const { p, fs, set, t, lang } = useStore();
   const speaking = useSpeaking();
@@ -96,7 +97,7 @@ function SizeBtns({ read }: { read?: () => string[] }) {
   );
   return (
     <View style={{ flexDirection: 'row' }}>
-      {read && (
+      {read && lang !== 'uk' && (
         <Press
           label={speaking ? t.stopListen : t.listen}
           onPress={() => (speaking ? stopSpeaking() : speak(read(), lang))}
