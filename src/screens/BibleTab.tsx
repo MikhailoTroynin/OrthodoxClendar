@@ -22,18 +22,17 @@ export const bookRow = (b: Book, lang: 'uk' | 'en', t: Record<string, any>, go: 
 const NT: Book[] = [...groupItem(5).books!, groupItem(6), groupItem(7), groupItem(8), groupItem(9)];
 // Усього глав у Біблії та в чотирьох Євангеліях (для лічильників прочитаного).
 const TOTAL = BOOKS.reduce((n, b) => n + b[5], 0);
-const GOSPELS = BOOKS.reduce((n, b) => n + (b[4] === 5 ? b[5] : 0), 0);
+export const GOSPELS = BOOKS.reduce((n, b) => n + (b[4] === 5 ? b[5] : 0), 0);
+/** Скільки глав Євангелія позначено прочитаними. */
+export const gospelRead = (bd: string[]) => bd.filter((k) => BOOKS[+k.split('.')[0]]?.[4] === 5).length;
 const OT: Book[] = [0, 1, 2, 3, 4].map(groupItem);
 
 export default function BibleTab() {
-  const { p, t, lang, cal, today, push, kd, bd } = useStore();
+  const { p, t, lang, cal, today, push, bd } = useStore();
   const ul = lang === 'uk';
   const day = dayInfo(today, cal, lang);
   const open = (b: Book) => push({ t: 'book', b });
-  // Назви сторінок Псалтиря беремо з його модуля, що довантажується разом із вкладкою.
-  const PSALTYR = useLazy(psaltyrL) ? psaltyrL()!.PSALTYR : null;
-  const gosRead = bd.filter((k) => BOOKS[+k.split('.')[0]]?.[4] === 5).length;
-  const nextK = Array.from({ length: 20 }, (_, i) => i + 1).find((k) => !kd.includes(k));
+  const gosRead = gospelRead(bd);
 
   const list = (books: Book[], gospel?: boolean) => (
     <View style={[card(p), { marginBottom: 24 }]}>
@@ -42,14 +41,6 @@ export default function BibleTab() {
         const title = gospel && i < 4 ? (ul ? 'Євангеліє в' + b.u.slice(1) : 'Gospel of ' + b.e) : r.title;
         return <NavRow key={i} title={title} sub={r.sub} onPress={r.go} last={r.last} />;
       })}
-    </View>
-  );
-
-  const psRows = (ix: number[], mt: number) => (
-    <View style={[card(p), { marginTop: mt, marginBottom: mt ? 0 : 16 }]}>
-      {ix.map((i, j) => (
-        <NavRow key={i} title={PSALTYR ? (ul ? PSALTYR[i].u : PSALTYR[i].e) : '…'} onPress={() => push({ t: 'ps', i })} last={j === ix.length - 1} />
-      ))}
     </View>
   );
 
@@ -81,38 +72,7 @@ export default function BibleTab() {
         {list(OT)}
 
         <Kicker style={{ marginBottom: 6 }}>{t.psalter}</Kicker>
-        <Body size={12.5} mute={60}>{t.psHelp}</Body>
-        <View style={{ height: 12 }} />
-        {psRows([0, 1], 0)}
-        <Body size={13} style={{ color: p.a700, marginBottom: 12 }}>
-          {`${ul ? 'Прочитано ' : 'Read '}${kd.length} ${t.of} 20`}
-        </Body>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          {KATH.map((ps, i) => {
-            const k = i + 1;
-            const done = kd.includes(k);
-            return (
-              <Press
-                key={k}
-                onPress={() => push({ t: 'kath', k })}
-                style={{
-                  width: '23.5%',
-                  paddingVertical: 10,
-                  alignItems: 'center',
-                  gap: 2,
-                  borderWidth: 1,
-                  borderRadius: RADIUS,
-                  borderColor: k === nextK ? p.accent : p.divider,
-                  backgroundColor: done ? p.a100 : 'transparent',
-                }}
-              >
-                <Text style={[{ fontFamily: FONT.headingBold, fontSize: 20, color: done ? p.a800 : p.text }, NUM]}>{k}</Text>
-                <Text style={{ fontFamily: FONT.body, fontSize: 9.5, color: done ? p.a800 : p.mute(55) }}>{ps}</Text>
-              </Press>
-            );
-          })}
-        </View>
-        {PSALTYR && psRows([PSALTYR.length - 2, PSALTYR.length - 1], 16)}
+        <PsalterBlock />
 
         <Kicker style={{ marginTop: 24, marginBottom: 8 }}>{t.bibRead}</Kicker>
         <Body size={13} style={{ color: p.a700 }}>{`${ul ? 'Прочитано ' : 'Read '}${bd.length} ${t.of} ${TOTAL} ${t.chW2}`}</Body>
@@ -121,5 +81,59 @@ export default function BibleTab() {
         <Body size={12} mute={55} style={{ marginTop: 8 }}>{ul ? 'Позначайте глави кнопкою внизу сторінки глави.' : 'Mark chapters with the button at the bottom of a chapter.'}</Body>
       </ScrollView>
     </View>
+  );
+}
+
+/** Псалтир: службові сторінки, сітка з 20 кафизм і лічильник прочитаного. */
+export function PsalterBlock() {
+  const { p, t, lang, push, kd } = useStore();
+  const ul = lang === 'uk';
+  // Назви сторінок Псалтиря беремо з його модуля, що довантажується разом із вкладкою.
+  const PSALTYR = useLazy(psaltyrL) ? psaltyrL()!.PSALTYR : null;
+  const nextK = Array.from({ length: 20 }, (_, i) => i + 1).find((k) => !kd.includes(k));
+
+  const psRows = (ix: number[], mt: number) => (
+    <View style={[card(p), { marginTop: mt, marginBottom: mt ? 0 : 16 }]}>
+      {ix.map((i, j) => (
+        <NavRow key={i} title={PSALTYR ? (ul ? PSALTYR[i].u : PSALTYR[i].e) : '…'} onPress={() => push({ t: 'ps', i })} last={j === ix.length - 1} />
+      ))}
+    </View>
+  );
+
+  return (
+    <>
+      <Body size={12.5} mute={60}>{t.psHelp}</Body>
+      <View style={{ height: 12 }} />
+      {psRows([0, 1], 0)}
+      <Body size={13} style={{ color: p.a700, marginBottom: 12 }}>
+        {`${ul ? 'Прочитано ' : 'Read '}${kd.length} ${t.of} 20`}
+      </Body>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {KATH.map((ps, i) => {
+          const k = i + 1;
+          const done = kd.includes(k);
+          return (
+            <Press
+              key={k}
+              onPress={() => push({ t: 'kath', k })}
+              style={{
+                width: '23.5%',
+                paddingVertical: 10,
+                alignItems: 'center',
+                gap: 2,
+                borderWidth: 1,
+                borderRadius: RADIUS,
+                borderColor: k === nextK ? p.accent : p.divider,
+                backgroundColor: done ? p.a100 : 'transparent',
+              }}
+            >
+              <Text style={[{ fontFamily: FONT.headingBold, fontSize: 20, color: done ? p.a800 : p.text }, NUM]}>{k}</Text>
+              <Text style={{ fontFamily: FONT.body, fontSize: 9.5, color: done ? p.a800 : p.mute(55) }}>{ps}</Text>
+            </Press>
+          );
+        })}
+      </View>
+      {PSALTYR && psRows([PSALTYR.length - 2, PSALTYR.length - 1], 16)}
+    </>
   );
 }

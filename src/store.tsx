@@ -22,6 +22,7 @@ export type Overlay =
   | { t: 'pass'; s: string; title: string }
   | { t: 'kath'; k: number }
   | { t: 'ps'; i: number }
+  | { t: 'psalter' }
   | { t: 'pom' }
   | { t: 'jesus' }
   | { t: 'search' }

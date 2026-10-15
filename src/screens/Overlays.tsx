@@ -9,7 +9,7 @@ import { PL, VERS } from '../data/strings';
 import { BackBar } from '../components/Chrome';
 import { Body, Divider, Heading, Icon, Kicker, NavRow, NUM, OutlineButton, Press, Seg, Switch, card } from '../components/ui';
 import { Rope } from './BookTab';
-import { bookRow } from './BibleTab';
+import { bookRow, PsalterBlock } from './BibleTab';
 import { refOverlay, Verses } from '../components/Scripture';
 import { BOOK, BOOKS, bookItem, bookName, chapTitle, chapter, parseRefs, passage } from '../lib/bible';
 import { Lazy, prayersL, psaltyrL, useLazy } from '../lib/lazy';
@@ -66,6 +66,7 @@ export function OverlayHost() {
       {top.t === 'pass' && need([...new Set(parseRefs(top.s).map((r) => BOOK[r.b]))], <Passage o={top} />)}
       {top.t === 'kath' && need([psaltyrL], <Kathisma o={top} />)}
       {top.t === 'ps' && need([psaltyrL], <PsPage o={top} />)}
+      {top.t === 'psalter' && need([psaltyrL], <Psalter />)}
       {top.t === 'pom' && <Pom />}
       {top.t === 'jesus' && <Jesus />}
       {top.t === 'search' && <Search />}
@@ -275,7 +276,7 @@ function Reader({ o }: { o: Of<'read'> }) {
 }
 
 function BookOv({ o }: { o: Of<'book'> }) {
-  const { p, t, lang, push } = useStore();
+  const { p, t, lang, push, bd } = useStore();
   const b = o.b;
   const name = lang === 'uk' ? b.u : b.e;
   return (
@@ -287,15 +288,18 @@ function BookOv({ o }: { o: Of<'book'> }) {
           <>
             <Kicker style={{ marginBottom: 10 }}>{b.i !== undefined && BOOKS[b.i][0] === 'ps' ? t.psalmsW : t.chapters}</Kicker>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {Array.from({ length: b.ch }, (_, i) => i + 1).map((n) => (
-                <Press
-                  key={n}
-                  onPress={() => b.i !== undefined && push({ t: 'chap', b: b.i, c: n })}
-                  style={{ width: 52, height: 52, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: p.divider }}
-                >
-                  <Text style={[{ fontFamily: FONT.headingBold, fontSize: 20, color: p.text }, NUM]}>{n}</Text>
-                </Press>
-              ))}
+              {Array.from({ length: b.ch }, (_, i) => i + 1).map((n) => {
+                const read = bd.includes(`${b.i}.${n}`);
+                return (
+                  <Press
+                    key={n}
+                    onPress={() => b.i !== undefined && push({ t: 'chap', b: b.i, c: n })}
+                    style={{ width: 52, height: 52, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: p.divider, backgroundColor: read ? p.a100 : 'transparent' }}
+                  >
+                    <Text style={[{ fontFamily: FONT.headingBold, fontSize: 20, color: read ? p.a800 : p.text }, NUM]}>{n}</Text>
+                  </Press>
+                );
+              })}
             </View>
           </>
         ) : (
@@ -307,6 +311,20 @@ function BookOv({ o }: { o: Of<'book'> }) {
           </View>
         )}
         {(b.books ?? [b]).some((x) => x.u.endsWith('*')) && <Body size={12.5} mute={55} style={{ marginTop: 16 }}>{t.deutero}</Body>}
+      </Scroll>
+    </>
+  );
+}
+
+/** Псалтир окремою сторінкою (відкривається з меню). */
+function Psalter() {
+  const { t } = useStore();
+  return (
+    <>
+      <BackBar kicker={t.scripture} />
+      <Scroll>
+        <Title>{t.psalter}</Title>
+        <PsalterBlock />
       </Scroll>
     </>
   );
