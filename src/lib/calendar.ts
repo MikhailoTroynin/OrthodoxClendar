@@ -1,6 +1,7 @@
 import {
   CalendarType,
   Entry,
+  FA,
   FE,
   Feast,
   Lang,
@@ -323,6 +324,67 @@ export const feastSections = (cal: CalendarType, L: Lang, from: Date) => {
       mv: !!f.mv,
       next: f === nx,
     })),
+  }));
+};
+
+export interface FastRow {
+  start: string;
+  /** Кінець для багатоденних постів (порожньо для одноденних). */
+  end: string;
+  name: string;
+  days: string;
+  mv: boolean;
+  now: boolean;
+  next: boolean;
+}
+
+/** Рік, на який указано перехідні дати постів у FA. */
+const FAST_MV_YEAR = 2027;
+
+const daysLabel = (n: number, L: Lang) => {
+  if (L === 'en') return `${n} ${n === 1 ? 'day' : 'days'}`;
+  const m10 = n % 10;
+  const m100 = n % 100;
+  const w = m10 === 1 && m100 !== 11 ? 'день' : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? 'дні' : 'днів';
+  return `${n} ${w}`;
+};
+
+/** Пости за розділами (багатоденні, одноденні, суцільні седмиці) з позначками «триває» й «найближчий». */
+export const fastSections = (cal: CalendarType, L: Lang, from: Date) => {
+  const t0 = ymd(from.getFullYear(), from.getMonth() + 1, from.getDate()).getTime();
+  const y = from.getFullYear();
+  const spans = FA.map((f) => {
+    const [m1, d1, m2, d2] = f[cal];
+    return (f.mv ? [FAST_MV_YEAR] : [y - 1, y, y + 1]).map((yy) => ({
+      a: ymd(yy, m1, d1).getTime(),
+      b: ymd(m2 < m1 ? yy + 1 : yy, m2, d2).getTime(),
+    }));
+  });
+  const now = spans.map((ss) => ss.some((x) => x.a <= t0 && t0 <= x.b));
+  let nx = -1;
+  let best = Infinity;
+  spans.forEach((ss, i) => {
+    if (FA[i].s === 2) return;
+    for (const x of ss) if (x.a > t0 && x.a < best) (best = x.a), (nx = i);
+  });
+  return [0, 1, 2].map((s) => ({
+    s,
+    rows: FA.map((f, i) => ({ f, i }))
+      .filter(({ f }) => f.s === s)
+      .map<FastRow>(({ f, i }) => {
+        const [m1, d1, m2, d2] = f[cal];
+        const one = m1 === m2 && d1 === d2;
+        const n = Math.round((spans[i][0].b - spans[i][0].a) / DAY_MS) + 1;
+        return {
+          start: fmtMD(m1, d1, L),
+          end: one ? '' : fmtMD(m2, d2, L),
+          name: f[L],
+          days: f.s === 1 ? '' : daysLabel(n, L),
+          mv: !!f.mv,
+          now: now[i],
+          next: i === nx,
+        };
+      }),
   }));
 };
 

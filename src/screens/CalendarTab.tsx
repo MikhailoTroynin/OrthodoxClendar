@@ -3,7 +3,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { WS } from '../data/calendar';
 import { Body, FastIcon, H1, Heading, Icon, Kicker, Marks, NeutralTag, NUM, OutlineButton, Press, Seg, Tag } from '../components/ui';
 import { TopBar } from '../components/Chrome';
-import { dayInfo, fastKind, FastKind, feastSections, fmtDate, MN, monthGrid, sameDay, toKey, weekdayName } from '../lib/calendar';
+import { dayInfo, fastKind, FastKind, fastSections, feastSections, fmtDate, MN, monthGrid, sameDay, toKey, weekdayName } from '../lib/calendar';
 import { useStore } from '../store';
 import { FONT, RADIUS } from '../theme';
 
@@ -23,7 +23,7 @@ export default function CalendarTab() {
       <TopBar kicker={cal === 'nj' ? t.nj : t.oj} />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 32 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 4, marginBottom: 16 }}>
-          {calView === 'month' ? <H1>{`${MN[lang][view.m - 1]} ${view.y}`}</H1> : <H1>{t.segFeasts}</H1>}
+          {calView === 'month' ? <H1>{`${MN[lang][view.m - 1]} ${view.y}`}</H1> : <H1>{calView === 'feasts' ? t.segFeasts : t.segFasts}</H1>}
           {calView === 'month' && (
             <View style={{ flexDirection: 'row' }}>
               <Press onPress={() => shift(-1)} label={t.prevMonth} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
@@ -40,6 +40,7 @@ export default function CalendarTab() {
             opts={[
               { label: t.segMonth, on: calView === 'month', onPress: () => setCalView('month') },
               { label: t.segFeasts, on: calView === 'feasts', onPress: () => setCalView('feasts') },
+              { label: t.segFasts, on: calView === 'fasts', onPress: () => setCalView('fasts') },
             ]}
           />
         </View>
@@ -109,6 +110,34 @@ export default function CalendarTab() {
               <Body size={13} mute={70}>{[fastKind(sel) === 'paska' ? t.fk.paska : sel.fastLabel || t.fk[fastKind(sel)], sel.r2].filter(Boolean).join(' · ')}</Body>
               <OutlineButton label={t.openDay} onPress={() => openDay(date)} style={{ alignSelf: 'flex-start', marginTop: 4 }} />
             </View>
+          </>
+        ) : calView === 'fasts' ? (
+          <>
+            <Body size={12.5} mute={60} style={{ marginHorizontal: 4 }}>{cal === 'oj' ? t.feastNoteOj : t.feastNote}</Body>
+            {fastSections(cal, lang, today).map((s, si) => (
+              <View key={si} style={{ marginTop: 18, marginHorizontal: 4 }}>
+                <Kicker style={{ paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: p.divider }}>
+                  {[t.fastsMultiH, t.fastsOneH, t.fastsContH][si]}
+                </Kicker>
+                {s.rows.map((r, i) => (
+                  <View key={i} style={{ flexDirection: 'row', gap: 12, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: p.divider }}>
+                    <Text style={[{ width: 104, fontFamily: FONT.headingBold, fontSize: 16, lineHeight: 19, color: p.text }, NUM]}>
+                      {r.end ? `${r.start} –\n${r.end}` : r.start}
+                    </Text>
+                    <View style={{ flex: 1, gap: 5, alignItems: 'flex-start' }}>
+                      <Body size={14}>{r.name}</Body>
+                      {!!r.days && <Body size={12.5} mute={60}>{r.days}</Body>}
+                      <View style={{ flexDirection: 'row', gap: 6 }}>
+                        {r.now && <Tag label={t.fastNow} />}
+                        {r.next && <Tag outline label={t.fastNext} />}
+                        {r.mv && <NeutralTag label={t.moveable} />}
+                      </View>
+                    </View>
+                  </View>
+                ))}
+                <Body size={12.5} mute={60} style={{ marginTop: 10 }}>{si === 1 ? t.fastsWF : si === 2 ? t.fastsCont : ''}</Body>
+              </View>
+            ))}
           </>
         ) : (
           <>
