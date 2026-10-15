@@ -4,7 +4,8 @@ import * as Clipboard from 'expo-clipboard';
 import { FE, LIVES } from '../data/calendar';
 import { CH_IMG } from '../data/channelImages';
 import { MB, ROM, T } from '../data/prayers';
-import { MOLYTVOSLOV } from '../data/molytvoslov';
+import { MOLYTVOSLOV, MvBook } from '../data/molytvoslov';
+import { PSALTYR, kathIdx } from '../data/psaltyr';
 import { VERS } from '../data/strings';
 import { BackBar } from '../components/Chrome';
 import { Body, Divider, Heading, Icon, Kicker, NavRow, NUM, OutlineButton, Press, Seg, Switch, card } from '../components/ui';
@@ -43,6 +44,7 @@ export function OverlayHost() {
       {top.t === 'book' && <BookOv o={top} />}
       {top.t === 'chap' && <Chapter o={top} />}
       {top.t === 'kath' && <Kathisma o={top} />}
+      {top.t === 'ps' && <PsPage o={top} />}
       {top.t === 'pom' && <Pom />}
       {top.t === 'jesus' && <Jesus />}
       {top.t === 'search' && <Search />}
@@ -55,8 +57,24 @@ export function OverlayHost() {
 
 const SUP = '⁰¹²³⁴⁵⁶⁷⁸⁹';
 
-/** Повний текст сторінки молитвослова (або лише розділів only): заголовки, рубрики (§), підзаголовки (#), примітки. */
-function PrayerBook({ b, only, title, fs }: { b: (typeof MOLYTVOSLOV)[number]; only?: number[]; title?: string; fs: number }) {
+/** Кнопки розміру тексту для читання. */
+function SizeBtns() {
+  const { p, fs, set } = useStore();
+  const btn = (label: string, delta: number) => (
+    <Press
+      key={label}
+      label={label}
+      onPress={() => set({ fs: Math.max(15, Math.min(25, fs + delta)) })}
+      style={{ minWidth: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
+    >
+      <Text style={{ fontFamily: FONT.headingBold, fontSize: 17, color: p.a700 }}>{label}</Text>
+    </Press>
+  );
+  return <View style={{ flexDirection: 'row' }}>{[btn('A−', -2), btn('A+', 2)]}</View>;
+}
+
+/** Повний текст сторінки молитвослова чи Псалтиря (або лише розділів only): заголовки, рубрики (§), підзаголовки (#), вірші (@N), примітки. */
+function PrayerBook({ b, only, title, fs }: { b: MvBook; only?: number[]; title?: string; fs: number }) {
   const { p } = useStore();
   const body = { fontFamily: FONT.body, fontSize: fs, lineHeight: fs * 1.65, color: p.text } as const;
   const secs = only ? only.map((i) => b.secs[i]) : b.secs;
@@ -73,6 +91,11 @@ function PrayerBook({ b, only, title, fs }: { b: (typeof MOLYTVOSLOV)[number]; o
               <Text key={j} style={{ ...body, fontStyle: 'italic', fontSize: fs - 2, lineHeight: (fs - 2) * 1.5, color: p.mute(65), marginBottom: 10 }}>{t.slice(1)}</Text>
             ) : t[0] === '#' ? (
               <Kicker key={j} style={{ marginTop: 6, marginBottom: 6 }}>{t.slice(1)}</Kicker>
+            ) : t[0] === '@' ? (
+              <Text key={j} style={{ ...body, marginBottom: 6 }}>
+                <Text style={[{ fontFamily: FONT.headingBold, fontSize: fs - 3, color: p.a700 }, NUM]}>{t.slice(1, t.indexOf(' '))}</Text>
+                {'\u2002' + t.slice(t.indexOf(' ') + 1)}
+              </Text>
             ) : (
               <Text key={j} style={{ ...body, marginBottom: 10 }}>{t}</Text>
             ),
@@ -139,32 +162,18 @@ function Sec({ o }: { o: Of<'sec'> }) {
 }
 
 function Reader({ o }: { o: Of<'read'> }) {
-  const { p, t, lang, fs, set } = useStore();
+  const { p, t, lang, fs } = useStore();
   const ul = lang === 'uk';
   const li = ul ? 0 : 1;
   const s = MB[o.s];
   const it = s.items[o.j];
   // Українською повний текст замінює план читання; англійською план лишається, а повний текст іде після нього.
   const outline = !it.mv || !ul;
-  const sizeBtn = (label: string, delta: number) => (
-    <Press
-      label={label}
-      onPress={() => set({ fs: Math.max(15, Math.min(25, fs + delta)) })}
-      style={{ minWidth: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
-    >
-      <Text style={{ fontFamily: FONT.headingBold, fontSize: 17, color: p.a700 }}>{label}</Text>
-    </Press>
-  );
   return (
     <>
       <BackBar
         kicker={ul ? s.u : s.e}
-        right={
-          <View style={{ flexDirection: 'row' }}>
-            {sizeBtn('A−', -2)}
-            {sizeBtn('A+', 2)}
-          </View>
-        }
+        right={<SizeBtns />}
       />
       <Scroll>
         <Title>{ul ? it.u : it.e}</Title>
@@ -270,22 +279,49 @@ function Chapter({ o }: { o: Of<'chap'> }) {
 }
 
 function Kathisma({ o }: { o: Of<'kath'> }) {
-  const { t, kd, set, p } = useStore();
+  const { t, kd, set, p, fs, lang, push } = useStore();
   const done = kd.includes(o.k);
   const KATH = require('../data/prayers').KATH as string[];
+  const mark = (
+    <OutlineButton
+      label={done ? t.marked : t.markRead}
+      onPress={() => set({ kd: done ? kd.filter((x) => x !== o.k) : [...kd, o.k] })}
+      style={{ alignSelf: 'flex-start' }}
+    />
+  );
   return (
     <>
-      <BackBar kicker={t.psalter} />
+      <BackBar right={<SizeBtns />} />
       <Scroll>
+        <Kicker style={{ marginBottom: 6 }}>{t.psalter}</Kicker>
         <Title>{`${t.kathisma} ${o.k}`}</Title>
         <Kicker style={{ marginBottom: 12 }}>{`${t.psalmsW} ${KATH[o.k - 1]}`}</Kicker>
         <Text style={{ fontFamily: FONT.body, fontStyle: 'italic', fontSize: 14, color: p.mute(65), marginBottom: 14 }}>{t.kathRubric}</Text>
-        <Body size={14} mute={55} style={{ marginBottom: 24 }}>{t.kathPh}</Body>
-        <OutlineButton
-          label={done ? t.marked : t.markRead}
-          onPress={() => set({ kd: done ? kd.filter((x) => x !== o.k) : [...kd, o.k] })}
-          style={{ alignSelf: 'flex-start' }}
-        />
+        <Press onPress={() => push({ t: 'ps', i: 1 })} style={{ marginBottom: 18 }}>
+          <Text style={{ fontFamily: FONT.body, fontSize: 14, color: p.a700, textDecorationLine: 'underline' }}>{lang === 'uk' ? PSALTYR[1].u : PSALTYR[1].e}</Text>
+        </Press>
+        <PrayerBook b={PSALTYR[kathIdx(o.k)]} fs={fs} />
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 }}>
+          {mark}
+          {o.k < 20 && <OutlineButton label={`${t.kathisma} ${o.k + 1} →`} onPress={() => push({ t: 'kath', k: o.k + 1 })} />}
+        </View>
+      </Scroll>
+    </>
+  );
+}
+
+/** Інші сторінки Слідуваного Псалтиря: як читати, молитви перед і після читання, пісні Писання. */
+function PsPage({ o }: { o: Of<'ps'> }) {
+  const { t, fs, lang } = useStore();
+  const b = PSALTYR[o.i];
+  return (
+    <>
+      <BackBar right={<SizeBtns />} />
+      <Scroll>
+        <Kicker style={{ marginBottom: 6 }}>{t.psalter}</Kicker>
+        <Title>{lang === 'uk' ? b.u : b.e}</Title>
+        {lang !== 'uk' && <Body size={12.5} mute={60} style={{ marginBottom: 14 }}>{t.fullText}</Body>}
+        <PrayerBook b={b} fs={fs} />
       </Scroll>
     </>
   );
@@ -403,6 +439,16 @@ function Search() {
         if (n.toLowerCase().includes(ql)) results.push({ title: n, sub: ul ? s.u : s.e, go: () => push({ t: 'read', s: si, j }) });
       }),
     );
+    // «Псалом 50», «пс 50», «psalm 50» — точно цей псалом; інакше — збіг у назвах сторінок і розділів Псалтиря.
+    const psN = ql.match(/^(?:psalm|ps|псалом|пс)\.?\s*(\d{1,3})$/)?.[1];
+    PSALTYR.forEach((b, i) => {
+      const go = () => push(i >= 2 && i <= 21 ? { t: 'kath', k: i - 1 } : { t: 'ps', i });
+      const n = ul ? b.u : b.e;
+      if (n.toLowerCase().includes(ql)) results.push({ title: n, sub: t.psalter, go });
+      b.secs.forEach((x) => {
+        if (x.h && (psN ? x.h === `Псалом ${psN}` : x.h.toLowerCase().includes(ql))) results.push({ title: x.h, sub: `${t.psalter} · ${n}`, go });
+      });
+    });
   }
   void setDate;
   return (
