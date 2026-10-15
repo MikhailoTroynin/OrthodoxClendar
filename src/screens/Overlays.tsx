@@ -628,7 +628,7 @@ function Search() {
 
 function Settings() {
   const { p, t, lang, cal, fs, rm, ang, set, push } = useStore();
-  const on = [rm.eve && rm.eveT, rm.morn && rm.mornT].filter(Boolean) as string[];
+  const on = [rm.eve && rm.eveT, rm.tmr && rm.tmrT, rm.morn && rm.mornT].filter(Boolean) as string[];
   const rmSub = on.length || rm.pre ? [...on, rm.pre ? t.rPre : ''].filter(Boolean).join(' · ') : t.rOffAll;
   return (
     <>
@@ -726,11 +726,12 @@ function TimeField({ value, onChange }: { value: string; onChange: (v: string) =
   );
 }
 
-/** Налаштування нагадувань: увечері — про завтра, вранці — про сьогодні, перед святом. */
+/** Налаштування нагадувань: увечері — про завтра (докладно й коротко), вранці — про сьогодні, перед святом. */
 function Remind() {
   const { p, t, rm, set } = useStore();
-  const [other, setOther] = useState<{ eveT: boolean; mornT: boolean }>({
+  const [other, setOther] = useState<{ eveT: boolean; mornT: boolean; tmrT: boolean }>({
     eveT: !EVE_TIMES.includes(rm.eveT),
+    tmrT: !EVE_TIMES.includes(rm.tmrT),
     mornT: !MORN_TIMES.includes(rm.mornT),
   });
   const [denied, setDenied] = useState(false);
@@ -738,7 +739,7 @@ function Remind() {
     const next = { ...rm, ...patch };
     set({ rm: next });
     // Дозвіл питаємо, коли людина вмикає нагадування.
-    if (NATIVE && (next.eve || next.morn || next.pre || next.show.p || next.ang)) notifPermission(true).then((r) => setDenied(r === 'denied'));
+    if (NATIVE && (next.eve || next.morn || next.tmr || next.pre || next.show.p || next.ang)) notifPermission(true).then((r) => setDenied(r === 'denied'));
   };
 
   const chip = (label: string, on: boolean, onPress: () => void, num = true) => (
@@ -753,7 +754,7 @@ function Remind() {
     </Press>
   );
 
-  const block = (k: 'eve' | 'morn', title: string, sub: string, key: 'eveT' | 'mornT', presets: string[]) => {
+  const block = (k: 'eve' | 'morn' | 'tmr', title: string, sub: string, key: 'eveT' | 'mornT' | 'tmrT', presets: string[]) => {
     const cur = rm[key];
     const isOther = other[key];
     return (
@@ -791,6 +792,7 @@ function Remind() {
         <Title>{t.rTitle}</Title>
         <View style={card(p)}>
           {block('eve', t.rEve, t.rEveSub, 'eveT', EVE_TIMES)}
+          {block('tmr', t.rTmr, t.rTmrSub, 'tmrT', EVE_TIMES)}
           {block('morn', t.rMorn, t.rMornSub, 'mornT', MORN_TIMES)}
           <View style={{ paddingHorizontal: 16, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <View style={{ flex: 1 }}>

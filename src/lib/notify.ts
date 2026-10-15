@@ -1,4 +1,4 @@
-// Локальні нагадування: увечері — про завтрашній день, вранці — про сьогоднішній,
+// Локальні нагадування: увечері — про завтрашній день (докладно й коротко, у свій час), вранці — про сьогоднішній,
 // за 5 днів — про велике свято, дні ангела близьких, а також час молитов. У веб-версії нічого не надсилається.
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
@@ -12,6 +12,9 @@ export interface Reminders {
   /** Ранкове нагадування про сьогоднішній день. */
   morn: boolean;
   mornT: string;
+  /** Просте вечірнє нагадування про завтра: свято чи пам'ять і піст — щодня, у свій час. */
+  tmr: boolean;
+  tmrT: string;
   /** За 5 днів до великого свята. */
   pre: boolean;
   /** Дні ангела близьких: увечері напередодні й у сам день. */
@@ -25,6 +28,8 @@ export const REMINDER_DEFAULTS: Reminders = {
   eveT: '20:00',
   morn: true,
   mornT: '07:00',
+  tmr: false,
+  tmrT: '21:00',
   pre: false,
   ang: true,
   show: { f: true, r: true, n: true, p: false },
@@ -92,7 +97,7 @@ export async function reschedule(rm: Reminders, cal: CalendarType, lang: Lang, t
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();
     const angOn = rm.ang && angels.length > 0;
-    const any = rm.eve || rm.morn || rm.pre || rm.show.p || angOn;
+    const any = rm.eve || rm.morn || rm.tmr || rm.pre || rm.show.p || angOn;
     if (!any) return;
     if ((await notifPermission(ask)) !== 'granted') return;
 
@@ -152,6 +157,17 @@ export async function reschedule(rm: Reminders, cal: CalendarType, lang: Lang, t
           rm.show.n && d.names ? `${t.nNamesP}${d.names}` : '',
         ].filter(Boolean);
         add(at(day, rm.eveT), title, lines.join('\n'), next, 'eve');
+      }
+
+      if (rm.tmr) {
+        // Щодня, без особливих умов: що завтра за день і чи він пісний.
+        const next = addDays(day, 1);
+        const d = dayInfo(next, cal, lang);
+        const lines = [
+          d.title ? `${d.rank === 2 ? t.nFeastP : t.nMemory}${d.title}` : '',
+          t.fk[fastKind(d)],
+        ].filter(Boolean);
+        add(at(day, rm.tmrT), `${t.nTmrK}${weekdayName(next, lang)}, ${fmtDate(next, lang)}`, lines.join('\n'), next, 'tmr');
       }
 
       if (rm.pre) {
