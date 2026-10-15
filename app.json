@@ -5,21 +5,40 @@
     "version": "0.8.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
+    "icon": "./assets/icons/icon.png",
+    "splash": {
+      "image": "./assets/icons/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f6f1ea"
+    },
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "ua.orthodoxcalendar.app"
     },
     "android": {
-      "package": "ua.orthodoxcalendar.app"
+      "package": "ua.orthodoxcalendar.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icons/adaptive-icon.png",
+        "backgroundImage": "./assets/icons/adaptive-icon-background.png",
+        "backgroundColor": "#f6f1ea",
+        "monochromeImage": "./assets/icons/adaptive-icon-monochrome.png"
+      }
     },
     "plugins": [
       "expo-asset",
-      "expo-notifications"
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icons/notification-icon.png",
+          "color": "#a8772e"
+        }
+      ]
     ],
     "web": {
       "bundler": "metro",
-      "output": "single"
+      "output": "single",
+      "favicon": "./assets/icons/favicon.png"
     },
     "experiments": {
       "baseUrl": "/OrthodoxClendar"
