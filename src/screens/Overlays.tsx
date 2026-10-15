@@ -5,7 +5,7 @@ import { FE, LIVES } from '../data/calendar';
 import { CH_IMG } from '../data/channelImages';
 import type { MvBook } from '../data/molytvoslov';
 import { KATH, ROM } from '../data/prayerLists';
-import { VERS } from '../data/strings';
+import { PL, VERS } from '../data/strings';
 import { BackBar } from '../components/Chrome';
 import { Body, Divider, Heading, Icon, Kicker, NavRow, NUM, OutlineButton, Press, Seg, Switch, card } from '../components/ui';
 import { Rope } from './BookTab';
@@ -15,9 +15,9 @@ import { BOOK, BOOKS, bookItem, bookName, chapTitle, chapter, parseRefs, passage
 import { Lazy, prayersL, psaltyrL, useLazy } from '../lib/lazy';
 import { yearsL } from '../lib/calendar';
 import { Gate, Loading } from '../components/Lazy';
-import { dayInfo, entryFor, fmtDate, fmtMD, addDays, searchYear, toKey, ymd, FULL_YEARS } from '../lib/calendar';
+import { dayInfo, entryFor, fmtDate, fmtMD, addDays, searchYear, toKey, ymd, FULL_YEARS, MN } from '../lib/calendar';
 import { JAR_URL, Overlay, useStore } from '../store';
-import { NATIVE, notifPermission, Reminders } from '../lib/notify';
+import { Angel, angelDate, NATIVE, notifPermission, Reminders } from '../lib/notify';
 import { FONT, RADIUS } from '../theme';
 import { bookText, speak, stopSpeaking, useSpeaking } from '../lib/speech';
 
@@ -71,6 +71,7 @@ export function OverlayHost() {
       {top.t === 'search' && <Search />}
       {top.t === 'settings' && <Settings />}
       {top.t === 'remind' && <Remind />}
+      {top.t === 'angels' && <Angels />}
       {top.t === 'donate' && <Donate />}
       {top.t === 'ver' && <Versions />}
     </View>
@@ -600,7 +601,7 @@ function Search() {
 }
 
 function Settings() {
-  const { p, t, lang, cal, fs, rm, set, push } = useStore();
+  const { p, t, lang, cal, fs, rm, ang, set, push } = useStore();
   const on = [rm.eve && rm.eveT, rm.morn && rm.mornT].filter(Boolean) as string[];
   const rmSub = on.length || rm.pre ? [...on, rm.pre ? t.rPre : ''].filter(Boolean).join(' · ') : t.rOffAll;
   return (
@@ -617,7 +618,14 @@ function Settings() {
         <Seg opts={[17, 19, 21].map((v, i) => ({ label: t.sizes[i], on: fs === v, onPress: () => set({ fs: v }) }))} />
         <Kicker style={{ marginTop: 24, marginBottom: 8 }}>{t.notif}</Kicker>
         <View style={card(p)}>
-          <NavRow title={t.rTitle} sub={rmSub} onPress={() => push({ t: 'remind' })} last />
+          <NavRow title={t.rTitle} sub={rmSub} onPress={() => push({ t: 'remind' })} />
+          <NavRow
+            title={t.angTitle}
+            sub={ang.length ? ang.map((a) => a.n).join(', ') : t.angNone}
+            value={ang.length ? String(ang.length) : undefined}
+            onPress={() => push({ t: 'angels' })}
+            last
+          />
         </View>
         <Kicker style={{ marginTop: 24, marginBottom: 8 }}>{t.about}</Kicker>
         <View style={card(p)}>
@@ -650,7 +658,7 @@ function Remind() {
     const next = { ...rm, ...patch };
     set({ rm: next });
     // Дозвіл питаємо, коли людина вмикає нагадування.
-    if (NATIVE && (next.eve || next.morn || next.pre || next.show.p)) notifPermission(true).then((r) => setDenied(r === 'denied'));
+    if (NATIVE && (next.eve || next.morn || next.pre || next.show.p || next.ang)) notifPermission(true).then((r) => setDenied(r === 'denied'));
   };
 
   const chip = (label: string, on: boolean, onPress: () => void, num = true) => (
@@ -718,6 +726,13 @@ function Remind() {
             </View>
             <Switch on={rm.pre} label={t.rPre} onPress={() => upd({ pre: !rm.pre })} />
           </View>
+          <View style={{ paddingHorizontal: 16, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderTopWidth: 1, borderTopColor: p.divider }}>
+            <View style={{ flex: 1 }}>
+              <Heading size={19}>{t.angTitle}</Heading>
+              <Body size={12.5} mute={60} style={{ marginTop: 3 }}>{t.rAngSub}</Body>
+            </View>
+            <Switch on={rm.ang} label={t.angTitle} onPress={() => upd({ ang: !rm.ang })} />
+          </View>
         </View>
         <Kicker style={{ marginTop: 26, marginBottom: 8 }}>{t.rShow}</Kicker>
         <View style={card(p)}>
@@ -747,6 +762,109 @@ function Remind() {
         {(denied || !NATIVE) && (
           <Body size={12.5} mute={65} style={{ marginTop: 16 }}>{NATIVE ? t.rDenied : t.rWeb}</Body>
         )}
+      </Scroll>
+    </>
+  );
+}
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+/** Скільки днів у місяці m (лютий — 29, щоб можна було обрати 29-те). */
+const monthLen = (m: number) => new Date(2024, m, 0).getDate();
+
+/** Найближча дата дня ангела, починаючи від сьогодні. */
+const nextAngel = (a: Angel, today: Date) => {
+  const t0 = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12);
+  const x = angelDate(a, t0.getFullYear());
+  return x.getTime() < t0.getTime() - 3600_000 ? angelDate(a, t0.getFullYear() + 1) : x;
+};
+
+/** Дні ангела близьких: ім'я і дата; нагадування — увечері напередодні й у сам день. */
+function Angels() {
+  const { p, t, lang, cal, ang, rm, set, push, today } = useStore();
+  const [name, setName] = useState('');
+  const [m, setM] = useState(today.getMonth() + 1);
+  const [d, setD] = useState(today.getDate());
+  const day = Math.min(d, monthLen(m));
+  const year = today.getFullYear();
+  const hint = dayInfo(angelDate({ n: '', d: `${pad2(m)}-${pad2(day)}` }, year), cal, lang).names;
+
+  const list = ang
+    .map((a, i) => ({ a, i, next: nextAngel(a, today) }))
+    .sort((x, y) => x.next.getTime() - y.next.getTime());
+  const daysTo = (x: Date) => Math.round((x.getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12).getTime()) / 86400_000);
+
+  const step = (label: string, value: string, dec: () => void, inc: () => void) => (
+    <View style={{ flex: 1 }}>
+      <Kicker style={{ marginBottom: 6 }}>{label}</Kicker>
+      <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: p.divider, borderRadius: RADIUS }}>
+        <Press label="−" onPress={dec} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="left" size={18} color={p.mute(60)} />
+        </Press>
+        <Text style={[{ flex: 1, textAlign: 'center', fontFamily: FONT.headingBold, fontSize: 18, color: p.text }, NUM]}>{value}</Text>
+        <Press label="+" onPress={inc} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="right" size={18} color={p.mute(60)} />
+        </Press>
+      </View>
+    </View>
+  );
+
+  const addOne = () => {
+    const v = name.trim();
+    if (!v) return;
+    set({ ang: [...ang, { n: v, d: `${pad2(m)}-${pad2(day)}` }] });
+    setName('');
+  };
+
+  return (
+    <>
+      <BackBar />
+      <Scroll>
+        <Title>{t.angTitle}</Title>
+        <Body size={13} mute={65} style={{ marginBottom: 20 }}>{t.angHelp}</Body>
+
+        {list.length > 0 && (
+          <View style={[card(p), { marginBottom: 26 }]}>
+            {list.map(({ a, i, next }, k) => {
+              const n = daysTo(next);
+              const when = n === 0 ? t.angTodayL : n === 1 ? t.angTomorrowL : `${t.angIn}${n} ${lang === 'uk' ? PL(n, t.angDayW) : t.angDayW[2]}`;
+              return (
+                <View
+                  key={i}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 16, borderBottomWidth: k === list.length - 1 ? 0 : 1, borderBottomColor: p.divider }}
+                >
+                  <View style={{ flex: 1, paddingVertical: 10 }}>
+                    <Text style={{ fontFamily: FONT.headingBold, fontSize: 19, color: p.text }}>{a.n}</Text>
+                    <Body size={12.5} mute={60} style={{ marginTop: 2 }}>{`${fmtDate(next, lang)} · ${when}`}</Body>
+                  </View>
+                  <Press label="×" onPress={() => set({ ang: ang.filter((_, j) => j !== i) })} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="x" size={18} color={p.mute(60)} />
+                  </Press>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        <Kicker style={{ paddingBottom: 8, marginBottom: 12, borderBottomWidth: 1, borderBottomColor: p.divider }}>{t.angAdd}</Kicker>
+        <TextInput
+          value={name}
+          onChangeText={setName}
+          placeholder={t.namePh}
+          placeholderTextColor={p.mute(45)}
+          onSubmitEditing={addOne}
+          style={{ minHeight: 40, paddingHorizontal: 10, borderWidth: 1, borderColor: p.divider, borderRadius: RADIUS, color: p.text, fontFamily: FONT.body, fontSize: 15 }}
+        />
+        <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+          {step(t.angDay, String(day), () => setD(day <= 1 ? monthLen(m) : day - 1), () => setD(day >= monthLen(m) ? 1 : day + 1))}
+          {step(t.angMonth, MN[lang][m - 1], () => setM(m <= 1 ? 12 : m - 1), () => setM(m >= 12 ? 1 : m + 1))}
+        </View>
+        {!!hint && <Body size={12.5} mute={60} style={{ marginTop: 10 }}>{`${t.nNamesP}${hint}`}</Body>}
+        <OutlineButton label={t.add} onPress={addOne} style={{ marginTop: 14, alignSelf: 'flex-start' }} />
+
+        <View style={[card(p), { marginTop: 26 }]}>
+          <NavRow title={t.rTitle} sub={rm.ang ? `${t.angWhen} · ${rm.eveT}, ${rm.mornT}` : t.rOffAll} onPress={() => push({ t: 'remind' })} last />
+        </View>
+        {!NATIVE && <Body size={12.5} mute={65} style={{ marginTop: 16 }}>{t.rWeb}</Body>}
       </Scroll>
     </>
   );

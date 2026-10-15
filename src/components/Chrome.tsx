@@ -51,6 +51,7 @@ function screenName(o: Overlay | undefined, tab: Tab, t: Record<string, any>, ul
     case 'search': return t.search;
     case 'settings': return t.settings;
     case 'remind': return t.rTitle;
+    case 'angels': return t.angTitle;
     case 'pom': return t.pom;
     case 'jesus': return t.jesus;
     case 'donate': return t.supportRow;

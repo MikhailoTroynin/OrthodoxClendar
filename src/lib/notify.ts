@@ -1,5 +1,5 @@
 // Локальні нагадування: увечері — про завтрашній день, вранці — про сьогоднішній,
-// за 5 днів — про велике свято, а також час молитов. У веб-версії нічого не надсилається.
+// за 5 днів — про велике свято, дні ангела близьких, а також час молитов. У веб-версії нічого не надсилається.
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import type { CalendarType, Lang } from '../data/calendar';
@@ -14,6 +14,8 @@ export interface Reminders {
   mornT: string;
   /** За 5 днів до великого свята. */
   pre: boolean;
+  /** Дні ангела близьких: увечері напередодні й у сам день. */
+  ang: boolean;
   /** Що показувати: піст, читання, іменини, час молитов. */
   show: { f: boolean; r: boolean; n: boolean; p: boolean };
 }
@@ -24,8 +26,29 @@ export const REMINDER_DEFAULTS: Reminders = {
   morn: true,
   mornT: '07:00',
   pre: false,
+  ang: true,
   show: { f: true, r: true, n: true, p: false },
 };
+
+/** День ангела близької людини: ім'я і дата «ММ-ДД» за цивільним календарем. */
+export interface Angel {
+  n: string;
+  d: string;
+}
+
+/** Дата дня ангела в році y; 29 лютого в невисокосний рік — 28-го. */
+export const angelDate = (a: Angel, y: number) => {
+  const [m, d] = a.d.split('-').map(Number);
+  const last = new Date(y, m, 0).getDate();
+  return new Date(y, m - 1, Math.min(d, last), 12);
+};
+
+/** Імена тих, чий день ангела припадає на цей день. */
+export const angelsOn = (list: Angel[], day: Date) =>
+  list.filter((a) => {
+    const x = angelDate(a, day.getFullYear());
+    return x.getMonth() === day.getMonth() && x.getDate() === day.getDate();
+  }).map((a) => a.n);
 
 /** Дія з розгорнутого ранкового сповіщення. */
 export type NotifAction = 'prayers' | 'reading' | 'life' | 'open';
@@ -64,11 +87,12 @@ export async function notifPermission(ask: boolean): Promise<'granted' | 'denied
 }
 
 /** Перепланує всі нагадування на найближчі дні за поточними налаштуваннями. */
-export async function reschedule(rm: Reminders, cal: CalendarType, lang: Lang, t: Record<string, any>, pomN: number, ask = false) {
+export async function reschedule(rm: Reminders, cal: CalendarType, lang: Lang, t: Record<string, any>, pomN: number, angels: Angel[] = [], ask = false) {
   if (!NATIVE) return;
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();
-    const any = rm.eve || rm.morn || rm.pre || rm.show.p;
+    const angOn = rm.ang && angels.length > 0;
+    const any = rm.eve || rm.morn || rm.pre || rm.show.p || angOn;
     if (!any) return;
     if ((await notifPermission(ask)) !== 'granted') return;
 
@@ -134,6 +158,15 @@ export async function reschedule(rm: Reminders, cal: CalendarType, lang: Lang, t
         const f = addDays(day, PRE_DAYS);
         const d = dayInfo(f, cal, lang);
         if (d.rank === 2 && d.title) add(at(day, rm.mornT, 1), t.nApp, `${t.nInDays}${fmtDate(f, lang)}: ${d.title}.`, f, 'pre');
+      }
+
+      if (angOn) {
+        // Увечері напередодні — у час вечірнього нагадування, у сам день — у час ранкового.
+        const next = addDays(day, 1);
+        const eveN = angelsOn(angels, next);
+        if (eveN.length) add(at(day, rm.eveT, 1), `${t.nAngTomorrow}${eveN.join(', ')}`, eveN.length > 1 ? t.nAngEveM : t.nAngEve, next, 'angE');
+        const todayN = angelsOn(angels, day);
+        if (todayN.length) add(at(day, rm.mornT, 2), `${t.nAngToday}${todayN.join(', ')}`, todayN.length > 1 ? t.nAngDayM : t.nAngDay, day, 'angM');
       }
 
       if (rm.show.p) {
