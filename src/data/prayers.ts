@@ -1,9 +1,12 @@
 // Молитвослов і Святе Письмо (портовано з макета Orthodox Calendar v2).
+import { CH, ChItem } from './channel';
 export type Bi = [string, string];
 export interface Block { h?: Bi; r?: Bi; t?: string }
 export interface Item {
   u: string; e: string; mu: string; me: string;
   full?: 1; r?: Bi; p?: Bi[]; b?: Block[];
+  /** Готовий текст (молитви й тропарі з каналу «Київський Ізвод») і зображення святого. */
+  x?: string; img?: { id: number; w: number; h: number };
 }
 export interface Section { u: string; e: string; items: Item[] }
 export interface Book { u: string; e: string; ch?: number; books?: Book[] }
@@ -48,7 +51,12 @@ export const MB: Section[] = [
 {u:'Канони',e:'Canons',items:[KN('Канон покаянний','Canon of Repentance'),KN('Молебний канон до Богородиці','Supplicatory Canon to the Theotokos'),KN('Канон Ангелу Хоронителю','Canon to the Guardian Angel'),KN('Великий канон прп. Андрія Критського','Great Canon of St Andrew of Crete',H('Читають у перші чотири дні Великого посту і в четвер пʼятого тижня.','Read on the first four days of Great Lent and on Thursday of the fifth week.')),KN('Пасхальний канон','Paschal Canon',H('Співають від Великодня до Віддання Пасхи.','Sung from Pascha until the Leave-taking of Pascha.'))]},
 {u:'Часослов',e:'Horologion',items:[{u:'Шестопсалміє',e:'The Six Psalms',mu:'≈ 12 хв',me:'≈ 12 min',p:['3','37','62','87','102','142'].map(n=>H('Псалом '+n,'Psalm '+n))},HR('Перший час','First Hour','5, 89, 100'),HR('Третій час','Third Hour','16, 24, 50'),HR('Шостий час','Sixth Hour','53, 54, 90'),HR('Девʼятий час','Ninth Hour','83, 84, 85'),{u:'Мале повечірʼя',e:'Small Compline',mu:'≈ 20 хв',me:'≈ 20 min',p:[H('Псалми 50, 69, 142','Psalms 50, 69, 142'),H('Символ віри','The Creed'),H('Канон','Canon'),H('«Достойно є» і молитва','“It is truly meet” and prayer')]}]},
 {u:'На різні потреби',e:'For various needs',items:[TX('Молитва за Україну','Prayer for Ukraine','ukraine',H('Духовний гімн на слова Олександра Кониського.','A hymn to words by Oleksandr Konysky.')),ND('Молитва за хворих','Prayer for the sick'),ND('Молитва за подорожніх','Prayer for travellers'),ND('Молитва перед навчанням','Prayer before study'),ND('Молитва за спочилих','Prayer for the departed'),ND('Подячна молитва','Prayer of thanksgiving')]}];
-export const ROM: string[] = ['I','II','III','IV','V','VI','VII'];
+const chItem = (c: ChItem): Item => ({ u: c.u, e: c.u, mu: '', me: '', full: 1, x: c.t, img: c.im && { id: c.id, w: c.im[0], h: c.im[1] } });
+MB.push(
+  { u: 'Молитви Київського ізводу', e: 'Prayers of the Kyiv Use', items: CH.filter((c) => c.k === 'p').map(chItem) },
+  { u: 'Святі й свята: тропарі та ікони', e: 'Saints and feasts: troparia and icons', items: CH.filter((c) => c.k === 's').map(chItem) },
+);
+export const ROM: string[] = ['I','II','III','IV','V','VI','VII','VIII','IX'];
 export const WK: [number, string, string][] = [[7,'безплотним силам','the Bodiless Powers'],[5,'святому Іоанну Предтечі','St John the Forerunner'],[1,'Хресту і Богородиці','the Cross and the Theotokos'],[6,'апостолам і святителю Миколаю','the Apostles and St Nicholas'],[4,'Хресту Господньому','the Cross'],[1,'усім святим і спочилим','all saints and the departed'],[3,'Воскресінню Христовому','the Resurrection']];
 export const GOS: Book[] = [{u:'Від Матвія',e:'Matthew',ch:28},{u:'Від Марка',e:'Mark',ch:16},{u:'Від Луки',e:'Luke',ch:24},{u:'Від Іоанна',e:'John',ch:21}];
 const B = (u: string, e: string, ch: number): Book =>({u,e,ch});

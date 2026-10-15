@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Linking, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Image, Linking, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { FE, LIVES } from '../data/calendar';
+import { CH_IMG } from '../data/channelImages';
 import { MB, ROM, T } from '../data/prayers';
 import { VERS } from '../data/strings';
 import { BackBar } from '../components/Chrome';
@@ -126,6 +127,15 @@ function Reader({ o }: { o: Of<'read'> }) {
       <Scroll>
         <Title>{ul ? it.u : it.e}</Title>
         {!!(ul ? it.mu : it.me) && <Body size={12.5} mute={60} style={{ marginBottom: 14 }}>{ul ? it.mu : it.me}</Body>}
+        {it.img && CH_IMG[it.img.id] && (
+          <Image
+            source={CH_IMG[it.img.id]}
+            accessibilityIgnoresInvertColors
+            resizeMode="contain"
+            style={{ width: '100%', aspectRatio: it.img.w / it.img.h, maxHeight: 420, marginBottom: 18, borderRadius: RADIUS, backgroundColor: p.divider }}
+          />
+        )}
+        {!!it.x && <Text style={{ fontFamily: FONT.body, fontSize: fs, lineHeight: fs * 1.65, color: p.text }}>{it.x}</Text>}
         {it.r && (
           <Text style={{ fontFamily: FONT.body, fontStyle: 'italic', fontSize: fs - 3, lineHeight: (fs - 3) * 1.5, color: p.mute(65), marginBottom: 16 }}>
             {it.r[li]}
