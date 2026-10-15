@@ -3,8 +3,9 @@ import { BackHandler } from 'react-native';
 import { CalendarType, Lang } from './data/calendar';
 import { Book } from './data/prayers';
 import { S } from './data/strings';
-import { fromKey, toKey } from './lib/calendar';
+import { dayInfo, fromKey, toKey } from './lib/calendar';
 import { loadJSON, saveJSON } from './lib/storage';
+import { NATIVE, onNotifResponse, REMINDER_DEFAULTS, Reminders, reschedule } from './lib/notify';
 import { palette, Palette, ThemeName } from './theme';
 
 export type Tab = 'today' | 'cal' | 'book' | 'bible' | 'more';
@@ -24,6 +25,7 @@ export type Overlay =
   | { t: 'jesus' }
   | { t: 'search' }
   | { t: 'settings' }
+  | { t: 'remind' }
   | { t: 'donate' }
   | { t: 'ver' };
 
@@ -32,7 +34,8 @@ export interface Persisted {
   cal: CalendarType;
   theme: ThemeName;
   fs: number;
-  nt: { f: boolean; s: boolean; n: boolean };
+  /** Налаштування нагадувань. */
+  rm: Reminders;
   kd: number[];
   pom: { h: string[]; r: string[] };
   jc: number;
@@ -45,7 +48,7 @@ const DEFAULTS: Persisted = {
   cal: 'nj',
   theme: 'day',
   fs: 17,
-  nt: { f: true, s: true, n: false },
+  rm: REMINDER_DEFAULTS,
   kd: [],
   pom: { h: [], r: [] },
   jc: 0,
@@ -100,8 +103,9 @@ export function StoreProvider({ children, onReady }: { children: React.ReactNode
 
   useEffect(() => {
     loadJSON<Persisted & { date?: string }>().then((v) => {
-      if (v) setSaved((s) => ({ ...s, ...v, nt: { ...s.nt, ...v.nt }, pom: { ...s.pom, ...v.pom } }));
+      if (v) setSaved((s) => ({ ...s, ...v, rm: { ...s.rm, ...v.rm, show: { ...s.rm.show, ...v.rm?.show } }, pom: { ...s.pom, ...v.pom } }));
       loaded.current = true;
+      setReady(true);
       onReady?.();
     });
   }, [onReady]);
@@ -109,6 +113,15 @@ export function StoreProvider({ children, onReady }: { children: React.ReactNode
   useEffect(() => {
     if (loaded.current) saveJSON(saved);
   }, [saved]);
+
+  // Нагадування плануються наперед на кілька днів: оновлюємо їх під час запуску і після змін налаштувань.
+  const pomN = saved.pom.h.length + saved.pom.r.length;
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (!ready || !NATIVE) return;
+    const h = setTimeout(() => reschedule(saved.rm, saved.cal, saved.lang, S[saved.lang], pomN, true), 400);
+    return () => clearTimeout(h);
+  }, [ready, saved.rm, saved.cal, saved.lang, pomN]);
 
   const set = useCallback((patch: Partial<Persisted>) => setSaved((s) => ({ ...s, ...patch })), []);
   const push = useCallback((o: Overlay) => setOv((s) => [...s, o]), []);
@@ -134,6 +147,29 @@ export function StoreProvider({ children, onReady }: { children: React.ReactNode
     setOv([]);
     setQ('');
   }, []);
+
+  // Натискання на сповіщення відкриває його день, а кнопки — молитви, читання чи житіє.
+  const savedRef = useRef(saved);
+  savedRef.current = saved;
+  useEffect(() => {
+    if (!ready) return;
+    return onNotifResponse((key, action, kind) => {
+      const d = fromKey(key);
+      openDay(d);
+      const { cal, lang } = savedRef.current;
+      const t = S[lang];
+      if (action === 'prayers' || kind === 'prayM' || kind === 'prayE') {
+        setTab('book');
+        setOv([{ t: 'read', s: 0, j: action === 'prayers' ? 0 : kind === 'prayE' ? 1 : 0 }]);
+      } else if (action === 'reading') {
+        const day = dayInfo(d, cal, lang);
+        const s = [day.r1, day.r2].filter(Boolean).join('; ');
+        if (s) setOv([{ t: 'pass', s, title: t.readings }]);
+      } else if (action === 'life') {
+        if (dayInfo(d, cal, lang).lifeKey) setOv([{ t: 'life' }]);
+      }
+    });
+  }, [ready, openDay]);
 
   // Кнопка «Назад» в Android закриває верхній екран.
   useEffect(() => {

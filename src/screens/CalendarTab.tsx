@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { WS } from '../data/calendar';
-import { Body, Divider, H1, Heading, Icon, Kicker, Marks, NeutralTag, NUM, OutlineButton, Press, Seg, Tag } from '../components/ui';
+import { Body, FastIcon, H1, Heading, Icon, Kicker, Marks, NeutralTag, NUM, OutlineButton, Press, Seg, Tag } from '../components/ui';
 import { TopBar } from '../components/Chrome';
-import { dayInfo, feastSections, fmtDate, MN, monthGrid, sameDay, toKey, weekdayName } from '../lib/calendar';
+import { dayInfo, fastKind, FastKind, feastSections, fmtDate, MN, monthGrid, sameDay, toKey, weekdayName } from '../lib/calendar';
 import { useStore } from '../store';
 import { FONT, RADIUS } from '../theme';
 
@@ -55,7 +55,7 @@ export default function CalendarTab() {
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', borderTopWidth: 1, borderTopColor: p.divider, paddingTop: 6 }}>
               {cells.map((c, i) => {
-                if (!c.date) return <View key={i} style={{ width: `${100 / 7}%`, height: 50 }} />;
+                if (!c.date) return <View key={i} style={{ width: `${100 / 7}%`, height: 60 }} />;
                 const info = dayInfo(c.date, cal, lang);
                 const on = sameDay(c.date, date);
                 const feast = info.rank > 0;
@@ -63,11 +63,11 @@ export default function CalendarTab() {
                   <Pressable
                     key={toKey(c.date)}
                     accessibilityRole="button"
-                    accessibilityLabel={fmtDate(c.date, lang)}
+                    accessibilityLabel={`${fmtDate(c.date, lang)}, ${t.fk[fastKind(info)]}`}
                     onPress={() => setDate(c.date!)}
                     style={({ pressed }) => ({
                       width: `${100 / 7}%`,
-                      height: 50,
+                      height: 60,
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: 4,
@@ -91,20 +91,22 @@ export default function CalendarTab() {
                     >
                       {c.date.getDate()}
                     </Text>
-                    <Marks feast={feast} fast={info.isFast} />
+                    <Marks feast={feast} kind={fastKind(info)} />
                   </Pressable>
                 );
               })}
             </View>
-            <View style={{ flexDirection: 'row', gap: 18, marginTop: 12, marginHorizontal: 4 }}>
-              <Legend feast label={t.lgFeast} />
-              <Legend label={t.lgFast} />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 10, marginTop: 14, marginHorizontal: 4 }}>
+              <Legend label={t.lgFeast} />
+              {(['meat', 'lean', 'oil', 'fish', 'paska'] as FastKind[]).map((k) => (
+                <Legend key={k} kind={k} label={t.fk[k]} />
+              ))}
             </View>
             <View style={{ marginTop: 22, padding: 16, borderWidth: 1, borderColor: p.divider, borderRadius: RADIUS, gap: 8 }}>
               <Kicker>{`${fmtDate(date, lang)}, ${weekdayName(date, lang)}`}</Kicker>
               <Heading size={20}>{sel.entry ? sel.title : t.noData}</Heading>
               {!!sel.week && <Body size={13} mute={70}>{sel.week}</Body>}
-              <Body size={13} mute={70}>{[sel.fastLabel || (sel.isFast ? t.fastDay : t.noFast), sel.r2].filter(Boolean).join(' · ')}</Body>
+              <Body size={13} mute={70}>{[fastKind(sel) === 'paska' ? t.fk.paska : sel.fastLabel || t.fk[fastKind(sel)], sel.r2].filter(Boolean).join(' · ')}</Body>
               <OutlineButton label={t.openDay} onPress={() => openDay(date)} style={{ alignSelf: 'flex-start', marginTop: 4 }} />
             </View>
           </>
@@ -137,16 +139,14 @@ export default function CalendarTab() {
   );
 }
 
-function Legend({ feast, label }: { feast?: boolean; label: string }) {
+function Legend({ kind, label }: { kind?: FastKind; label: string }) {
   const { p } = useStore();
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-      {feast ? (
-        <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: p.accent }} />
-      ) : (
-        <View style={{ width: 6, height: 6, borderRadius: 3, borderWidth: 1, borderColor: p.n600 }} />
-      )}
-      <Text style={{ fontFamily: FONT.body, fontSize: 11.5, color: p.mute(65) }}>{label}</Text>
+    <View style={{ width: '50%', flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 8 }}>
+      <View style={{ width: 17, alignItems: 'center' }}>
+        {kind ? <FastIcon kind={kind} size={17} /> : <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: p.accent }} />}
+      </View>
+      <Text style={{ flex: 1, fontFamily: FONT.body, fontSize: 12, color: p.mute(70) }}>{label}</Text>
     </View>
   );
 }

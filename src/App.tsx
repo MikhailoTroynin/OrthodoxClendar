@@ -29,9 +29,10 @@ function Shell() {
         {tab === 'book' && <BookTab />}
         {tab === 'bible' && <BibleTab />}
         {tab === 'more' && <MenuTab />}
+        {/* Вкладені екрани відкриваються над вкладкою, а нижня панель лишається видимою. */}
+        <OverlayHost />
       </View>
       <TabBar />
-      <OverlayHost />
     </View>
   );
 }
