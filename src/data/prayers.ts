@@ -1,6 +1,7 @@
 // Молитвослов і Святе Письмо (портовано з макета Orthodox Calendar v2).
 import { CH, ChItem } from './channel';
 import { MOLYTVOSLOV } from './molytvoslov';
+export { MOLYTVOSLOV };
 export type Bi = [string, string];
 export interface Block { h?: Bi; r?: Bi; t?: string }
 /** Посилання на повний текст у MOLYTVOSLOV: книга b, за потреби — лише розділи s. */
@@ -67,6 +68,3 @@ MB.push({
   u: 'Молитвослов (Київський ізвод)', e: 'Prayer book (Kyiv Use)',
   items: MOLYTVOSLOV.map((b, i): Item => ({ u: b.u, e: b.e, mu: '', me: '', full: 1, mv: [{ b: i }] })),
 });
-export const ROM: string[] = ['I','II','III','IV','V','VI','VII','VIII','IX','X'];
-export const WK: [number, string, string][] = [[7,'безплотним силам','the Bodiless Powers'],[5,'святому Іоанну Предтечі','St John the Forerunner'],[1,'Хресту і Богородиці','the Cross and the Theotokos'],[6,'апостолам і святителю Миколаю','the Apostles and St Nicholas'],[4,'Хресту Господньому','the Cross'],[1,'усім святим і спочилим','all saints and the departed'],[3,'Воскресінню Христовому','the Resurrection']];
-export const KATH: string[] = ['1–8','9–16','17–23','24–31','32–36','37–45','46–54','55–63','64–69','70–76','77–84','85–90','91–100','101–104','105–108','109–117','118','119–133','134–142','143–151'];

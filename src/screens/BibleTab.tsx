@@ -1,8 +1,9 @@
 import React from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { Book, KATH } from '../data/prayers';
+import type { Book } from '../data/prayers';
+import { KATH } from '../data/prayerLists';
 import { groupItem } from '../lib/bible';
-import { PSALTYR } from '../data/psaltyr';
+import { psaltyrL, useLazy } from '../lib/lazy';
 import { PL } from '../data/strings';
 import { Body, H1, Kicker, NavRow, NUM, Press, card } from '../components/ui';
 import { TopBar } from '../components/Chrome';
@@ -26,6 +27,8 @@ export default function BibleTab() {
   const ul = lang === 'uk';
   const day = dayInfo(today, cal, lang);
   const open = (b: Book) => push({ t: 'book', b });
+  // Назви сторінок Псалтиря беремо з його модуля, що довантажується разом із вкладкою.
+  const PSALTYR = useLazy(psaltyrL) ? psaltyrL()!.PSALTYR : null;
   const nextK = Array.from({ length: 20 }, (_, i) => i + 1).find((k) => !kd.includes(k));
 
   const list = (books: Book[], gospel?: boolean) => (
@@ -41,7 +44,7 @@ export default function BibleTab() {
   const psRows = (ix: number[], mt: number) => (
     <View style={[card(p), { marginTop: mt, marginBottom: mt ? 0 : 16 }]}>
       {ix.map((i, j) => (
-        <NavRow key={i} title={ul ? PSALTYR[i].u : PSALTYR[i].e} onPress={() => push({ t: 'ps', i })} last={j === ix.length - 1} />
+        <NavRow key={i} title={PSALTYR ? (ul ? PSALTYR[i].u : PSALTYR[i].e) : '…'} onPress={() => push({ t: 'ps', i })} last={j === ix.length - 1} />
       ))}
     </View>
   );
@@ -105,7 +108,7 @@ export default function BibleTab() {
             );
           })}
         </View>
-        {psRows([PSALTYR.length - 2, PSALTYR.length - 1], 16)}
+        {PSALTYR && psRows([PSALTYR.length - 2, PSALTYR.length - 1], 16)}
       </ScrollView>
     </View>
   );

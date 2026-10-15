@@ -3,16 +3,18 @@ import { Image, Linking, Pressable, ScrollView, Text, TextInput, View } from 're
 import * as Clipboard from 'expo-clipboard';
 import { FE, LIVES } from '../data/calendar';
 import { CH_IMG } from '../data/channelImages';
-import { MB, ROM, T } from '../data/prayers';
-import { MOLYTVOSLOV, MvBook } from '../data/molytvoslov';
-import { PSALTYR, kathIdx } from '../data/psaltyr';
+import type { MvBook } from '../data/molytvoslov';
+import { KATH, ROM } from '../data/prayerLists';
 import { VERS } from '../data/strings';
 import { BackBar } from '../components/Chrome';
 import { Body, Divider, Heading, Icon, Kicker, NavRow, NUM, OutlineButton, Press, Seg, Switch, card } from '../components/ui';
 import { Rope } from './BookTab';
 import { bookRow } from './BibleTab';
 import { refOverlay, Verses } from '../components/Scripture';
-import { BOOKS, bookItem, bookName, chapTitle, chapter, parseRefs, passage } from '../lib/bible';
+import { BOOK, BOOKS, bookItem, bookName, chapTitle, chapter, parseRefs, passage } from '../lib/bible';
+import { Lazy, prayersL, psaltyrL, useLazy } from '../lib/lazy';
+import { yearsL } from '../lib/calendar';
+import { Gate, Loading } from '../components/Lazy';
 import { dayInfo, entryFor, fmtDate, fmtMD, addDays, searchYear, toKey, ymd, FULL_YEARS } from '../lib/calendar';
 import { JAR_URL, Overlay, useStore } from '../store';
 import { NATIVE, notifPermission, Reminders } from '../lib/notify';
@@ -39,16 +41,30 @@ export function OverlayHost() {
   const { ov, p } = useStore();
   const top = ov[ov.length - 1];
   if (!top) return null;
+  // Екрани з великими текстами з'являються, щойно завантажено потрібні дані.
+  const need = (ls: Lazy<unknown>[], el: React.ReactNode) => (
+    <Gate
+      need={ls}
+      fallback={
+        <>
+          <BackBar />
+          <Loading />
+        </>
+      }
+    >
+      {el}
+    </Gate>
+  );
   return (
     <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: p.bg }}>
       {top.t === 'life' && <Life />}
-      {top.t === 'sec' && <Sec o={top} />}
-      {top.t === 'read' && <Reader o={top} />}
+      {top.t === 'sec' && need([prayersL], <Sec o={top} />)}
+      {top.t === 'read' && need([prayersL], <Reader o={top} />)}
       {top.t === 'book' && <BookOv o={top} />}
-      {top.t === 'chap' && <Chapter key={`${top.b}.${top.c}.${top.v ?? 0}`} o={top} />}
-      {top.t === 'pass' && <Passage o={top} />}
-      {top.t === 'kath' && <Kathisma o={top} />}
-      {top.t === 'ps' && <PsPage o={top} />}
+      {top.t === 'chap' && need([BOOK[top.b]], <Chapter key={`${top.b}.${top.c}.${top.v ?? 0}`} o={top} />)}
+      {top.t === 'pass' && need([...new Set(parseRefs(top.s).map((r) => BOOK[r.b]))], <Passage o={top} />)}
+      {top.t === 'kath' && need([psaltyrL], <Kathisma o={top} />)}
+      {top.t === 'ps' && need([psaltyrL], <PsPage o={top} />)}
       {top.t === 'pom' && <Pom />}
       {top.t === 'jesus' && <Jesus />}
       {top.t === 'search' && <Search />}
@@ -143,7 +159,7 @@ function Life() {
 function Sec({ o }: { o: Of<'sec'> }) {
   const { p, t, lang, push } = useStore();
   const ul = lang === 'uk';
-  const s = MB[o.s];
+  const s = prayersL()!.MB[o.s];
   return (
     <>
       <BackBar kicker={t.prayerBook} />
@@ -170,6 +186,7 @@ function Reader({ o }: { o: Of<'read'> }) {
   const { p, t, lang, fs } = useStore();
   const ul = lang === 'uk';
   const li = ul ? 0 : 1;
+  const { MB, MOLYTVOSLOV, T } = prayersL()!;
   const s = MB[o.s];
   const it = s.items[o.j];
   // Українською повний текст замінює план читання; англійською план лишається, а повний текст іде після нього.
@@ -346,7 +363,7 @@ function Passage({ o }: { o: Of<'pass'> }) {
 function Kathisma({ o }: { o: Of<'kath'> }) {
   const { t, kd, set, p, fs, lang, push } = useStore();
   const done = kd.includes(o.k);
-  const KATH = require('../data/prayers').KATH as string[];
+  const { PSALTYR, kathIdx } = psaltyrL()!;
   const mark = (
     <OutlineButton
       label={done ? t.marked : t.markRead}
@@ -378,7 +395,7 @@ function Kathisma({ o }: { o: Of<'kath'> }) {
 /** Інші сторінки Слідуваного Псалтиря: як читати, молитви перед і після читання, пісні Писання. */
 function PsPage({ o }: { o: Of<'ps'> }) {
   const { t, fs, lang } = useStore();
-  const b = PSALTYR[o.i];
+  const b = psaltyrL()!.PSALTYR[o.i];
   return (
     <>
       <BackBar right={<SizeBtns />} />
@@ -475,6 +492,10 @@ function Search() {
   const ul = lang === 'uk';
   const li = ul ? 0 : 1;
   const ql = q.trim().toLowerCase();
+  // Пошук охоплює календар, молитвослов і Псалтир: довантажуємо їх, результати доповнюються в міру готовності.
+  useLazy(...yearsL, prayersL, psaltyrL);
+  const MB = prayersL()?.MB ?? [];
+  const PSALTYR = psaltyrL()?.PSALTYR ?? [];
   const results: { title: string; sub: string; go: () => void }[] = [];
   if (ql.length >= 2) {
     // Повний календар (2026 і 2027): шукаємо по всій пам'яті кожного дня, спершу поточний рік.

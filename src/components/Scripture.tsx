@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleProp, Text, TextStyle, View } from 'react-native';
-import { chapTitle, chapter, Ref, tokenize, Verse } from '../lib/bible';
+import { BOOK, chapTitle, chapter, Ref, tokenize, Verse } from '../lib/bible';
+import { useLazy } from '../lib/lazy';
 import { useStore } from '../store';
 import { FONT } from '../theme';
 import { NUM, Press } from './ui';
@@ -40,12 +41,31 @@ const snippet = (r: Ref) => {
   return s.length > 110 ? s.slice(0, 108).replace(/\s+\S*$/, '') + '…' : s;
 };
 
+/** Паралельні місця вірша з початком тексту (книги, на які вони посилаються, довантажуються). */
+function XRefs({ xs }: { xs: Ref[] }) {
+  const { p, fs, push } = useStore();
+  useLazy(...new Set(xs.map((r) => BOOK[r.b])));
+  return (
+    <View style={{ borderLeftWidth: 2, borderLeftColor: p.a300, paddingLeft: 10, marginVertical: 6, gap: 6 }}>
+      {xs.map((r, j) => (
+        <Press key={j} onPress={() => push(refOverlay(r))} style={{ paddingVertical: 2 }}>
+          <Text style={{ fontFamily: FONT.body, fontSize: fs * 0.78, lineHeight: fs * 1.15, color: p.mute(70) }}>
+            <Text style={{ color: p.a700, textDecorationLine: 'underline', textDecorationColor: p.a300 }}>{r.label}</Text>
+            {'  '}
+            {snippet(r)}
+          </Text>
+        </Press>
+      ))}
+    </View>
+  );
+}
+
 /**
  * Вірші з номерами. Номер вірша з паралельними місцями підкреслено: дотик розгортає їх список,
  * кожне місце відкривається окремою главою. hl — виділені вірші, onY — позиція вірша (для прокрутки).
  */
 export function Verses({ vs, b, c, hl, onY }: { vs: Verse[]; b: number; c?: number; hl?: [number, number]; onY?: (n: number, y: number) => void }) {
-  const { p, fs, push, lang } = useStore();
+  const { p, fs, lang } = useStore();
   const ul = lang === 'uk';
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const body = { fontFamily: FONT.body, fontSize: fs, lineHeight: fs * 1.6, color: p.text } as const;
@@ -88,19 +108,7 @@ export function Verses({ vs, b, c, hl, onY }: { vs: Verse[]; b: number; c?: numb
                 </Text>
               ))}
             </View>
-            {on && (
-              <View style={{ borderLeftWidth: 2, borderLeftColor: p.a300, paddingLeft: 10, marginVertical: 6, gap: 6 }}>
-                {v.x.map((r, j) => (
-                  <Press key={j} onPress={() => push(refOverlay(r))} style={{ paddingVertical: 2 }}>
-                    <Text style={{ fontFamily: FONT.body, fontSize: fs * 0.78, lineHeight: fs * 1.15, color: p.mute(70) }}>
-                      <Text style={{ color: p.a700, textDecorationLine: 'underline', textDecorationColor: p.a300 }}>{r.label}</Text>
-                      {'  '}
-                      {snippet(r)}
-                    </Text>
-                  </Press>
-                ))}
-              </View>
-            )}
+            {on && <XRefs xs={v.x} />}
           </View>
         );
       })}

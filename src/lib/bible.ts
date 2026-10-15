@@ -2,6 +2,7 @@
 import { BOOKS, LOAD } from '../data/bible/books';
 import type { BChap } from '../data/bible/types';
 import type { Book } from '../data/prayers';
+import { lazy } from './lazy';
 
 export { BOOKS };
 
@@ -19,9 +20,10 @@ export const GROUPS: [string, string][] = [
   ['Одкровення', 'Revelation'],
 ];
 
-const cache: BChap[][] = [];
-/** Глави книги b (модуль із текстом завантажується при першому зверненні). */
-export const bookData = (b: number): BChap[] => (cache[b] ??= LOAD[b]());
+/** Текст книги b: завантажується за потреби (useLazy(BOOK[b]) або BOOK[b].load()). */
+export const BOOK = LOAD.map((l) => lazy(l));
+/** Глави книги b; порожньо, поки книгу не завантажено. */
+const bookData = (b: number): BChap[] => BOOK[b]() ?? [];
 
 export interface Verse {
   n: number;
@@ -51,7 +53,7 @@ export const chapter = (b: number, c: number): { h?: string; vs: Verse[] } => {
   const hit = verseCache.get(key);
   if (hit) return hit;
   const ch = bookData(b)[c - 1];
-  if (!ch) return { vs: [] };
+  if (!ch) return { vs: [] }; // книгу ще не завантажено або глави немає — не кешуємо
   let e = 1;
   const vs = ch.v.map((it) => {
     const [n, t] = typeof it === 'string' ? [e, it] : it;

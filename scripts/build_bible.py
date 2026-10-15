@@ -120,15 +120,15 @@ def main(d, out):
             f"// {u} — Біблія, переклад Патріарха Філарета. Згенеровано scripts/build_bible.py, не правте вручну.\n"
             "import type { BChap } from '../types';\n"
             f"const C: BChap[] = {js};\nexport default C;\n")
-        loaders.append(f"  () => require('./b/{sl}').default,")
+        loaders.append(f"  () => import('./b/{sl}').then((m) => m.default),")
     open(f'{out}/books.ts', 'w', encoding='utf8').write(
         "// Книги Біблії (переклад Патріарха Філарета): slug, назва, скорочення, назва англ., група, кількість глав.\n"
         "// Згенеровано scripts/build_bible.py. Тексти глав — у ./b/<slug>.ts, завантажуються за потреби.\n"
         "import type { BChap } from './types';\n"
         "export type BookMeta = [slug: string, u: string, abbr: string, e: string, group: number, chapters: number];\n"
         "export const BOOKS: BookMeta[] = " + json.dumps(meta, ensure_ascii=False) + ";\n"
-        "/** Ліниве завантаження тексту книги (модуль виконується лише при першому зверненні). */\n"
-        "export const LOAD: (() => BChap[])[] = [\n" + '\n'.join(loaders) + "\n];\n")
+        "/** Ліниве завантаження тексту книги: у веб-версії кожна книга — окремий файл, що завантажується при першому зверненні. */\n"
+        "export const LOAD: (() => Promise<BChap[]>)[] = [\n" + '\n'.join(loaders) + "\n];\n")
     print(len(BOOKS), 'книг,', total // 1024, 'КБ тексту')
 
 

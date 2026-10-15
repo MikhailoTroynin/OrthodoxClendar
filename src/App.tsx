@@ -16,6 +16,8 @@ import BookTab from './screens/BookTab';
 import BibleTab from './screens/BibleTab';
 import MenuTab from './screens/MenuTab';
 import { OverlayHost } from './screens/Overlays';
+import { Gate } from './components/Lazy';
+import { prayersL } from './lib/lazy';
 
 function Shell() {
   const { p, tab, theme } = useStore();
@@ -26,7 +28,11 @@ function Shell() {
       <View style={{ flex: 1 }}>
         {tab === 'today' && <Today />}
         {tab === 'cal' && <CalendarTab />}
-        {tab === 'book' && <BookTab />}
+        {tab === 'book' && (
+          <Gate need={[prayersL]}>
+            <BookTab />
+          </Gate>
+        )}
         {tab === 'bible' && <BibleTab />}
         {tab === 'more' && <MenuTab />}
         {/* Вкладені екрани відкриваються над вкладкою, а нижня панель лишається видимою. */}

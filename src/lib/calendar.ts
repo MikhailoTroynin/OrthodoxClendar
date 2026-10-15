@@ -12,8 +12,8 @@ import {
   SEP,
   WD,
 } from '../data/calendar';
-import { DayRec, Item, Reading, Y2027 } from '../data/calendar2027';
-import { Y2026 } from '../data/calendar2026';
+import type { DayRec, Item, Reading } from '../data/calendar2027';
+import { Lazy, lazy } from './lazy';
 
 const DAY_MS = 86400000;
 
@@ -37,11 +37,22 @@ const JULIAN_SHIFT = 13;
 /** Дата за юліанським календарем для цивільної дати. */
 export const julianOf = (dt: Date) => addDays(dt, -JULIAN_SHIFT);
 
-/** Повні дані за рік (за цивільною датою). Зараз є 2026 і 2027. */
-const YEARS: Record<number, Record<string, DayRec>> = { 2026: Y2026, 2027: Y2027 };
+/** Повні дані за рік (за цивільною датою). Зараз є 2026 і 2027; кожен рік завантажується окремо, за потреби. */
+const YEARS = {
+  2026: lazy(() => import('../data/calendar2026').then((m) => m.Y2026)),
+  2027: lazy(() => import('../data/calendar2027').then((m) => m.Y2027)),
+} as Record<number, Lazy<Record<string, DayRec>>>;
+const yearRecs = (y: number) => YEARS[y]?.();
 
 /** Роки, для яких є повний календар. */
 export const FULL_YEARS = Object.keys(YEARS).map(Number);
+
+/** Модулі з даними всіх років. */
+export const yearsL = Object.values(YEARS);
+
+/** Завантажує дані років (тих, для яких є повний календар). */
+export const loadYears = (years: number[] = FULL_YEARS) =>
+  Promise.all(years.filter((y) => YEARS[y]).map((y) => YEARS[y].load())).then(() => undefined);
 
 /** Індекс «дата за юліанським календарем → запис», щоб брати неперехідну пам'ять за новоюліанськими числами. */
 const OLD_INDEX: Record<number, Record<string, DayRec>> = {};
@@ -49,7 +60,7 @@ const oldIndex = (year: number) => {
   let idx = OLD_INDEX[year];
   if (!idx) {
     idx = {};
-    for (const rec of Object.values(YEARS[year])) idx[`${rec.o[0]}-${rec.o[1]}`] = rec;
+    for (const rec of Object.values(yearRecs(year)!)) idx[`${rec.o[0]}-${rec.o[1]}`] = rec;
     OLD_INDEX[year] = idx;
   }
   return idx;
@@ -78,7 +89,7 @@ export interface YearDay {
  */
 export const yearDay = (dt: Date, cal: CalendarType): YearDay | null => {
   const year = dt.getFullYear();
-  const civil = YEARS[year]?.[toKey(dt)];
+  const civil = yearRecs(year)?.[toKey(dt)];
   if (!civil) return null;
   if (cal === 'oj') {
     return { week: civil.w, glas: civil.g, fast: civil.f, items: civil.i, readings: civil.r };
@@ -143,7 +154,7 @@ export const entryFor = (dt: Date, cal: CalendarType): Entry | null => {
 /** Пошук по пам'яті всіх днів року, для якого є повні дані (2026, 2027). */
 export const searchYear = (year: number, cal: CalendarType, q: string, limit = 60) => {
   const out: { text: string; date: Date }[] = [];
-  const recs = YEARS[year];
+  const recs = yearRecs(year);
   if (!recs) return out;
   for (const key of Object.keys(recs).sort()) {
     const dt = fromKey(key);

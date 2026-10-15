@@ -2,8 +2,7 @@ import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { FONT } from '../theme';
 import { Overlay, Tab, useStore } from '../store';
-import { MB } from '../data/prayers';
-import { PSALTYR } from '../data/psaltyr';
+import { prayersL, psaltyrL } from '../lib/lazy';
 import { bookName, chapTitle } from '../lib/bible';
 import { Icon, Kicker, Press } from './ui';
 
@@ -37,15 +36,17 @@ export function TopBar({ kicker }: { kicker: string }) {
 /** Назва екрана для кнопки «Назад»: куди вона повертає. */
 function screenName(o: Overlay | undefined, tab: Tab, t: Record<string, any>, ul: boolean): string {
   const nm = (x: { u: string; e: string }) => (ul ? x.u : x.e);
+  const mb = prayersL()?.MB;
+  const ps = psaltyrL()?.PSALTYR;
   if (!o) return { today: t.tab0, cal: t.tab1, book: t.prayerBook, bible: t.scripture, more: t.menu }[tab];
   switch (o.t) {
-    case 'sec': return nm(MB[o.s]);
-    case 'read': return nm(MB[o.s].items[o.j]);
+    case 'sec': return mb ? nm(mb[o.s]) : '';
+    case 'read': return mb ? nm(mb[o.s].items[o.j]) : '';
     case 'book': return nm(o.b);
     case 'chap': return chapTitle(o.b, o.c, ul);
     case 'pass': return o.title;
     case 'kath': return `${t.kathisma} ${o.k}`;
-    case 'ps': return nm(PSALTYR[o.i]);
+    case 'ps': return ps ? nm(ps[o.i]) : '';
     case 'life': return t.life2;
     case 'search': return t.search;
     case 'settings': return t.settings;

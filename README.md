@@ -82,3 +82,8 @@ src/screens/             вкладки та екрани-накладки
 Веб-версія збирається через `npx expo export --platform web` і публікується workflow-ом
 `.github/workflows/pages.yml`. Одноразово: **Settings → Pages → Source: GitHub Actions**.
 Адреса: https://mikhailotroynin.github.io/OrthodoxClendar/
+
+Сайт завантажується частинами: спершу лише оболонка застосунку (~0,8 МБ) і календар поточного року, а кожна книга Біблії,
+календар іншого року, Псалтир і молитвослов — окремі файли, що підвантажуються, коли їх уперше відкривають
+(`import()` і `src/lib/lazy.ts`; поки дані вантажаться, екран показує індикатор). Для цього в `index.ts` підключено
+`@expo/metro-runtime`, а `metro.config.js` зберігає кирилицю в UTF-8 замість `\uXXXX`, що втричі зменшує файли.
