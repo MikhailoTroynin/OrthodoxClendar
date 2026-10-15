@@ -10,7 +10,7 @@ import { BackBar } from '../components/Chrome';
 import { Body, Divider, Heading, Icon, Kicker, NavRow, NUM, OutlineButton, Press, Seg, Switch, card } from '../components/ui';
 import { Rope } from './BookTab';
 import { bookRow } from './BibleTab';
-import { dayInfo, entryFor, fmtDate, fmtMD, addDays, searchYear, ymd } from '../lib/calendar';
+import { dayInfo, entryFor, fmtDate, fmtMD, addDays, searchYear, toKey, ymd, FULL_YEARS } from '../lib/calendar';
 import { JAR_URL, Overlay, useStore } from '../store';
 import { FONT, RADIUS } from '../theme';
 
@@ -363,14 +363,19 @@ function Search() {
   const ql = q.trim().toLowerCase();
   const results: { title: string; sub: string; go: () => void }[] = [];
   if (ql.length >= 2) {
-    // Повний календар 2027 року: шукаємо по всій пам'яті кожного дня.
-    searchYear(2027, cal, ql).forEach(({ text, date }) =>
-      results.push({ title: text, sub: fmtDate(date, lang), go: () => openDay(date) }),
-    );
-    // Решта днів, для яких у даних є пам'ять (вересень і жовтень інших років).
+    // Повний календар (2026 і 2027): шукаємо по всій пам'яті кожного дня, спершу поточний рік.
     const y = today.getFullYear();
-    for (let i = -20; y !== 2027 && i <= 40; i++) {
+    const seen = new Set<string>();
+    [...FULL_YEARS].sort((a, b) => Number(b === y) - Number(a === y) || a - b).forEach((yr) =>
+      searchYear(yr, cal, ql, 40).forEach(({ text, date }) => {
+        seen.add(toKey(date));
+        results.push({ title: text, sub: fmtDate(date, lang), go: () => openDay(date) });
+      }),
+    );
+    // Ручні дані (вересень і жовтень): назва й іменини, зокрема для днів поза повним календарем.
+    for (let i = -20; i <= 40; i++) {
       const dt = addDays(ymd(y, 9, 15), i);
+      if (seen.has(toKey(dt))) continue;
       const e = entryFor(dt, cal);
       if (e && ((e[li] as string).toLowerCase().includes(ql) || (e[li + 2] as string).toLowerCase().includes(ql)))
         results.push({ title: e[li] as string, sub: fmtDate(dt, lang), go: () => openDay(dt) });

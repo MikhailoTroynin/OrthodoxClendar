@@ -13,6 +13,7 @@ import {
   WD,
 } from '../data/calendar';
 import { DayRec, Item, Reading, Y2027 } from '../data/calendar2027';
+import { Y2026 } from '../data/calendar2026';
 
 const DAY_MS = 86400000;
 
@@ -36,8 +37,11 @@ const JULIAN_SHIFT = 13;
 /** Дата за юліанським календарем для цивільної дати. */
 export const julianOf = (dt: Date) => addDays(dt, -JULIAN_SHIFT);
 
-/** Повні дані за рік (за цивільною датою). Зараз є лише 2027. */
-const YEARS: Record<number, Record<string, DayRec>> = { 2027: Y2027 };
+/** Повні дані за рік (за цивільною датою). Зараз є 2026 і 2027. */
+const YEARS: Record<number, Record<string, DayRec>> = { 2026: Y2026, 2027: Y2027 };
+
+/** Роки, для яких є повний календар. */
+export const FULL_YEARS = Object.keys(YEARS).map(Number);
 
 /** Індекс «дата за юліанським календарем → запис», щоб брати неперехідну пам'ять за новоюліанськими числами. */
 const OLD_INDEX: Record<number, Record<string, DayRec>> = {};
@@ -67,7 +71,7 @@ export interface YearDay {
 }
 
 /**
- * Дані дня з календаря 2027 (azbyka.ru, юліанський календар).
+ * Дані дня з повного календаря (2026 і 2027, azbyka.ru, юліанський календар).
  * Юліанський режим бере запис за цивільною датою як є. Новоюліанський бере
  * неперехідну пам'ять і пости за числом місяця (13 днів різниці), а тиждень,
  * Пасхалію й перехідні свята — за цивільною датою.
@@ -110,14 +114,8 @@ export const yearDay = (dt: Date, cal: CalendarType): YearDay | null => {
 
 const rankOf = (items: Item[]): 0 | 1 | 2 => items.reduce<0 | 1 | 2>((m, it) => (it[0] > m ? it[0] : m), 0);
 
-/** Запис про пам'ять дня. Дані збігаються за місяцем і числом, а не за роком, окрім 2027 (повний рік). */
-export const entryFor = (dt: Date, cal: CalendarType): Entry | null => {
-  const yd = yearDay(dt, cal);
-  if (yd) {
-    if (!yd.items.length) return null;
-    const title = yd.items[0][1];
-    return [title, title, '', '', rankOf(yd.items)];
-  }
+/** Запис із ручних даних (вересень і жовтень): збігається за місяцем і числом, а не за роком. */
+const legacyEntry = (dt: Date, cal: CalendarType): Entry | null => {
   const k = cal === 'nj' ? dt : julianOf(dt);
   const m = k.getMonth() + 1;
   const d = k.getDate();
@@ -126,7 +124,23 @@ export const entryFor = (dt: Date, cal: CalendarType): Entry | null => {
   return null;
 };
 
-/** Пошук по пам'яті всіх днів, для яких є повні дані (2027). */
+/**
+ * Запис про пам'ять дня. Для років із повним календарем (2026, 2027) пам'ять беруть з нього;
+ * іменини додають із ручних даних (вересень, жовтень), а англійську назву — лише якщо назва збігається.
+ */
+export const entryFor = (dt: Date, cal: CalendarType): Entry | null => {
+  const yd = yearDay(dt, cal);
+  if (yd) {
+    if (!yd.items.length) return null;
+    const title = yd.items[0][1];
+    const old = legacyEntry(dt, cal);
+    if (old) return [title, old[0] === title ? old[1] : title, old[2], old[3], rankOf(yd.items)];
+    return [title, title, '', '', rankOf(yd.items)];
+  }
+  return legacyEntry(dt, cal);
+};
+
+/** Пошук по пам'яті всіх днів року, для якого є повні дані (2026, 2027). */
 export const searchYear = (year: number, cal: CalendarType, q: string, limit = 60) => {
   const out: { text: string; date: Date }[] = [];
   const recs = YEARS[year];
@@ -210,8 +224,8 @@ export const dayInfo = (dt: Date, cal: CalendarType, L: Lang): DayInfo => {
       rank,
       weekday: wi,
       isFast: yd.fast !== '' && !yd.fast.startsWith('Заговини'),
-      title: entry ? entry[0] : '',
-      names: '',
+      title: entry ? (entry[li] as string) : '',
+      names: entry ? (entry[li + 2] as string) : '',
       lifeKey: lifeKey && LIVES[lifeKey] ? lifeKey : null,
       r1: uniq(yd.readings.map((r) => r[1])),
       r2: uniq(yd.readings.map((r) => r[2])),
