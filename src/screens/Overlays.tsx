@@ -665,12 +665,70 @@ function Settings() {
 const EVE_TIMES = ['19:00', '20:00', '21:00'];
 const MORN_TIMES = ['06:00', '07:00', '08:00'];
 
-/** Зсув часу «ГГ:ХХ» на n хвилин у межах доби. */
-const shiftTime = (hhmm: string, n: number) => {
-  const [h, m] = hhmm.split(':').map(Number);
-  const v = (((h * 60 + m + n) % 1440) + 1440) % 1440;
-  return `${String(Math.floor(v / 60)).padStart(2, '0')}:${String(v % 60).padStart(2, '0')}`;
-};
+const pad2 = (n: number) => String(n).padStart(2, '0');
+/** Розбір «ГГ:ХХ» і збирання назад; значення завжди в межах доби. */
+const hm = (hhmm: string) => hhmm.split(':').map(Number) as [number, number];
+const hhmm = (h: number, m: number) => `${pad2(((h % 24) + 24) % 24)}:${pad2(((m % 60) + 60) % 60)}`;
+
+/** Одне число годинника: кнопки −/+ по краях, посередині поле, у яке можна ввести значення з клавіатури. */
+function ClockNum({ value, max, step, label, onChange }: { value: number; max: number; step: number; label: string; onChange: (v: number) => void }) {
+  const { p } = useStore();
+  const [draft, setDraft] = useState<string | null>(null);
+  const commit = () => {
+    if (draft === null) return;
+    const n = parseInt(draft, 10);
+    if (!Number.isNaN(n)) onChange(Math.min(max, Math.max(0, n)));
+    setDraft(null);
+  };
+  // Кнопки перескакують на найближче кратне кроку: 07:23 → 07:25 / 07:20.
+  const inc = () => onChange((Math.floor(value / step) * step + step) % (max + 1));
+  const dec = () => onChange(value % step ? value - (value % step) : (value - step + max + 1) % (max + 1));
+  const btn = (sym: string, a11y: string, f: () => void) => (
+    <Press label={a11y} onPress={f} style={{ width: 44, height: 48, alignItems: 'center', justifyContent: 'center' }}>
+      <Text style={{ fontFamily: FONT.headingBold, fontSize: 24, color: p.a700 }}>{sym}</Text>
+    </Press>
+  );
+  return (
+    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: draft !== null ? p.accent : p.divider, borderRadius: RADIUS }}>
+      {btn('−', `${label} −${step}`, dec)}
+      <TextInput
+        value={draft ?? pad2(value)}
+        onChangeText={(x) => setDraft(x.replace(/\D/g, '').slice(0, 2))}
+        onFocus={() => setDraft(pad2(value))}
+        onBlur={commit}
+        onSubmitEditing={commit}
+        keyboardType="number-pad"
+        returnKeyType="done"
+        maxLength={2}
+        selectTextOnFocus
+        accessibilityLabel={label}
+        style={[{ flex: 1, minWidth: 0, height: 48, padding: 0, textAlign: 'center', fontFamily: FONT.headingBold, fontSize: 28, color: p.text }, NUM]}
+      />
+      {btn('+', `${label} +${step}`, inc)}
+    </View>
+  );
+}
+
+/** Довільний час «ГГ:ХХ»: години й хвилини окремо, кожне — кнопками або з клавіатури. */
+function TimeField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { p, t } = useStore();
+  const [h, m] = hm(value);
+  return (
+    <View style={{ marginTop: 12 }}>
+      <View style={{ flexDirection: 'row', gap: 10, marginBottom: 6 }}>
+        <Kicker style={{ flex: 1 }}>{t.rHours}</Kicker>
+        <View style={{ width: 8 }} />
+        <Kicker style={{ flex: 1 }}>{t.rMinutes}</Kicker>
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <ClockNum value={h} max={23} step={1} label={t.rHours} onChange={(x) => onChange(hhmm(x, m))} />
+        <Text style={{ width: 8, textAlign: 'center', fontFamily: FONT.headingBold, fontSize: 28, color: p.mute(50) }}>:</Text>
+        <ClockNum value={m} max={59} step={5} label={t.rMinutes} onChange={(x) => onChange(hhmm(h, x))} />
+      </View>
+      <Body size={12} mute={55} style={{ marginTop: 8 }}>{t.rTypeHint}</Body>
+    </View>
+  );
+}
 
 /** Налаштування нагадувань: увечері — про завтра, вранці — про сьогодні, перед святом. */
 function Remind() {
@@ -720,16 +778,9 @@ function Remind() {
                   upd({ [key]: x } as Partial<Reminders>);
                 }),
               )}
-              {chip(isOther ? cur : t.rOther, isOther, () => setOther((o) => ({ ...o, [key]: true })), isOther)}
+              {chip(t.rOther, isOther, () => setOther((o) => ({ ...o, [key]: true })), false)}
             </View>
-            {isOther && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
-                {chip('−1:00', false, () => upd({ [key]: shiftTime(cur, -60) } as Partial<Reminders>), false)}
-                {chip('−0:15', false, () => upd({ [key]: shiftTime(cur, -15) } as Partial<Reminders>), false)}
-                {chip('+0:15', false, () => upd({ [key]: shiftTime(cur, 15) } as Partial<Reminders>), false)}
-                {chip('+1:00', false, () => upd({ [key]: shiftTime(cur, 60) } as Partial<Reminders>), false)}
-              </View>
-            )}
+            {isOther && <TimeField value={cur} onChange={(x) => upd({ [key]: x } as Partial<Reminders>)} />}
           </>
         )}
       </View>
@@ -793,7 +844,6 @@ function Remind() {
   );
 }
 
-const pad2 = (n: number) => String(n).padStart(2, '0');
 /** Скільки днів у місяці m (лютий — 29, щоб можна було обрати 29-те). */
 const monthLen = (m: number) => new Date(2024, m, 0).getDate();
 

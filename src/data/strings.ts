@@ -8,7 +8,7 @@ export const THEMES: Record<string, Record<string, string>> = {day:{scheme:'ligh
 night:{scheme:'dark',bg:'#1c1a18',surface:'#26231f',text:'#ebe7e1',divider:'color-mix(in srgb, #ebe7e1 15%, transparent)',a100:'#3a270d',a300:'#7d5411',a700:'#e1ad66',a800:'#facb8d',n100:'#2d2b2b',n200:'#262423',n300:'#444141',n400:'#605d5d',n500:'#7d7979',n600:'#9b9797',n700:'#bab6b6',n800:'#d7d3d3'}};
 export interface Version { n: string; m: [number, number]; uk: string; en: string; iu: string[]; ie: string[] }
 export const VERS: Version[] = [
-{n:'0.8',m:[10,15],uk:'Дні ангела близьких',en:'Name days of loved ones',iu:['Налаштування → «Дні ангела близьких»: імена рідних і дати їхніх днів ангела','Нагадування помолитися за них — увечері напередодні й у сам день'],ie:['Settings → “Name days of loved ones”: names of family and friends and the dates of their name days','A reminder to pray for them on the evening before and on the day itself']},
+{n:'0.8',m:[10,15],uk:'Дні ангела близьких',en:'Name days of loved ones',iu:['Налаштування → «Дні ангела близьких»: імена рідних і дати їхніх днів ангела','Нагадування помолитися за них — увечері напередодні й у сам день','Час нагадувань — будь-який: три готові варіанти або «Свій час», де години й хвилини можна ввести з клавіатури'],ie:['Settings → “Name days of loved ones”: names of family and friends and the dates of their name days','A reminder to pray for them on the evening before and on the day itself','Any reminder time: three presets or “Custom time”, where hours and minutes can be typed in']},
 {n:'0.7',m:[10,15],uk:'Нагадування, позначки посту і навігація',en:'Reminders, fasting marks and navigation',iu:['Нагадування: увечері — про завтрашній піст чи свято, вранці — підсумок дня з кнопками «Молитви», «Читання», «Житіє»','Окреме нагадування за 5 днів до великого свята; вибір часу й того, що показувати','Іконки посту замість крапок: посту немає, пісний день, олія, риба, суцільна седмиця; легенда під календарем','Активна вкладка позначена золотою рискою, нижня панель видима на вкладених екранах','Кнопка «Назад» показує, куди повертає; кнопка «Сьогодні», якщо обрано інший день','Нова іконка вкладки «Святе Писання»'],ie:['Reminders: in the evening about tomorrow’s fast or feast, in the morning a summary of the day with Prayers, Readings and Life buttons','A separate reminder 5 days before a great feast; choose the time and what to show','Fasting icons instead of dots: no fast, fast day, oil, fish, fast-free week; a legend under the calendar','The active tab carries a gold rule and the tab bar stays visible on inner screens','Back shows where it returns to; a “Today” button when another day is selected','New Holy Scripture tab icon']},
 {n:'0.6',m:[10,15],uk:'Біблія',en:'The Bible',iu:['Повний текст Старого і Нового Заповіту українською (переклад Патріарха Філарета): 77 книг, 1361 глава','Паралельні місця до віршів: дотик до підкресленого номера показує їх і відкриває потрібну главу з виділеним віршем','Читання дня (Апостол, Євангеліє, паремії) відкривають сам текст, а посилання в переліку читань — активні','Пошук за посиланням («Ін. 3:16») і назвою книги'],ie:['The full Old and New Testament in Ukrainian (translation of Patriarch Filaret): 77 books, 1361 chapters','Cross-references for verses: tap an underlined verse number to see them and open the chapter at that verse','The day’s readings open the text itself, and references in the list of readings are links','Search by reference (“Jn 3:16”) and book name']},
 {n:'0.5',m:[10,15],uk:'Псалтир',en:'The Psalter',iu:['Повний текст Слідуваного Псалтиря (Київський ізвод) за кафизмами: псалми з номерами віршів, «Слава», тропарі й молитви після кожної кафизми','Як читати Псалтир, молитви перед читанням і після нього, пісні Священного Писання','Пошук псалма: «Псалом 50» або «пс 50»'],ie:['Full text of the Psalter with its prayers (Kyiv Use) by kathisma: numbered psalm verses, “Glory” divisions, troparia and the prayer after each kathisma','How to read the Psalter, prayers before and after reading, the biblical canticles','Find a psalm in Search: “Psalm 50” or “ps 50”']},
@@ -40,7 +40,10 @@ Object.assign(S.uk, {
   rMornSub: 'Пам’ять, піст, читання й іменини',
   rPre: 'За 5 днів до великого свята',
   rPreSub: 'Щоб підготуватися до свята',
-  rOther: 'Інший',
+  rOther: 'Свій час',
+  rHours: 'Години',
+  rMinutes: 'Хвилини',
+  rTypeHint: 'Торкніться цифр, щоб ввести час з клавіатури, або змінюйте кнопками − і +.',
   rShow: 'Що показувати',
   rFast: 'Піст і правила їжі',
   rRead: 'Читання дня',
@@ -107,7 +110,10 @@ Object.assign(S.en, {
   rMornSub: 'Commemoration, fast, readings and name days',
   rPre: '5 days before a great feast',
   rPreSub: 'To prepare for the feast',
-  rOther: 'Other',
+  rOther: 'Custom time',
+  rHours: 'Hours',
+  rMinutes: 'Minutes',
+  rTypeHint: 'Tap the digits to type the time, or adjust it with − and +.',
   rShow: 'What to show',
   rFast: 'Fast and food rules',
   rRead: 'Daily readings',
