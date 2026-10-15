@@ -16,6 +16,7 @@ export type Overlay =
   | { t: 'book'; b: Book }
   | { t: 'chap'; title: string }
   | { t: 'kath'; k: number }
+  | { t: 'ps'; i: number }
   | { t: 'pom' }
   | { t: 'jesus' }
   | { t: 'search' }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { APO, Book, GOS, KATH } from '../data/prayers';
+import { PSALTYR } from '../data/psaltyr';
 import { PL } from '../data/strings';
 import { Body, H1, Kicker, NavRow, NUM, Press, card } from '../components/ui';
 import { TopBar } from '../components/Chrome';
@@ -32,6 +33,14 @@ export default function BibleTab() {
     </View>
   );
 
+  const psRows = (ix: number[], mt: number) => (
+    <View style={[card(p), { marginTop: mt, marginBottom: mt ? 0 : 16 }]}>
+      {ix.map((i, j) => (
+        <NavRow key={i} title={ul ? PSALTYR[i].u : PSALTYR[i].e} onPress={() => push({ t: 'ps', i })} last={j === ix.length - 1} />
+      ))}
+    </View>
+  );
+
   return (
     <View style={{ flex: 1 }}>
       <TopBar kicker={t.scriptureK} />
@@ -60,7 +69,9 @@ export default function BibleTab() {
 
         <Kicker style={{ marginBottom: 6 }}>{t.psalter}</Kicker>
         <Body size={12.5} mute={60}>{t.psHelp}</Body>
-        <Body size={13} style={{ color: p.a700, marginTop: 8, marginBottom: 12 }}>
+        <View style={{ height: 12 }} />
+        {psRows([0, 1], 0)}
+        <Body size={13} style={{ color: p.a700, marginBottom: 12 }}>
           {`${ul ? 'Прочитано ' : 'Read '}${kd.length} ${t.of} 20`}
         </Body>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -88,6 +99,7 @@ export default function BibleTab() {
             );
           })}
         </View>
+        {psRows([PSALTYR.length - 2, PSALTYR.length - 1], 16)}
       </ScrollView>
     </View>
   );
