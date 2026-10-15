@@ -2,7 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches: [claude/vigilant-dirac-9aly5m]
+    branches: [main, claude/eager-johnson-ai7wpw]
   workflow_dispatch:
 
 jobs:
