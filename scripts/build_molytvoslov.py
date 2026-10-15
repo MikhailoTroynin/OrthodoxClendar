@@ -24,15 +24,17 @@ PAGES = [
 class P(HTMLParser):
     def __init__(s):
         super().__init__(convert_charrefs=True)
-        s.on=False; s.items=[]; s.cur=None; s.kind=None; s.skip=0
+        s.on=False; s.h1=False; s.items=[]; s.cur=None; s.kind=None; s.skip=0
         s.red=0; s.notes=[]; s.in_sup=False; s.tagstack=[]
     def handle_starttag(s,t,a):
         a=dict(a)
-        if t=='h1': s.on=True; return
+        if t=='h1': s.on=True; s.h1=True; return
         if not s.on: return
         if t in('style','iframe','hide','script'): s.skip+=1
+        if t in('h2','h3','p','li','div'):
+            s.flush()  # у джерелі трапляються незакриті <p> — не губимо попередній текст
         if t in('h2','h3','p','li'):
-            s.kind=t; s.cur=[]; s.red=0; s.first=True; s.redtxt=0; s.alltxt=0
+            s.start(t)
         elif t=='br' and s.cur is not None: s.cur.append('\n')
         elif t=='sup' and s.cur is not None:
             s.notes.append(a.get('data-bs-original-title','').strip()); n=len(s.notes)
@@ -41,18 +43,27 @@ class P(HTMLParser):
         if t=='span': s.tagstack.append('red' in (a.get('class') or ''))
     def handle_endtag(s,t):
         if not s.on: return
+        if t=='h1': s.h1=False
         if t in('style','iframe','hide','script'): s.skip-=1
         if t=='sup': s.in_sup=False
         if t=='span' and s.tagstack:
             if s.tagstack.pop(): s.red-=1
-        if t in('h2','h3','p','li') and s.cur is not None and s.kind==t:
-            txt=re.sub(r'[ \t\r\f\v]+',' ',''.join(s.cur)); txt=re.sub(r' ?\n ?','\n',txt).strip()
-            if txt:
-                rub = t in('p','li') and s.alltxt>0 and s.redtxt>=s.alltxt
-                s.items.append((t,txt,rub))
-            s.cur=None
+        if t in('h2','h3','p','li','div'): s.flush()
+    def start(s,t):
+        s.kind=t; s.cur=[]; s.redtxt=0; s.alltxt=0
+    def flush(s):
+        if s.cur is None: return
+        t=s.kind
+        txt=re.sub(r'[ \t\r\f\v]+',' ',''.join(s.cur)); txt=re.sub(r' ?\n ?','\n',txt).strip()
+        if txt:
+            rub = t in('p','li') and s.alltxt>0 and s.redtxt>=s.alltxt
+            s.items.append((t,txt,rub))
+        s.cur=None
     def handle_data(s,d):
-        if not s.on or s.skip or s.cur is None or s.in_sup: return
+        if not s.on or s.skip or s.in_sup or s.h1: return
+        if s.cur is None:
+            if not d.strip(): return
+            s.start('p')  # текст поза <p> (напр. у <div>/<span>)
         s.cur.append(d)
         st=d.strip()
         if st:
