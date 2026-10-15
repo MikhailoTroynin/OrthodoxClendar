@@ -653,10 +653,6 @@ function Settings() {
             last
           />
         </View>
-        <Kicker style={{ marginTop: 24, marginBottom: 8 }}>{t.about}</Kicker>
-        <View style={card(p)}>
-          <NavRow title={t.versions} value={VERS[0].n} onPress={() => push({ t: 'ver' })} last />
-        </View>
       </Scroll>
     </>
   );

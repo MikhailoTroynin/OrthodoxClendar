@@ -32,11 +32,6 @@ export default function MenuTab() {
           <NavRow title={t.gosRead} sub={leftSub} value={`${gos} / ${GOSPELS}`} onPress={() => push({ t: 'book', b: groupItem(5) })} last />
         </View>
 
-        <Kicker style={{ marginBottom: 8 }}>{t.support}</Kicker>
-        <View style={[card(p), { marginBottom: 24 }]}>
-          <NavRow title={t.supportRow} sub={t.supportSub} onPress={() => push({ t: 'donate' })} last />
-        </View>
-
         <Kicker style={{ marginBottom: 8 }}>{t.app}</Kicker>
         <View style={{ marginBottom: 12 }}>
           <Body size={12.5} mute={60} style={{ marginBottom: 8 }}>{t.theme}</Body>
@@ -52,8 +47,8 @@ export default function MenuTab() {
             title={t.settings}
             sub={`${ul ? 'Українська' : 'English'} · ${cal === 'nj' ? t.nj : t.oj}`}
             onPress={() => push({ t: 'settings' })}
+            last
           />
-          <NavRow title={t.versions} sub={t.verHelp} onPress={() => push({ t: 'ver' })} last />
         </View>
       </ScrollView>
     </View>
