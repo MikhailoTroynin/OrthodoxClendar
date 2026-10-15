@@ -15,6 +15,13 @@
     },
     "plugins": [
       "expo-asset"
-    ]
+    ],
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "experiments": {
+      "baseUrl": "/OrthodoxClendar"
+    }
   }
 }
