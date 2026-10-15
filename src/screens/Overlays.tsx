@@ -15,6 +15,7 @@ import { refOverlay, Verses } from '../components/Scripture';
 import { BOOKS, bookItem, bookName, chapTitle, chapter, parseRefs, passage } from '../lib/bible';
 import { dayInfo, entryFor, fmtDate, fmtMD, addDays, searchYear, toKey, ymd, FULL_YEARS } from '../lib/calendar';
 import { JAR_URL, Overlay, useStore } from '../store';
+import { NATIVE, notifPermission, Reminders } from '../lib/notify';
 import { FONT, RADIUS } from '../theme';
 
 type Of<K extends Overlay['t']> = Extract<Overlay, { t: K }>;
@@ -52,6 +53,7 @@ export function OverlayHost() {
       {top.t === 'jesus' && <Jesus />}
       {top.t === 'search' && <Search />}
       {top.t === 'settings' && <Settings />}
+      {top.t === 'remind' && <Remind />}
       {top.t === 'donate' && <Donate />}
       {top.t === 'ver' && <Versions />}
     </View>
@@ -555,8 +557,9 @@ function Search() {
 }
 
 function Settings() {
-  const { p, t, lang, cal, fs, nt, set } = useStore();
-  const toggles: ['f' | 's' | 'n', string][] = [['f', t.nFeasts], ['s', t.nFasts], ['n', t.nNames]];
+  const { p, t, lang, cal, fs, rm, set, push } = useStore();
+  const on = [rm.eve && rm.eveT, rm.morn && rm.mornT].filter(Boolean) as string[];
+  const rmSub = on.length || rm.pre ? [...on, rm.pre ? t.rPre : ''].filter(Boolean).join(' · ') : t.rOffAll;
   return (
     <>
       <BackBar kicker={t.app} />
@@ -569,13 +572,138 @@ function Settings() {
         <Body size={12.5} mute={65} style={{ marginTop: 8 }}>{(cal === 'nj' ? t.helpNj : t.helpOj) + t.helpP}</Body>
         <Kicker style={{ marginTop: 24, marginBottom: 4 }}>{t.textSize}</Kicker>
         <Seg opts={[17, 19, 21].map((v, i) => ({ label: t.sizes[i], on: fs === v, onPress: () => set({ fs: v }) }))} />
-        <Kicker style={{ marginTop: 24, marginBottom: 4 }}>{t.notif}</Kicker>
-        {toggles.map(([k, label]) => (
-          <View key={k} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: p.divider }}>
-            <Body size={15} style={{ flex: 1 }}>{label}</Body>
-            <Switch on={nt[k]} label={label} onPress={() => set({ nt: { ...nt, [k]: !nt[k] } })} />
+        <Kicker style={{ marginTop: 24, marginBottom: 8 }}>{t.notif}</Kicker>
+        <View style={card(p)}>
+          <NavRow title={t.rTitle} sub={rmSub} onPress={() => push({ t: 'remind' })} last />
+        </View>
+        <Kicker style={{ marginTop: 24, marginBottom: 8 }}>{t.about}</Kicker>
+        <View style={card(p)}>
+          <NavRow title={t.versions} value={VERS[0].n} onPress={() => push({ t: 'ver' })} last />
+        </View>
+      </Scroll>
+    </>
+  );
+}
+
+const EVE_TIMES = ['19:00', '20:00', '21:00'];
+const MORN_TIMES = ['06:00', '07:00', '08:00'];
+
+/** Зсув часу «ГГ:ХХ» на n хвилин у межах доби. */
+const shiftTime = (hhmm: string, n: number) => {
+  const [h, m] = hhmm.split(':').map(Number);
+  const v = (((h * 60 + m + n) % 1440) + 1440) % 1440;
+  return `${String(Math.floor(v / 60)).padStart(2, '0')}:${String(v % 60).padStart(2, '0')}`;
+};
+
+/** Налаштування нагадувань: увечері — про завтра, вранці — про сьогодні, перед святом. */
+function Remind() {
+  const { p, t, rm, set } = useStore();
+  const [other, setOther] = useState<{ eveT: boolean; mornT: boolean }>({
+    eveT: !EVE_TIMES.includes(rm.eveT),
+    mornT: !MORN_TIMES.includes(rm.mornT),
+  });
+  const [denied, setDenied] = useState(false);
+  const upd = (patch: Partial<Reminders>) => {
+    const next = { ...rm, ...patch };
+    set({ rm: next });
+    // Дозвіл питаємо, коли людина вмикає нагадування.
+    if (NATIVE && (next.eve || next.morn || next.pre || next.show.p)) notifPermission(true).then((r) => setDenied(r === 'denied'));
+  };
+
+  const chip = (label: string, on: boolean, onPress: () => void, num = true) => (
+    <Press
+      key={label}
+      onPress={onPress}
+      style={{ paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: on ? p.accent : p.divider, justifyContent: 'center' }}
+    >
+      <Text style={[num ? { fontFamily: FONT.headingBold, fontSize: 17 } : { fontFamily: FONT.body, fontSize: 14 }, { color: on ? p.a700 : p.text }, NUM]}>
+        {label}
+      </Text>
+    </Press>
+  );
+
+  const block = (k: 'eve' | 'morn', title: string, sub: string, key: 'eveT' | 'mornT', presets: string[]) => {
+    const cur = rm[key];
+    const isOther = other[key];
+    return (
+      <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: p.divider }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <View style={{ flex: 1 }}>
+            <Heading size={19}>{title}</Heading>
+            <Body size={12.5} mute={60} style={{ marginTop: 3 }}>{sub}</Body>
           </View>
-        ))}
+          <Switch on={rm[k]} label={title} onPress={() => upd({ [k]: !rm[k] } as Partial<Reminders>)} />
+        </View>
+        {rm[k] && (
+          <>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+              {presets.map((x) =>
+                chip(x, !isOther && cur === x, () => {
+                  setOther((o) => ({ ...o, [key]: false }));
+                  upd({ [key]: x } as Partial<Reminders>);
+                }),
+              )}
+              {chip(isOther ? cur : t.rOther, isOther, () => setOther((o) => ({ ...o, [key]: true })), isOther)}
+            </View>
+            {isOther && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
+                {chip('−1:00', false, () => upd({ [key]: shiftTime(cur, -60) } as Partial<Reminders>), false)}
+                {chip('−0:15', false, () => upd({ [key]: shiftTime(cur, -15) } as Partial<Reminders>), false)}
+                {chip('+0:15', false, () => upd({ [key]: shiftTime(cur, 15) } as Partial<Reminders>), false)}
+                {chip('+1:00', false, () => upd({ [key]: shiftTime(cur, 60) } as Partial<Reminders>), false)}
+              </View>
+            )}
+          </>
+        )}
+      </View>
+    );
+  };
+
+  const shows: ['f' | 'r' | 'n' | 'p', string][] = [['f', t.rFast], ['r', t.rRead], ['n', t.rNames], ['p', t.rPray]];
+  return (
+    <>
+      <BackBar />
+      <Scroll>
+        <Title>{t.rTitle}</Title>
+        <View style={card(p)}>
+          {block('eve', t.rEve, t.rEveSub, 'eveT', EVE_TIMES)}
+          {block('morn', t.rMorn, t.rMornSub, 'mornT', MORN_TIMES)}
+          <View style={{ paddingHorizontal: 16, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <Heading size={19}>{t.rPre}</Heading>
+              <Body size={12.5} mute={60} style={{ marginTop: 3 }}>{t.rPreSub}</Body>
+            </View>
+            <Switch on={rm.pre} label={t.rPre} onPress={() => upd({ pre: !rm.pre })} />
+          </View>
+        </View>
+        <Kicker style={{ marginTop: 26, marginBottom: 8 }}>{t.rShow}</Kicker>
+        <View style={card(p)}>
+          {shows.map(([k, label], i) => (
+            <Press
+              key={k}
+              onPress={() => upd({ show: { ...rm.show, [k]: !rm.show[k] } })}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+                paddingHorizontal: 16,
+                paddingVertical: 14,
+                borderRadius: 0,
+                borderBottomWidth: i === shows.length - 1 ? 0 : 1,
+                borderBottomColor: p.divider,
+              }}
+            >
+              <Body size={15} style={{ flex: 1 }}>{label}</Body>
+              <Text accessibilityLabel={rm.show[k] ? '✓' : '—'} style={{ fontFamily: FONT.body, fontSize: 16, color: rm.show[k] ? p.a700 : p.mute(35) }}>
+                {rm.show[k] ? '✓' : '—'}
+              </Text>
+            </Press>
+          ))}
+        </View>
+        {(denied || !NATIVE) && (
+          <Body size={12.5} mute={65} style={{ marginTop: 16 }}>{NATIVE ? t.rDenied : t.rWeb}</Body>
+        )}
       </Scroll>
     </>
   );

@@ -1,23 +1,25 @@
 import React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { MG, WS } from '../data/calendar';
-import { Body, Divider, GhostButton, Heading, Kicker, Marks, NUM, Tag } from '../components/ui';
+import { Body, Divider, FastIcon, GhostButton, Heading, Icon, Kicker, Marks, NUM, Press, Tag } from '../components/ui';
 import { TopBar } from '../components/Chrome';
 import { RefText } from '../components/Scripture';
-import { dayInfo, fmtDate, julianOf, sameDay, toKey, weekOf, weekdayIdx, weekdayName } from '../lib/calendar';
+import { dayInfo, fastKind, fmtDate, julianOf, sameDay, toKey, weekOf, weekdayIdx, weekdayName } from '../lib/calendar';
 import { useStore } from '../store';
 import { FONT, RADIUS } from '../theme';
 
 const COL = 96;
 
 export default function Today() {
-  const { p, t, lang, cal, date, setDate, push } = useStore();
+  const { p, t, lang, cal, date, setDate, push, today } = useStore();
   const day = dayInfo(date, cal, lang);
   const week = weekOf(date);
   const wd = weekdayName(date, lang);
   const fastText = !day.isFast ? t.noFastTx : day.rank === 2 ? t.fastFish : day.rank === 1 ? t.fastOil : t.fastStrict;
   const tag = day.rank === 2 ? t.greatTag : day.rank === 1 ? t.feastTag : '';
   const jline = `${cal === 'nj' ? t.julian : t.church}: ${fmtDate(julianOf(date), lang)}`;
+  const kind = fastKind(day);
+  const fastTitle = kind === 'paska' ? t.fk.paska : day.fastLabel || t.fk[kind];
 
   return (
     <View style={{ flex: 1 }}>
@@ -34,11 +36,23 @@ export default function Today() {
             <Body size={13} mute={60}>{`${wd}, ${date.getFullYear()}`}</Body>
           </View>
         </View>
-        <Body size={12} style={{ color: p.a700, marginTop: 22 }}>{jline}</Body>
+        <View style={{ marginTop: 22, minHeight: 32, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <Body size={12} style={{ color: p.a700, flex: 1 }}>{jline}</Body>
+          {!sameDay(date, today) && (
+            <Press
+              onPress={() => setDate(today)}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 4, height: 32, paddingHorizontal: 10, borderWidth: 1, borderColor: p.accent }}
+            >
+              <Icon name="undo" size={16} color={p.a700} sw={1.6} />
+              <Text style={{ fontFamily: FONT.headingBold, fontSize: 15, color: p.a700 }}>{t.toToday}</Text>
+            </Press>
+          )}
+        </View>
 
         <View style={{ flexDirection: 'row', gap: 4, marginTop: 20 }}>
           {week.map((w) => {
             const sel = sameDay(w, date);
+            const isToday = sameDay(w, today);
             const e = dayInfo(w, cal, lang);
             const feast = e.rank > 0;
             return (
@@ -63,13 +77,19 @@ export default function Today() {
                 </Text>
                 <Text
                   style={[
-                    { fontFamily: sel || w.getDate() === 13 ? FONT.headingBold : FONT.heading, fontSize: 20, lineHeight: 22, color: sel || feast ? p.a700 : p.text },
+                    {
+                      fontFamily: isToday ? FONT.headingBold : FONT.heading,
+                      fontSize: 20,
+                      lineHeight: 22,
+                      color: sel || feast ? p.a700 : p.text,
+                      textDecorationLine: isToday ? 'underline' : 'none',
+                    },
                     NUM,
                   ]}
                 >
                   {w.getDate()}
                 </Text>
-                <Marks feast={feast} fast={e.isFast} />
+                <Marks feast={feast} kind={fastKind(e)} />
               </Pressable>
             );
           })}
@@ -110,9 +130,14 @@ export default function Today() {
         <Divider />
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <Kicker style={{ width: COL - 12, paddingTop: 4 }}>{t.fast}</Kicker>
-          <View style={{ flex: 1 }}>
-            <Heading size={18}>{day.fastLabel || (day.isFast ? t.fastDay : t.noFast)}</Heading>
-            <Body size={13} mute={70}>{fastText}</Body>
+          <View style={{ flex: 1, flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
+            <View style={{ width: 42, height: 42, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: p.divider, borderRadius: RADIUS }}>
+              <FastIcon kind={kind} size={24} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Heading size={18}>{fastTitle}</Heading>
+              <Body size={13} mute={70}>{fastText}</Body>
+            </View>
           </View>
         </View>
 

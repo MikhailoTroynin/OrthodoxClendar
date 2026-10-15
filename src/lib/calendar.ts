@@ -260,6 +260,20 @@ const readingLine = ([label, ap, ev, extra]: Reading) => {
   return `${label}: ${[extra, lit && `Літ. – ${lit}`].filter(Boolean).join('; ')}`;
 };
 
+/** Вид посту дня для іконки: без посту, пісний, з олією, з рибою, суцільна седмиця. */
+export type FastKind = 'meat' | 'lean' | 'oil' | 'fish' | 'paska';
+
+export const fastKind = (d: Pick<DayInfo, 'isFast' | 'rank' | 'week'>): FastKind =>
+  /суцільн/i.test(d.week)
+    ? 'paska'
+    : !d.isFast
+      ? 'meat'
+      : d.rank === 2
+        ? 'fish'
+        : d.rank === 1
+          ? 'oil'
+          : 'lean';
+
 export const weekdayName = (dt: Date, L: Lang) => WD[L][weekdayIdx(dt)];
 
 export interface FeastRow {
