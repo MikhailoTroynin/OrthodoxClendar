@@ -55,13 +55,17 @@ export function OverlayHost() {
 
 const SUP = '⁰¹²³⁴⁵⁶⁷⁸⁹';
 
-/** Повний текст сторінки молитвослова: заголовки, рубрики (§), підзаголовки (#), примітки. */
-function PrayerBook({ b, fs }: { b: (typeof MOLYTVOSLOV)[number]; fs: number }) {
+/** Повний текст сторінки молитвослова (або лише розділів only): заголовки, рубрики (§), підзаголовки (#), примітки. */
+function PrayerBook({ b, only, title, fs }: { b: (typeof MOLYTVOSLOV)[number]; only?: number[]; title?: string; fs: number }) {
   const { p } = useStore();
   const body = { fontFamily: FONT.body, fontSize: fs, lineHeight: fs * 1.65, color: p.text } as const;
+  const secs = only ? only.map((i) => b.secs[i]) : b.secs;
+  // Примітки, на які посилаються показані розділи (⁽n⁾ у тексті).
+  const used = new Set([...secs.flatMap((s) => [s.h ?? '', ...s.ps]).join('\n').matchAll(/⁽(\d+)⁾/g)].map((m) => +m[1] - 1));
   return (
     <View>
-      {b.secs.map((s, i) => (
+      {!!title && <Heading size={24} style={{ marginTop: 10, marginBottom: 4 }}>{title}</Heading>}
+      {secs.map((s, i) => (
         <View key={i} style={{ marginBottom: 12 }}>
           {!!s.h && <Heading size={20} style={{ marginTop: 14, marginBottom: 8 }}>{s.h}</Heading>}
           {s.ps.map((t, j) =>
@@ -75,9 +79,9 @@ function PrayerBook({ b, fs }: { b: (typeof MOLYTVOSLOV)[number]; fs: number }) 
           )}
         </View>
       ))}
-      {b.notes.filter(Boolean).length > 0 && (
-        <View style={{ borderTopWidth: 1, borderTopColor: p.divider, paddingTop: 12, gap: 6 }}>
-          {b.notes.map((n, k) => !!n && (
+      {b.notes.some((n, k) => !!n && used.has(k)) && (
+        <View style={{ borderTopWidth: 1, borderTopColor: p.divider, paddingTop: 12, marginBottom: 18, gap: 6 }}>
+          {b.notes.map((n, k) => !!n && used.has(k) && (
             <Text key={k} style={{ fontFamily: FONT.body, fontSize: fs - 4, lineHeight: (fs - 4) * 1.5, color: p.mute(65) }}>
               {`⁽${[...String(k + 1)].map((c) => SUP[+c]).join('')}⁾ ${n.replace(/<[^>]+>/g, '')}`}
             </Text>
@@ -140,6 +144,8 @@ function Reader({ o }: { o: Of<'read'> }) {
   const li = ul ? 0 : 1;
   const s = MB[o.s];
   const it = s.items[o.j];
+  // Українською повний текст замінює план читання; англійською план лишається, а повний текст іде після нього.
+  const outline = !it.mv || !ul;
   const sizeBtn = (label: string, delta: number) => (
     <Press
       label={label}
@@ -172,13 +178,12 @@ function Reader({ o }: { o: Of<'read'> }) {
           />
         )}
         {!!it.x && <Text style={{ fontFamily: FONT.body, fontSize: fs, lineHeight: fs * 1.65, color: p.text }}>{it.x}</Text>}
-        {it.mv !== undefined && <PrayerBook b={MOLYTVOSLOV[it.mv]} fs={fs} />}
         {it.r && (
           <Text style={{ fontFamily: FONT.body, fontStyle: 'italic', fontSize: fs - 3, lineHeight: (fs - 3) * 1.5, color: p.mute(65), marginBottom: 16 }}>
             {it.r[li]}
           </Text>
         )}
-        {(it.b ?? []).map((b, i) => (
+        {outline && (it.b ?? []).map((b, i) => (
           <View key={i} style={{ marginBottom: 18 }}>
             {b.h && <Kicker style={{ marginBottom: 6 }}>{b.h[li]}</Kicker>}
             {b.r && (
@@ -189,7 +194,7 @@ function Reader({ o }: { o: Of<'read'> }) {
             {b.t && <Text style={{ fontFamily: FONT.body, fontSize: fs, lineHeight: fs * 1.65, color: p.text }}>{T[b.t][li]}</Text>}
           </View>
         ))}
-        {it.p && it.p.length > 0 && (
+        {outline && it.p && it.p.length > 0 && (
           <>
             <Kicker style={{ marginBottom: 6 }}>{t.order}</Kicker>
             {it.p.map((x, i) => (
@@ -199,6 +204,14 @@ function Reader({ o }: { o: Of<'read'> }) {
               </View>
             ))}
           </>
+        )}
+        {it.mv && (
+          <View style={{ marginTop: outline && (it.b || it.p) ? 24 : 0 }}>
+            {outline && (it.b || it.p) && <Kicker style={{ marginBottom: 6 }}>{t.fullText}</Kicker>}
+            {it.mv.map((m, k) => (
+              <PrayerBook key={k} b={MOLYTVOSLOV[m.b]} only={m.s} title={it.mv!.length > 1 && !m.s ? MOLYTVOSLOV[m.b].u : undefined} fs={fs} />
+            ))}
+          </View>
         )}
         {!it.full && <Body size={12.5} mute={55} style={{ marginTop: 18 }}>{t.outlineNote}</Body>}
       </Scroll>
