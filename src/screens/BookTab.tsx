@@ -1,7 +1,8 @@
 import React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { MB, ROM, WK } from '../data/prayers';
+import { ROM, WK } from '../data/prayerLists';
+import { prayersL } from '../lib/lazy';
 import { Body, H1, Heading, Icon, Kicker, NavRow, OutlineButton, Press, card } from '../components/ui';
 import { TopBar } from '../components/Chrome';
 import { weekdayIdx, weekdayName } from '../lib/calendar';
@@ -15,6 +16,7 @@ export default function BookTab() {
   const mt = (x: { mu: string; me: string }) => (ul ? x.mu : x.me);
   const wi = weekdayIdx(today);
   const wk = WK[wi];
+  const MB = prayersL()!.MB; // вкладка відкривається, коли молитвослов уже завантажено (див. App)
   const ak = MB[3].items[wk[0]];
   const morning = MB[0].items[0];
 

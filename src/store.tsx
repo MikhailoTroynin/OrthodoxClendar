@@ -1,9 +1,10 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { BackHandler } from 'react-native';
 import { CalendarType, Lang } from './data/calendar';
-import { Book } from './data/prayers';
+import type { Book } from './data/prayers';
 import { S } from './data/strings';
-import { dayInfo, fromKey, toKey } from './lib/calendar';
+import { dayInfo, fromKey, loadYears, toKey } from './lib/calendar';
+import { useDataVersion } from './lib/lazy';
 import { loadJSON, saveJSON } from './lib/storage';
 import { NATIVE, onNotifResponse, REMINDER_DEFAULTS, Reminders, reschedule } from './lib/notify';
 import { palette, Palette, ThemeName } from './theme';
@@ -102,13 +103,16 @@ export function StoreProvider({ children, onReady }: { children: React.ReactNode
   const [q, setQ] = useState('');
 
   useEffect(() => {
-    loadJSON<Persisted & { date?: string }>().then((v) => {
+    // Перший екран чекає лише на налаштування й календар поточного року; решта даних — за потреби.
+    const year = loadYears([today.getFullYear()]).catch((e) => console.warn('Не вдалося завантажити календар', e));
+    Promise.all([loadJSON<Persisted & { date?: string }>(), year]).then(([v]) => {
       if (v) setSaved((s) => ({ ...s, ...v, rm: { ...s.rm, ...v.rm, show: { ...s.rm.show, ...v.rm?.show } }, pom: { ...s.pom, ...v.pom } }));
       loaded.current = true;
       setReady(true);
       onReady?.();
+      loadYears().catch(() => {});
     });
-  }, [onReady]);
+  }, [onReady, today]);
 
   useEffect(() => {
     if (loaded.current) saveJSON(saved);
@@ -119,7 +123,10 @@ export function StoreProvider({ children, onReady }: { children: React.ReactNode
   const [ready, setReady] = useState(false);
   useEffect(() => {
     if (!ready || !NATIVE) return;
-    const h = setTimeout(() => reschedule(saved.rm, saved.cal, saved.lang, S[saved.lang], pomN, true), 400);
+    const h = setTimeout(
+      () => loadYears().then(() => reschedule(saved.rm, saved.cal, saved.lang, S[saved.lang], pomN, true)),
+      400,
+    );
     return () => clearTimeout(h);
   }, [ready, saved.rm, saved.cal, saved.lang, pomN]);
 
@@ -183,6 +190,8 @@ export function StoreProvider({ children, onReady }: { children: React.ReactNode
     return () => sub.remove();
   }, [ov.length, pop]);
 
+  // Коли довантажуються дані (календар іншого року тощо), екрани перемальовуються.
+  const dv = useDataVersion();
   const value = useMemo<Ctx>(
     () => ({
       ...saved,
@@ -205,7 +214,7 @@ export function StoreProvider({ children, onReady }: { children: React.ReactNode
       setQ,
       openDay,
     }),
-    [saved, set, tab, goTab, ov, push, pop, replace, date, setDate, today, calView, openFeasts, q, openDay],
+    [saved, set, tab, goTab, ov, push, pop, replace, date, setDate, today, calView, openFeasts, q, openDay, dv],
   );
 
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
