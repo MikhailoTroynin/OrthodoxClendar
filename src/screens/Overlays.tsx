@@ -204,7 +204,7 @@ function Reader({ o }: { o: Of<'read'> }) {
   const { p, t, lang, fs } = useStore();
   const ul = lang === 'uk';
   const li = ul ? 0 : 1;
-  const { MB, MOLYTVOSLOV, T } = prayersL()!;
+  const { MB, T, mvBook } = prayersL()!;
   const s = MB[o.s];
   const it = s.items[o.j];
   // Українською повний текст замінює план читання; англійською план лишається, а повний текст іде після нього.
@@ -218,7 +218,7 @@ function Reader({ o }: { o: Of<'read'> }) {
           it.x ?? '',
           ...(outline ? (it.b ?? []).flatMap((b) => [b.h?.[li] ?? '', b.t ? T[b.t][li] : '']) : []),
           ...(outline ? (it.p ?? []).map((x) => x[li]) : []),
-          ...(it.mv ?? []).flatMap((m) => bookText(MOLYTVOSLOV[m.b], m.s)),
+          ...(it.mv ?? []).flatMap((m) => bookText(mvBook(m), m.s)),
         ]} />}
       />
       <Scroll>
@@ -264,7 +264,7 @@ function Reader({ o }: { o: Of<'read'> }) {
           <View style={{ marginTop: outline && (it.b || it.p) ? 24 : 0 }}>
             {outline && (it.b || it.p) && <Kicker style={{ marginBottom: 6 }}>{t.fullText}</Kicker>}
             {it.mv.map((m, k) => (
-              <PrayerBook key={k} b={MOLYTVOSLOV[m.b]} only={m.s} title={it.mv!.length > 1 && !m.s ? MOLYTVOSLOV[m.b].u : undefined} fs={fs} />
+              <PrayerBook key={k} b={mvBook(m)} only={m.s} title={it.mv!.length > 1 && !m.s ? mvBook(m).u : undefined} fs={fs} />
             ))}
           </View>
         )}
