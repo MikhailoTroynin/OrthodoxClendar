@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Image, Linking, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { FE, LIVES } from '../data/calendar';
@@ -11,6 +11,8 @@ import { BackBar } from '../components/Chrome';
 import { Body, Divider, Heading, Icon, Kicker, NavRow, NUM, OutlineButton, Press, Seg, Switch, card } from '../components/ui';
 import { Rope } from './BookTab';
 import { bookRow } from './BibleTab';
+import { refOverlay, Verses } from '../components/Scripture';
+import { BOOKS, bookItem, bookName, chapTitle, chapter, parseRefs, passage } from '../lib/bible';
 import { dayInfo, entryFor, fmtDate, fmtMD, addDays, searchYear, toKey, ymd, FULL_YEARS } from '../lib/calendar';
 import { JAR_URL, Overlay, useStore } from '../store';
 import { FONT, RADIUS } from '../theme';
@@ -42,7 +44,8 @@ export function OverlayHost() {
       {top.t === 'sec' && <Sec o={top} />}
       {top.t === 'read' && <Reader o={top} />}
       {top.t === 'book' && <BookOv o={top} />}
-      {top.t === 'chap' && <Chapter o={top} />}
+      {top.t === 'chap' && <Chapter key={`${top.b}.${top.c}.${top.v ?? 0}`} o={top} />}
+      {top.t === 'pass' && <Passage o={top} />}
       {top.t === 'kath' && <Kathisma o={top} />}
       {top.t === 'ps' && <PsPage o={top} />}
       {top.t === 'pom' && <Pom />}
@@ -239,12 +242,12 @@ function BookOv({ o }: { o: Of<'book'> }) {
         <Title>{name}</Title>
         {b.ch ? (
           <>
-            <Kicker style={{ marginBottom: 10 }}>{t.chapters}</Kicker>
+            <Kicker style={{ marginBottom: 10 }}>{b.i !== undefined && BOOKS[b.i][0] === 'ps' ? t.psalmsW : t.chapters}</Kicker>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {Array.from({ length: b.ch }, (_, i) => i + 1).map((n) => (
                 <Press
                   key={n}
-                  onPress={() => push({ t: 'chap', title: `${name}, ${lang === 'uk' ? 'глава' : 'chapter'} ${n}` })}
+                  onPress={() => b.i !== undefined && push({ t: 'chap', b: b.i, c: n })}
                   style={{ width: 52, height: 52, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: p.divider }}
                 >
                   <Text style={[{ fontFamily: FONT.headingBold, fontSize: 20, color: p.text }, NUM]}>{n}</Text>
@@ -260,19 +263,79 @@ function BookOv({ o }: { o: Of<'book'> }) {
             })}
           </View>
         )}
+        {(b.books ?? [b]).some((x) => x.u.endsWith('*')) && <Body size={12.5} mute={55} style={{ marginTop: 16 }}>{t.deutero}</Body>}
       </Scroll>
     </>
   );
 }
 
+/** Глава Біблії: вірші з номерами й паралельними місцями, перехід до сусідніх глав. */
 function Chapter({ o }: { o: Of<'chap'> }) {
-  const { t } = useStore();
+  const { p, t, lang, push, replace } = useStore();
+  const ul = lang === 'uk';
+  const ref = useRef<ScrollView>(null);
+  const done = useRef(false);
+  const top = useRef(0);
+  const { h, vs } = chapter(o.b, o.c);
+  const last = BOOKS[o.b][5];
+  const prev = o.c > 1 ? { b: o.b, c: o.c - 1 } : o.b > 0 ? { b: o.b - 1, c: BOOKS[o.b - 1][5] } : null;
+  const next = o.c < last ? { b: o.b, c: o.c + 1 } : o.b < BOOKS.length - 1 ? { b: o.b + 1, c: 1 } : null;
+  const label = (x: { b: number; c: number }) => (x.b === o.b ? chapTitle(x.b, x.c, ul) : `${BOOKS[x.b][2]} ${x.c}`);
+  const book = bookItem(o.b);
   return (
     <>
-      <BackBar kicker={t.scripture} />
+      <BackBar right={<SizeBtns />} />
+      <ScrollView ref={ref} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 4, paddingBottom: 40 }}>
+        <Press onPress={() => push({ t: 'book', b: book })} style={{ alignSelf: 'flex-start', marginBottom: 6 }}>
+          <Kicker>{`${bookName(o.b, ul)} · ${t.translation}`}</Kicker>
+        </Press>
+        <Title>{chapTitle(o.b, o.c, ul)}</Title>
+        {h ? <Text style={{ fontFamily: FONT.body, fontStyle: 'italic', fontSize: 14, color: p.mute(65), marginBottom: 10 }}>{h}</Text> : null}
+        <View onLayout={(e) => (top.current = e.nativeEvent.layout.y)}>
+        <Verses
+          vs={vs}
+          b={o.b}
+          c={o.c}
+          hl={o.v ? [o.v, o.v2 ?? o.v] : undefined}
+          onY={(n, y) => {
+            // y — відносно списку віршів; зсув самого списку знаємо з onLayout обгортки.
+            if (o.v && n === o.v && !done.current) {
+              done.current = true;
+              setTimeout(() => ref.current?.scrollTo({ y: Math.max(0, top.current + y - 12), animated: false }), 50);
+            }
+          }}
+        />
+        </View>
+        <Body size={12} mute={55} style={{ marginTop: 14 }}>{t.xrefHelp}</Body>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10, marginTop: 18 }}>
+          {prev ? <OutlineButton label={`← ${label(prev)}`} onPress={() => replace({ t: 'chap', ...prev })} /> : <View />}
+          {next ? <OutlineButton label={`${label(next)} →`} onPress={() => replace({ t: 'chap', ...next })} /> : <View />}
+        </View>
+      </ScrollView>
+    </>
+  );
+}
+
+/** Читання дня або інше місце Писання за посиланням: усі уривки підряд. */
+function Passage({ o }: { o: Of<'pass'> }) {
+  const { t, push } = useStore();
+  const refs = parseRefs(o.s);
+  return (
+    <>
+      <BackBar right={<SizeBtns />} />
       <Scroll>
-        <Title>{o.title}</Title>
-        <Body size={14} mute={55}>{t.chapPh}</Body>
+        <Kicker style={{ marginBottom: 6 }}>{`${o.title} · ${t.translation}`}</Kicker>
+        <Title>{o.s}</Title>
+        {refs.length === 0 && <Body size={14} mute={60}>{t.refNotFound}</Body>}
+        {refs.map((r, i) => (
+          <View key={i} style={{ marginBottom: 18 }}>
+            <Press onPress={() => push(refOverlay(r))} style={{ alignSelf: 'flex-start', marginBottom: 6 }}>
+              <Heading size={18}>{`${r.label} ›`}</Heading>
+            </Press>
+            <Verses vs={passage(r)} b={r.b} c={r.c} />
+          </View>
+        ))}
+        {refs.length > 0 && <Body size={12} mute={55}>{t.xrefHelp}</Body>}
       </Scroll>
     </>
   );
@@ -439,6 +502,14 @@ function Search() {
         if (n.toLowerCase().includes(ql)) results.push({ title: n, sub: ul ? s.u : s.e, go: () => push({ t: 'read', s: si, j }) });
       }),
     );
+    // Посилання на Писання («Ін. 3:16», «Gal 5:22–6:2») і назви книг Біблії.
+    parseRefs(q.trim()).forEach((r) =>
+      results.push({ title: r.label, sub: `${bookName(r.b, ul)} · ${t.scripture}`, go: () => push(refOverlay(r)) }),
+    );
+    BOOKS.forEach((_, i) => {
+      const n = bookName(i, ul);
+      if (n.toLowerCase().includes(ql)) results.push({ title: n, sub: t.scripture, go: () => push({ t: 'book', b: bookItem(i) }) });
+    });
     // «Псалом 50», «пс 50», «psalm 50» — точно цей псалом; інакше — збіг у назвах сторінок і розділів Псалтиря.
     const psN = ql.match(/^(?:psalm|ps|псалом|пс)\.?\s*(\d{1,3})$/)?.[1];
     PSALTYR.forEach((b, i) => {

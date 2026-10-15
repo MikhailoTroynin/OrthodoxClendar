@@ -12,7 +12,8 @@ export interface Item {
   x?: string; /** Повний текст із MOLYTVOSLOV (молитвослов, Київський ізвод). */ mv?: MvRef[]; img?: { id: number; w: number; h: number };
 }
 export interface Section { u: string; e: string; items: Item[] }
-export interface Book { u: string; e: string; ch?: number; books?: Book[] }
+/** Книга Біблії (i — індекс у BOOKS із data/bible/books) або група книг. */
+export interface Book { u: string; e: string; ch?: number; books?: Book[]; i?: number }
 
 const H = (u: string, e: string): Bi => [u, e];
 export const T: Record<string, Bi> = {
@@ -68,7 +69,4 @@ MB.push({
 });
 export const ROM: string[] = ['I','II','III','IV','V','VI','VII','VIII','IX','X'];
 export const WK: [number, string, string][] = [[7,'безплотним силам','the Bodiless Powers'],[5,'святому Іоанну Предтечі','St John the Forerunner'],[1,'Хресту і Богородиці','the Cross and the Theotokos'],[6,'апостолам і святителю Миколаю','the Apostles and St Nicholas'],[4,'Хресту Господньому','the Cross'],[1,'усім святим і спочилим','all saints and the departed'],[3,'Воскресінню Христовому','the Resurrection']];
-export const GOS: Book[] = [{u:'Від Матвія',e:'Matthew',ch:28},{u:'Від Марка',e:'Mark',ch:16},{u:'Від Луки',e:'Luke',ch:24},{u:'Від Іоанна',e:'John',ch:21}];
-const B = (u: string, e: string, ch: number): Book =>({u,e,ch});
-export const APO: Book[] = [B('Діяння апостолів','Acts of the Apostles',28),{u:'Соборні послання',e:'Catholic Epistles',books:[B('Якова','James',5),B('1 Петра','1 Peter',5),B('2 Петра','2 Peter',3),B('1 Іоанна','1 John',5),B('2 Іоанна','2 John',1),B('3 Іоанна','3 John',1),B('Юди','Jude',1)]},{u:'Послання апостола Павла',e:'Epistles of St Paul',books:[B('До римлян','Romans',16),B('1 до коринтян','1 Corinthians',16),B('2 до коринтян','2 Corinthians',13),B('До галатів','Galatians',6),B('До ефесян','Ephesians',6),B('До филипʼян','Philippians',4),B('До колоссян','Colossians',4),B('1 до солунян','1 Thessalonians',5),B('2 до солунян','2 Thessalonians',3),B('1 до Тимофія','1 Timothy',6),B('2 до Тимофія','2 Timothy',4),B('До Тита','Titus',3),B('До Филимона','Philemon',1),B('До євреїв','Hebrews',13)]},B('Одкровення','Revelation',22)];
 export const KATH: string[] = ['1–8','9–16','17–23','24–31','32–36','37–45','46–54','55–63','64–69','70–76','77–84','85–90','91–100','101–104','105–108','109–117','118','119–133','134–142','143–151'];

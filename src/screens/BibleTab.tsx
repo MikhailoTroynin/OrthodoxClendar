@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { APO, Book, GOS, KATH } from '../data/prayers';
+import { Book, KATH } from '../data/prayers';
+import { groupItem } from '../lib/bible';
 import { PSALTYR } from '../data/psaltyr';
 import { PL } from '../data/strings';
 import { Body, H1, Kicker, NavRow, NUM, Press, card } from '../components/ui';
@@ -12,9 +13,13 @@ import { FONT, RADIUS } from '../theme';
 export const bookRow = (b: Book, lang: 'uk' | 'en', t: Record<string, any>, go: () => void, last?: boolean) => {
   const ul = lang === 'uk';
   const pl = (n: number, f: string[]) => (ul ? PL(n, f) : n === 1 ? f[0] : f[1]);
-  const sub = b.ch ? `${b.ch} ${pl(b.ch, t.chW)}` : `${b.books!.length} ${pl(b.books!.length, t.epW)}`;
+  const w = b.e.includes('Epistle') ? t.epW : t.bkW;
+  const sub = b.ch ? `${b.ch} ${pl(b.ch, t.chW)}` : `${b.books!.length} ${pl(b.books!.length, w)}`;
   return { title: ul ? b.u : b.e, sub, go, last };
 };
+
+const NT: Book[] = [...groupItem(5).books!, groupItem(6), groupItem(7), groupItem(8), groupItem(9)];
+const OT: Book[] = [0, 1, 2, 3, 4].map(groupItem);
 
 export default function BibleTab() {
   const { p, t, lang, cal, today, push, kd } = useStore();
@@ -27,7 +32,7 @@ export default function BibleTab() {
     <View style={[card(p), { marginBottom: 24 }]}>
       {books.map((b, i) => {
         const r = bookRow(b, lang, t, () => open(b), i === books.length - 1);
-        const title = gospel ? (ul ? 'Євангеліє в' + b.u.slice(1) : 'Gospel of ' + b.e) : r.title;
+        const title = gospel && i < 4 ? (ul ? 'Євангеліє в' + b.u.slice(1) : 'Gospel of ' + b.e) : r.title;
         return <NavRow key={i} title={title} sub={r.sub} onPress={r.go} last={r.last} />;
       })}
     </View>
@@ -55,17 +60,18 @@ export default function BibleTab() {
             [t.apostle, day.r1],
             [t.gospel, day.r2],
           ].map(([l, v]) => (
-            <Press key={l} onPress={() => push({ t: 'chap', title: `${l} · ${v}` })} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 }}>
+            <Press key={l} onPress={() => v && push({ t: 'pass', s: v, title: l })} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12, paddingVertical: 6 }}>
               <Text style={{ fontFamily: FONT.body, fontSize: 14, color: p.mute(60) }}>{l}</Text>
-              <Text style={[{ fontFamily: FONT.body, fontSize: 14, color: p.text, textDecorationLine: 'underline', textDecorationColor: p.a300 }, NUM]}>{v}</Text>
+              <Text style={[{ flexShrink: 1, textAlign: 'right', fontFamily: FONT.body, fontSize: 14, color: p.text, textDecorationLine: 'underline', textDecorationColor: p.a300 }, NUM]}>{v}</Text>
             </Press>
           ))}
         </View>
 
-        <Kicker style={{ marginBottom: 8 }}>{t.gospelH}</Kicker>
-        {list(GOS, true)}
-        <Kicker style={{ marginBottom: 8 }}>{t.apostleH}</Kicker>
-        {list(APO)}
+        <Body size={12.5} mute={60} style={{ marginBottom: 14 }}>{t.bibleHelp}</Body>
+        <Kicker style={{ marginBottom: 8 }}>{t.ntH}</Kicker>
+        {list(NT, true)}
+        <Kicker style={{ marginBottom: 8 }}>{t.otH}</Kicker>
+        {list(OT)}
 
         <Kicker style={{ marginBottom: 6 }}>{t.psalter}</Kicker>
         <Body size={12.5} mute={60}>{t.psHelp}</Body>
