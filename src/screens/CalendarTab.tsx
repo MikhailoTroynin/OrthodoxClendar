@@ -103,7 +103,8 @@ export default function CalendarTab() {
             <View style={{ marginTop: 22, padding: 16, borderWidth: 1, borderColor: p.divider, borderRadius: RADIUS, gap: 8 }}>
               <Kicker>{`${fmtDate(date, lang)}, ${weekdayName(date, lang)}`}</Kicker>
               <Heading size={20}>{sel.entry ? sel.title : t.noData}</Heading>
-              <Body size={13} mute={70}>{`${sel.isFast ? t.fastDay : t.noFast} · ${sel.r2}`}</Body>
+              {!!sel.week && <Body size={13} mute={70}>{sel.week}</Body>}
+              <Body size={13} mute={70}>{[sel.fastLabel || (sel.isFast ? t.fastDay : t.noFast), sel.r2].filter(Boolean).join(' · ')}</Body>
               <OutlineButton label={t.openDay} onPress={() => openDay(date)} style={{ alignSelf: 'flex-start', marginTop: 4 }} />
             </View>
           </>

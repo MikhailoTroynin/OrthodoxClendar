@@ -12,6 +12,7 @@ import {
   SEP,
   WD,
 } from '../data/calendar';
+import { DayRec, Item, Reading, Y2027 } from '../data/calendar2027';
 
 const DAY_MS = 86400000;
 
@@ -35,14 +36,113 @@ const JULIAN_SHIFT = 13;
 /** Дата за юліанським календарем для цивільної дати. */
 export const julianOf = (dt: Date) => addDays(dt, -JULIAN_SHIFT);
 
-/** Запис про пам'ять дня. Дані збігаються за місяцем і числом, а не за роком. */
+/** Повні дані за рік (за цивільною датою). Зараз є лише 2027. */
+const YEARS: Record<number, Record<string, DayRec>> = { 2027: Y2027 };
+
+/** Індекс «дата за юліанським календарем → запис», щоб брати неперехідну пам'ять за новоюліанськими числами. */
+const OLD_INDEX: Record<number, Record<string, DayRec>> = {};
+const oldIndex = (year: number) => {
+  let idx = OLD_INDEX[year];
+  if (!idx) {
+    idx = {};
+    for (const rec of Object.values(YEARS[year])) idx[`${rec.o[0]}-${rec.o[1]}`] = rec;
+    OLD_INDEX[year] = idx;
+  }
+  return idx;
+};
+
+/** Мітки читань, що залежать від дня тижня й Пасхалії, а не від числа місяця. */
+const isCycleLabel = (l: string) => l === 'Звичайне' || /^(За |Суботи|Неділі)/.test(l);
+
+const FIXED_FAST = ['Різдвяний піст', 'Успенський піст', 'Початок Різдвяного посту', 'Початок Успенського посту'];
+const APOSTLES_FAST = ['Апостольський піст', 'Початок Апостольського посту'];
+const WED_FRI = 'Пісний день';
+
+export interface YearDay {
+  week: string;
+  glas: string;
+  fast: string;
+  items: Item[];
+  readings: Reading[];
+}
+
+/**
+ * Дані дня з календаря 2027 (azbyka.ru, юліанський календар).
+ * Юліанський режим бере запис за цивільною датою як є. Новоюліанський бере
+ * неперехідну пам'ять і пости за числом місяця (13 днів різниці), а тиждень,
+ * Пасхалію й перехідні свята — за цивільною датою.
+ */
+export const yearDay = (dt: Date, cal: CalendarType): YearDay | null => {
+  const year = dt.getFullYear();
+  const civil = YEARS[year]?.[toKey(dt)];
+  if (!civil) return null;
+  if (cal === 'oj') {
+    return { week: civil.w, glas: civil.g, fast: civil.f, items: civil.i, readings: civil.r };
+  }
+  const month = dt.getMonth() + 1;
+  const day = dt.getDate();
+  const men = oldIndex(year)[`${month}-${day}`];
+  if (!men) return { week: civil.w, glas: civil.g, fast: civil.f, items: civil.i, readings: civil.r };
+
+  const items = [...civil.i.filter((it) => it[2]), ...men.i.filter((it) => !it[2])];
+  // У велике свято читаються лише святкові читання: Пасхальні — за цивільною датою, Господні й Богородичні — за числом місяця.
+  const paschal = civil.i.some((it) => it[0] === 2 && it[2]);
+  const feast = men.i.some((it) => it[0] === 2 && !it[2]);
+  const readings = paschal
+    ? civil.r
+    : [
+        ...(feast ? [] : civil.r.filter((r) => isCycleLabel(r[0]))),
+        ...men.r.filter((r) => !isCycleLabel(r[0])),
+      ];
+
+  // Піст: постійні (Різдвяний, Успенський) — за числом місяця, решта — за Пасхалією.
+  const wedFri = weekdayIdx(dt) === 2 || weekdayIdx(dt) === 4;
+  let fast = civil.f;
+  if (FIXED_FAST.includes(men.f)) fast = men.f;
+  else if (FIXED_FAST.includes(civil.f)) {
+    const sviatky = month === 12 ? day >= 25 : month === 1 && day <= 4;
+    fast = wedFri && !sviatky ? WED_FRI : '';
+  } else if (APOSTLES_FAST.includes(civil.f) && (month > 6 || (month === 6 && day > 28))) {
+    fast = wedFri ? WED_FRI : '';
+  }
+  return { week: civil.w, glas: civil.g, fast, items, readings: readings.length ? readings : civil.r };
+};
+
+const rankOf = (items: Item[]): 0 | 1 | 2 => items.reduce<0 | 1 | 2>((m, it) => (it[0] > m ? it[0] : m), 0);
+
+/** Запис про пам'ять дня. Дані збігаються за місяцем і числом, а не за роком, окрім 2027 (повний рік). */
 export const entryFor = (dt: Date, cal: CalendarType): Entry | null => {
+  const yd = yearDay(dt, cal);
+  if (yd) {
+    if (!yd.items.length) return null;
+    const title = yd.items[0][1];
+    return [title, title, '', '', rankOf(yd.items)];
+  }
   const k = cal === 'nj' ? dt : julianOf(dt);
   const m = k.getMonth() + 1;
   const d = k.getDate();
   if (m === 10) return NJ[d] ?? null;
   if (m === 9) return SEP[d] ?? null;
   return null;
+};
+
+/** Пошук по пам'яті всіх днів, для яких є повні дані (2027). */
+export const searchYear = (year: number, cal: CalendarType, q: string, limit = 60) => {
+  const out: { text: string; date: Date }[] = [];
+  const recs = YEARS[year];
+  if (!recs) return out;
+  for (const key of Object.keys(recs).sort()) {
+    const dt = fromKey(key);
+    const yd = yearDay(dt, cal);
+    if (!yd) continue;
+    for (const it of yd.items) {
+      if (it[1].toLowerCase().includes(q)) {
+        out.push({ text: it[1], date: dt });
+        if (out.length >= limit) return out;
+      }
+    }
+  }
+  return out;
 };
 
 export const fmtDate = (dt: Date, L: Lang) => {
@@ -69,6 +169,15 @@ export interface DayInfo {
   lifeKey: string | null;
   r1: string;
   r2: string;
+  /** Решта пам'яті дня (повний календар). */
+  more: string[];
+  /** Тиждень по Пʼятидесятниці, суботи й недільні назви. */
+  week: string;
+  glas: string;
+  /** Назва посту з календаря (порожньо, якщо посту немає). */
+  fastLabel: string;
+  /** Усі богослужбові читання дня, по рядку на кожне. */
+  readingLines: string[];
 }
 
 /**
@@ -92,6 +201,27 @@ export const dayInfo = (dt: Date, cal: CalendarType, L: Lang): DayInfo => {
   const rd = pok ? POK[L] : RD[L][wi];
   void jm;
   void jd;
+  const yd = yearDay(dt, cal);
+  if (yd) {
+    const uniq = (xs: string[]) => [...new Set(xs.filter(Boolean))].join('; ');
+    return {
+      date: dt,
+      entry,
+      rank,
+      weekday: wi,
+      isFast: yd.fast !== '' && !yd.fast.startsWith('Заговини'),
+      title: entry ? entry[0] : '',
+      names: '',
+      lifeKey: lifeKey && LIVES[lifeKey] ? lifeKey : null,
+      r1: uniq(yd.readings.map((r) => r[1])),
+      r2: uniq(yd.readings.map((r) => r[2])),
+      more: yd.items.slice(1).map((it) => it[1]),
+      week: yd.week,
+      glas: yd.glas,
+      fastLabel: yd.fast,
+      readingLines: yd.readings.map(readingLine),
+    };
+  }
   return {
     date: dt,
     entry,
@@ -103,7 +233,17 @@ export const dayInfo = (dt: Date, cal: CalendarType, L: Lang): DayInfo => {
     lifeKey: lifeKey && LIVES[lifeKey] ? lifeKey : null,
     r1: rd[0],
     r2: rd[1],
+    more: [],
+    week: '',
+    glas: '',
+    fastLabel: '',
+    readingLines: [],
   };
+};
+
+const readingLine = ([label, ap, ev, extra]: Reading) => {
+  const lit = [ap && `Ап. ${ap}`, ev && `Єв. ${ev}`].filter(Boolean).join('; ');
+  return `${label}: ${[extra, lit && `Літ. – ${lit}`].filter(Boolean).join('; ')}`;
 };
 
 export const weekdayName = (dt: Date, L: Lang) => WD[L][weekdayIdx(dt)];
