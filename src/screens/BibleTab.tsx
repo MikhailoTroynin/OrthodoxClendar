@@ -2,7 +2,7 @@ import React from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import type { Book } from '../data/prayers';
 import { KATH } from '../data/prayerLists';
-import { groupItem } from '../lib/bible';
+import { BOOKS, groupItem } from '../lib/bible';
 import { psaltyrL, useLazy } from '../lib/lazy';
 import { PL } from '../data/strings';
 import { Body, H1, Kicker, NavRow, NUM, Press, card } from '../components/ui';
@@ -20,15 +20,19 @@ export const bookRow = (b: Book, lang: 'uk' | 'en', t: Record<string, any>, go: 
 };
 
 const NT: Book[] = [...groupItem(5).books!, groupItem(6), groupItem(7), groupItem(8), groupItem(9)];
+// Усього глав у Біблії та в чотирьох Євангеліях (для лічильників прочитаного).
+const TOTAL = BOOKS.reduce((n, b) => n + b[5], 0);
+const GOSPELS = BOOKS.reduce((n, b) => n + (b[4] === 5 ? b[5] : 0), 0);
 const OT: Book[] = [0, 1, 2, 3, 4].map(groupItem);
 
 export default function BibleTab() {
-  const { p, t, lang, cal, today, push, kd } = useStore();
+  const { p, t, lang, cal, today, push, kd, bd } = useStore();
   const ul = lang === 'uk';
   const day = dayInfo(today, cal, lang);
   const open = (b: Book) => push({ t: 'book', b });
   // Назви сторінок Псалтиря беремо з його модуля, що довантажується разом із вкладкою.
   const PSALTYR = useLazy(psaltyrL) ? psaltyrL()!.PSALTYR : null;
+  const gosRead = bd.filter((k) => BOOKS[+k.split('.')[0]]?.[4] === 5).length;
   const nextK = Array.from({ length: 20 }, (_, i) => i + 1).find((k) => !kd.includes(k));
 
   const list = (books: Book[], gospel?: boolean) => (
@@ -109,6 +113,12 @@ export default function BibleTab() {
           })}
         </View>
         {PSALTYR && psRows([PSALTYR.length - 2, PSALTYR.length - 1], 16)}
+
+        <Kicker style={{ marginTop: 24, marginBottom: 8 }}>{t.bibRead}</Kicker>
+        <Body size={13} style={{ color: p.a700 }}>{`${ul ? 'Прочитано ' : 'Read '}${bd.length} ${t.of} ${TOTAL} ${t.chW2}`}</Body>
+        <Kicker style={{ marginTop: 16, marginBottom: 8 }}>{t.gosRead}</Kicker>
+        <Body size={13} style={{ color: p.a700 }}>{`${ul ? 'Прочитано ' : 'Read '}${gosRead} ${t.of} ${GOSPELS} ${t.chW2}`}</Body>
+        <Body size={12} mute={55} style={{ marginTop: 8 }}>{ul ? 'Позначайте глави кнопкою внизу сторінки глави.' : 'Mark chapters with the button at the bottom of a chapter.'}</Body>
       </ScrollView>
     </View>
   );
