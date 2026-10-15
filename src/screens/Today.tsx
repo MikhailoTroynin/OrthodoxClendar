@@ -3,6 +3,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { MG, WS } from '../data/calendar';
 import { Body, Divider, GhostButton, Heading, Kicker, Marks, NUM, Tag } from '../components/ui';
 import { TopBar } from '../components/Chrome';
+import { RefText } from '../components/Scripture';
 import { dayInfo, fmtDate, julianOf, sameDay, toKey, weekOf, weekdayIdx, weekdayName } from '../lib/calendar';
 import { useStore } from '../store';
 import { FONT, RADIUS } from '../theme';
@@ -120,10 +121,10 @@ export default function Today() {
           <Kicker style={{ width: COL - 12, paddingTop: 6 }}>{t.readings}</Kicker>
           <View style={{ flex: 1 }}>
             {day.r1 !== '' && (
-              <Reading label={t.apostle} value={day.r1} onPress={() => push({ t: 'chap', title: `${t.apostle} · ${day.r1}` })} />
+              <Reading label={t.apostle} value={day.r1} onPress={() => push({ t: 'pass', s: day.r1, title: t.apostle })} />
             )}
             {day.r2 !== '' && (
-              <Reading label={t.gospel} value={day.r2} onPress={() => push({ t: 'chap', title: `${t.gospel} · ${day.r2}` })} />
+              <Reading label={t.gospel} value={day.r2} onPress={() => push({ t: 'pass', s: day.r2, title: t.gospel })} />
             )}
             {day.r1 === '' && day.r2 === '' && day.readingLines.length === 0 && (
               <Body size={13} mute={70}>Читання цього дня в джерелі не вказані.</Body>
@@ -131,9 +132,9 @@ export default function Today() {
             {day.readingLines.length > 0 && (
               <View style={{ marginTop: 8, gap: 6 }}>
                 {day.readingLines.map((l, i) => (
-                  <Body key={i} size={12.5} mute={65}>
+                  <RefText key={i} style={{ fontFamily: FONT.body, fontSize: 12.5, lineHeight: 18, color: p.mute(65) }}>
                     {l}
-                  </Body>
+                  </RefText>
                 ))}
               </View>
             )}

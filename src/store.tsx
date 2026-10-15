@@ -14,7 +14,10 @@ export type Overlay =
   | { t: 'sec'; s: number }
   | { t: 'read'; s: number; j: number }
   | { t: 'book'; b: Book }
-  | { t: 'chap'; title: string }
+  /** Глава c книги b (індекс у BOOKS); v…v2 — виділені вірші, до v прокручується. */
+  | { t: 'chap'; b: number; c: number; v?: number; v2?: number }
+  /** Читання за посиланням s («Гал. 5:22–6:2; Лк. 8:16–21»). */
+  | { t: 'pass'; s: string; title: string }
   | { t: 'kath'; k: number }
   | { t: 'ps'; i: number }
   | { t: 'pom' }
@@ -62,6 +65,8 @@ interface Ctx extends Persisted {
   ov: Overlay[];
   push: (o: Overlay) => void;
   pop: () => void;
+  /** Замінює верхній екран (перехід між главами без накопичення стека). */
+  replace: (o: Overlay) => void;
   /** Обрана дата ("YYYY-MM-DD"). */
   date: Date;
   setDate: (d: Date) => void;
@@ -108,6 +113,7 @@ export function StoreProvider({ children, onReady }: { children: React.ReactNode
   const set = useCallback((patch: Partial<Persisted>) => setSaved((s) => ({ ...s, ...patch })), []);
   const push = useCallback((o: Overlay) => setOv((s) => [...s, o]), []);
   const pop = useCallback(() => setOv((s) => s.slice(0, -1)), []);
+  const replace = useCallback((o: Overlay) => setOv((s) => [...s.slice(0, -1), o]), []);
   const goTab = useCallback((t: Tab) => {
     setTab(t);
     setOv([]);
@@ -152,6 +158,7 @@ export function StoreProvider({ children, onReady }: { children: React.ReactNode
       ov,
       push,
       pop,
+      replace,
       date,
       setDate,
       today,
@@ -162,7 +169,7 @@ export function StoreProvider({ children, onReady }: { children: React.ReactNode
       setQ,
       openDay,
     }),
-    [saved, set, tab, goTab, ov, push, pop, date, setDate, today, calView, openFeasts, q, openDay],
+    [saved, set, tab, goTab, ov, push, pop, replace, date, setDate, today, calView, openFeasts, q, openDay],
   );
 
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
