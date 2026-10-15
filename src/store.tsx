@@ -84,13 +84,15 @@ interface Ctx extends Persisted {
   setDate: (d: Date) => void;
   today: Date;
   /** Місяць, показаний у вкладці «Календар». */
-  calView: 'month' | 'feasts';
-  setCalView: (v: 'month' | 'feasts') => void;
+  calView: CalView;
+  setCalView: (v: CalView) => void;
   openFeasts: () => void;
   q: string;
   setQ: (q: string) => void;
   openDay: (d: Date) => void;
 }
+
+export type CalView = 'month' | 'feasts' | 'fasts';
 
 const StoreCtx = createContext<Ctx | null>(null);
 
@@ -107,7 +109,7 @@ export function StoreProvider({ children, onReady }: { children: React.ReactNode
   const [ov, setOv] = useState<Overlay[]>([]);
   const today = useMemo(() => new Date(), []);
   const [date, setDateState] = useState<Date>(today);
-  const [calView, setCalView] = useState<'month' | 'feasts'>('month');
+  const [calView, setCalView] = useState<CalView>('month');
   const [q, setQ] = useState('');
 
   useEffect(() => {
