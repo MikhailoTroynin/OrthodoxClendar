@@ -4,6 +4,7 @@ import * as Clipboard from 'expo-clipboard';
 import { FE, LIVES } from '../data/calendar';
 import { CH_IMG } from '../data/channelImages';
 import { MB, ROM, T } from '../data/prayers';
+import { MOLYTVOSLOV } from '../data/molytvoslov';
 import { VERS } from '../data/strings';
 import { BackBar } from '../components/Chrome';
 import { Body, Divider, Heading, Icon, Kicker, NavRow, NUM, OutlineButton, Press, Seg, Switch, card } from '../components/ui';
@@ -48,6 +49,41 @@ export function OverlayHost() {
       {top.t === 'settings' && <Settings />}
       {top.t === 'donate' && <Donate />}
       {top.t === 'ver' && <Versions />}
+    </View>
+  );
+}
+
+const SUP = '⁰¹²³⁴⁵⁶⁷⁸⁹';
+
+/** Повний текст сторінки молитвослова: заголовки, рубрики (§), підзаголовки (#), примітки. */
+function PrayerBook({ b, fs }: { b: (typeof MOLYTVOSLOV)[number]; fs: number }) {
+  const { p } = useStore();
+  const body = { fontFamily: FONT.body, fontSize: fs, lineHeight: fs * 1.65, color: p.text } as const;
+  return (
+    <View>
+      {b.secs.map((s, i) => (
+        <View key={i} style={{ marginBottom: 12 }}>
+          {!!s.h && <Heading size={20} style={{ marginTop: 14, marginBottom: 8 }}>{s.h}</Heading>}
+          {s.ps.map((t, j) =>
+            t[0] === '§' ? (
+              <Text key={j} style={{ ...body, fontStyle: 'italic', fontSize: fs - 2, lineHeight: (fs - 2) * 1.5, color: p.mute(65), marginBottom: 10 }}>{t.slice(1)}</Text>
+            ) : t[0] === '#' ? (
+              <Kicker key={j} style={{ marginTop: 6, marginBottom: 6 }}>{t.slice(1)}</Kicker>
+            ) : (
+              <Text key={j} style={{ ...body, marginBottom: 10 }}>{t}</Text>
+            ),
+          )}
+        </View>
+      ))}
+      {b.notes.filter(Boolean).length > 0 && (
+        <View style={{ borderTopWidth: 1, borderTopColor: p.divider, paddingTop: 12, gap: 6 }}>
+          {b.notes.map((n, k) => !!n && (
+            <Text key={k} style={{ fontFamily: FONT.body, fontSize: fs - 4, lineHeight: (fs - 4) * 1.5, color: p.mute(65) }}>
+              {`⁽${[...String(k + 1)].map((c) => SUP[+c]).join('')}⁾ ${n.replace(/<[^>]+>/g, '')}`}
+            </Text>
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -136,6 +172,7 @@ function Reader({ o }: { o: Of<'read'> }) {
           />
         )}
         {!!it.x && <Text style={{ fontFamily: FONT.body, fontSize: fs, lineHeight: fs * 1.65, color: p.text }}>{it.x}</Text>}
+        {it.mv !== undefined && <PrayerBook b={MOLYTVOSLOV[it.mv]} fs={fs} />}
         {it.r && (
           <Text style={{ fontFamily: FONT.body, fontStyle: 'italic', fontSize: fs - 3, lineHeight: (fs - 3) * 1.5, color: p.mute(65), marginBottom: 16 }}>
             {it.r[li]}

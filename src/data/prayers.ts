@@ -1,12 +1,13 @@
 // Молитвослов і Святе Письмо (портовано з макета Orthodox Calendar v2).
 import { CH, ChItem } from './channel';
+import { MOLYTVOSLOV } from './molytvoslov';
 export type Bi = [string, string];
 export interface Block { h?: Bi; r?: Bi; t?: string }
 export interface Item {
   u: string; e: string; mu: string; me: string;
   full?: 1; r?: Bi; p?: Bi[]; b?: Block[];
   /** Готовий текст (молитви й тропарі з каналу «Київський Ізвод») і зображення святого. */
-  x?: string; img?: { id: number; w: number; h: number };
+  x?: string; /** Індекс книги в MOLYTVOSLOV (повний молитвослов, Київський ізвод). */ mv?: number; img?: { id: number; w: number; h: number };
 }
 export interface Section { u: string; e: string; items: Item[] }
 export interface Book { u: string; e: string; ch?: number; books?: Book[] }
@@ -56,7 +57,11 @@ MB.push(
   { u: 'Молитви Київського ізводу', e: 'Prayers of the Kyiv Use', items: CH.filter((c) => c.k === 'p').map(chItem) },
   { u: 'Святі й свята: тропарі та ікони', e: 'Saints and feasts: troparia and icons', items: CH.filter((c) => c.k === 's').map(chItem) },
 );
-export const ROM: string[] = ['I','II','III','IV','V','VI','VII','VIII','IX'];
+MB.push({
+  u: 'Молитвослов (Київський ізвод)', e: 'Prayer book (Kyiv Use)',
+  items: MOLYTVOSLOV.map((b, i): Item => ({ u: b.u, e: b.e, mu: '', me: '', full: 1, mv: i })),
+});
+export const ROM: string[] = ['I','II','III','IV','V','VI','VII','VIII','IX','X'];
 export const WK: [number, string, string][] = [[7,'безплотним силам','the Bodiless Powers'],[5,'святому Іоанну Предтечі','St John the Forerunner'],[1,'Хресту і Богородиці','the Cross and the Theotokos'],[6,'апостолам і святителю Миколаю','the Apostles and St Nicholas'],[4,'Хресту Господньому','the Cross'],[1,'усім святим і спочилим','all saints and the departed'],[3,'Воскресінню Христовому','the Resurrection']];
 export const GOS: Book[] = [{u:'Від Матвія',e:'Matthew',ch:28},{u:'Від Марка',e:'Mark',ch:16},{u:'Від Луки',e:'Luke',ch:24},{u:'Від Іоанна',e:'John',ch:21}];
 const B = (u: string, e: string, ch: number): Book =>({u,e,ch});

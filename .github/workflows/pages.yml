@@ -2,7 +2,7 @@ name: Deploy web preview to GitHub Pages
 
 on:
   push:
-    branches: [main, claude/funny-mayer-ez8k33]
+    branches: [main, claude/funny-mayer-ez8k33, claude/modest-mayer-j2oiso]
   workflow_dispatch:
 
 permissions:
