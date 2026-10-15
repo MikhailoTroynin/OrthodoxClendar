@@ -113,13 +113,18 @@ export function StoreProvider({ children, onReady }: { children: React.ReactNode
   useEffect(() => {
     // Перший екран чекає лише на налаштування й календар поточного року; решта даних — за потреби.
     const year = loadYears([today.getFullYear()]).catch((e) => console.warn('Не вдалося завантажити календар', e));
-    Promise.all([loadJSON<Persisted & { date?: string }>(), year]).then(([v]) => {
-      if (v) setSaved((s) => ({ ...s, ...v, rm: { ...s.rm, ...v.rm, show: { ...s.rm.show, ...v.rm?.show } }, pom: { ...s.pom, ...v.pom } }));
-      loaded.current = true;
-      setReady(true);
-      onReady?.();
-      loadYears().catch(() => {});
-    });
+    Promise.all([loadJSON<Persisted & { date?: string }>(), year])
+      .then(([v]) => {
+        if (v) setSaved((s) => ({ ...s, ...v, rm: { ...s.rm, ...v.rm, show: { ...s.rm.show, ...v.rm?.show } }, pom: { ...s.pom, ...v.pom } }));
+      })
+      .catch((e) => console.warn('Не вдалося відновити налаштування', e))
+      // Застосунок відкривається за будь-якого результату: інакше лишається порожній екран.
+      .finally(() => {
+        loaded.current = true;
+        setReady(true);
+        onReady?.();
+        loadYears().catch(() => {});
+      });
   }, [onReady, today]);
 
   useEffect(() => {
