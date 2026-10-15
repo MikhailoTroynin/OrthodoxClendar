@@ -19,6 +19,7 @@ import { dayInfo, entryFor, fmtDate, fmtMD, addDays, searchYear, toKey, ymd, FUL
 import { JAR_URL, Overlay, useStore } from '../store';
 import { NATIVE, notifPermission, Reminders } from '../lib/notify';
 import { FONT, RADIUS } from '../theme';
+import { bookText, speak, stopSpeaking, useSpeaking } from '../lib/speech';
 
 type Of<K extends Overlay['t']> = Extract<Overlay, { t: K }>;
 
@@ -78,9 +79,10 @@ export function OverlayHost() {
 
 const SUP = '⁰¹²³⁴⁵⁶⁷⁸⁹';
 
-/** Кнопки розміру тексту для читання. */
-function SizeBtns() {
-  const { p, fs, set } = useStore();
+/** Кнопки розміру тексту для читання; з read — ще й кнопка читання вголос. */
+function SizeBtns({ read }: { read?: () => string[] }) {
+  const { p, fs, set, t, lang } = useStore();
+  const speaking = useSpeaking();
   const btn = (label: string, delta: number) => (
     <Press
       key={label}
@@ -91,7 +93,21 @@ function SizeBtns() {
       <Text style={{ fontFamily: FONT.headingBold, fontSize: 17, color: p.a700 }}>{label}</Text>
     </Press>
   );
-  return <View style={{ flexDirection: 'row' }}>{[btn('A−', -2), btn('A+', 2)]}</View>;
+  return (
+    <View style={{ flexDirection: 'row' }}>
+      {read && (
+        <Press
+          label={speaking ? t.stopListen : t.listen}
+          onPress={() => (speaking ? stopSpeaking() : speak(read(), lang))}
+          style={{ minWidth: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Icon name={speaking ? 'stop' : 'speaker'} color={p.a700} />
+        </Press>
+      )}
+      {btn('A−', -2)}
+      {btn('A+', 2)}
+    </View>
+  );
 }
 
 /** Повний текст сторінки молитвослова чи Псалтиря (або лише розділів only): заголовки, рубрики (§), підзаголовки (#), вірші (@N), примітки. */
@@ -195,7 +211,13 @@ function Reader({ o }: { o: Of<'read'> }) {
     <>
       <BackBar
         kicker={ul ? s.u : s.e}
-        right={<SizeBtns />}
+        right={<SizeBtns read={() => [
+          ul ? it.u : it.e,
+          it.x ?? '',
+          ...(outline ? (it.b ?? []).flatMap((b) => [b.h?.[li] ?? '', b.t ? T[b.t][li] : '']) : []),
+          ...(outline ? (it.p ?? []).map((x) => x[li]) : []),
+          ...(it.mv ?? []).flatMap((m) => bookText(MOLYTVOSLOV[m.b], m.s)),
+        ]} />}
       />
       <Scroll>
         <Title>{ul ? it.u : it.e}</Title>
@@ -373,7 +395,7 @@ function Kathisma({ o }: { o: Of<'kath'> }) {
   );
   return (
     <>
-      <BackBar right={<SizeBtns />} />
+      <BackBar right={<SizeBtns read={() => [`${t.kathisma} ${o.k}`, ...bookText(PSALTYR[kathIdx(o.k)])]} />} />
       <Scroll>
         <Kicker style={{ marginBottom: 6 }}>{t.psalter}</Kicker>
         <Title>{`${t.kathisma} ${o.k}`}</Title>
@@ -398,7 +420,7 @@ function PsPage({ o }: { o: Of<'ps'> }) {
   const b = psaltyrL()!.PSALTYR[o.i];
   return (
     <>
-      <BackBar right={<SizeBtns />} />
+      <BackBar right={<SizeBtns read={() => [lang === 'uk' ? b.u : b.e, ...bookText(b)]} />} />
       <Scroll>
         <Kicker style={{ marginBottom: 6 }}>{t.psalter}</Kicker>
         <Title>{lang === 'uk' ? b.u : b.e}</Title>

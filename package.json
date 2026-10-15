@@ -19,6 +19,7 @@
     "expo-clipboard": "~7.1.4",
     "expo-font": "~13.3.1",
     "expo-notifications": "~0.31.5",
+    "expo-speech": "~13.1.7",
     "expo-status-bar": "~2.2.3",
     "react": "19.0.0",
     "react-dom": "19.0.0",
