@@ -6,7 +6,7 @@ import { S } from './data/strings';
 import { dayInfo, fromKey, loadYears, toKey } from './lib/calendar';
 import { useDataVersion } from './lib/lazy';
 import { loadJSON, saveJSON } from './lib/storage';
-import { NATIVE, onNotifResponse, REMINDER_DEFAULTS, Reminders, reschedule } from './lib/notify';
+import { Angel, NATIVE, onNotifResponse, REMINDER_DEFAULTS, Reminders, reschedule } from './lib/notify';
 import { palette, Palette, ThemeName } from './theme';
 
 export type Tab = 'today' | 'cal' | 'book' | 'bible' | 'more';
@@ -27,6 +27,7 @@ export type Overlay =
   | { t: 'search' }
   | { t: 'settings' }
   | { t: 'remind' }
+  | { t: 'angels' }
   | { t: 'donate' }
   | { t: 'ver' };
 
@@ -37,6 +38,8 @@ export interface Persisted {
   fs: number;
   /** Налаштування нагадувань. */
   rm: Reminders;
+  /** Дні ангела близьких. */
+  ang: Angel[];
   kd: number[];
   pom: { h: string[]; r: string[] };
   jc: number;
@@ -50,6 +53,7 @@ const DEFAULTS: Persisted = {
   theme: 'day',
   fs: 17,
   rm: REMINDER_DEFAULTS,
+  ang: [],
   kd: [],
   pom: { h: [], r: [] },
   jc: 0,
@@ -124,11 +128,11 @@ export function StoreProvider({ children, onReady }: { children: React.ReactNode
   useEffect(() => {
     if (!ready || !NATIVE) return;
     const h = setTimeout(
-      () => loadYears().then(() => reschedule(saved.rm, saved.cal, saved.lang, S[saved.lang], pomN, true)),
+      () => loadYears().then(() => reschedule(saved.rm, saved.cal, saved.lang, S[saved.lang], pomN, saved.ang, true)),
       400,
     );
     return () => clearTimeout(h);
-  }, [ready, saved.rm, saved.cal, saved.lang, pomN]);
+  }, [ready, saved.rm, saved.cal, saved.lang, pomN, saved.ang]);
 
   const set = useCallback((patch: Partial<Persisted>) => setSaved((s) => ({ ...s, ...patch })), []);
   const push = useCallback((o: Overlay) => setOv((s) => [...s, o]), []);
