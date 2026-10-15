@@ -313,8 +313,10 @@ function BookOv({ o }: { o: Of<'book'> }) {
 
 /** Глава Біблії: вірші з номерами й паралельними місцями, перехід до сусідніх глав. */
 function Chapter({ o }: { o: Of<'chap'> }) {
-  const { p, t, lang, push, replace } = useStore();
+  const { p, t, lang, push, replace, bd, set } = useStore();
   const ul = lang === 'uk';
+  const key = `${o.b}.${o.c}`;
+  const read = bd.includes(key);
   const ref = useRef<ScrollView>(null);
   const done = useRef(false);
   const top = useRef(0);
@@ -349,6 +351,11 @@ function Chapter({ o }: { o: Of<'chap'> }) {
         />
         </View>
         <Body size={12} mute={55} style={{ marginTop: 14 }}>{t.xrefHelp}</Body>
+        <OutlineButton
+          label={read ? t.marked : t.markRead}
+          onPress={() => set({ bd: read ? bd.filter((x) => x !== key) : [...bd, key] })}
+          style={{ alignSelf: 'flex-start', marginTop: 18 }}
+        />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10, marginTop: 18 }}>
           {prev ? <OutlineButton label={`← ${label(prev)}`} onPress={() => replace({ t: 'chap', ...prev })} /> : <View />}
           {next ? <OutlineButton label={`${label(next)} →`} onPress={() => replace({ t: 'chap', ...next })} /> : <View />}

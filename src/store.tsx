@@ -41,6 +41,8 @@ export interface Persisted {
   /** Дні ангела близьких. */
   ang: Angel[];
   kd: number[];
+  /** Прочитані глави Біблії: ключі «книга.глава» (індекс у BOOKS). */
+  bd: string[];
   pom: { h: string[]; r: string[] };
   jc: number;
   jt: number;
@@ -55,6 +57,7 @@ const DEFAULTS: Persisted = {
   rm: REMINDER_DEFAULTS,
   ang: [],
   kd: [],
+  bd: [],
   pom: { h: [], r: [] },
   jc: 0,
   jt: 100,
