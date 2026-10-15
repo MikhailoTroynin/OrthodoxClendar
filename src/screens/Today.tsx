@@ -86,6 +86,20 @@ export default function Today() {
         ) : (
           <Body size={14} mute={60}>{t.noData}</Body>
         )}
+        {!!day.week && (
+          <Body size={13} mute={70} style={{ marginTop: 6 }}>
+            {day.glas ? `${day.week} · глас ${day.glas}` : day.week}
+          </Body>
+        )}
+        {day.more.length > 0 && (
+          <View style={{ marginTop: 14, gap: 8 }}>
+            {day.more.map((m, i) => (
+              <Body key={i} size={15} mute={85}>
+                {m}
+              </Body>
+            ))}
+          </View>
+        )}
         {day.lifeKey && (
           <View style={{ marginTop: 12 }}>
             <GhostButton label={t.life} onPress={() => push({ t: 'life' })} />
@@ -96,7 +110,7 @@ export default function Today() {
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <Kicker style={{ width: COL - 12, paddingTop: 4 }}>{t.fast}</Kicker>
           <View style={{ flex: 1 }}>
-            <Heading size={18}>{day.isFast ? t.fastDay : t.noFast}</Heading>
+            <Heading size={18}>{day.fastLabel || (day.isFast ? t.fastDay : t.noFast)}</Heading>
             <Body size={13} mute={70}>{fastText}</Body>
           </View>
         </View>
@@ -105,8 +119,24 @@ export default function Today() {
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <Kicker style={{ width: COL - 12, paddingTop: 6 }}>{t.readings}</Kicker>
           <View style={{ flex: 1 }}>
-            <Reading label={t.apostle} value={day.r1} onPress={() => push({ t: 'chap', title: `${t.apostle} · ${day.r1}` })} />
-            <Reading label={t.gospel} value={day.r2} onPress={() => push({ t: 'chap', title: `${t.gospel} · ${day.r2}` })} />
+            {day.r1 !== '' && (
+              <Reading label={t.apostle} value={day.r1} onPress={() => push({ t: 'chap', title: `${t.apostle} · ${day.r1}` })} />
+            )}
+            {day.r2 !== '' && (
+              <Reading label={t.gospel} value={day.r2} onPress={() => push({ t: 'chap', title: `${t.gospel} · ${day.r2}` })} />
+            )}
+            {day.r1 === '' && day.r2 === '' && day.readingLines.length === 0 && (
+              <Body size={13} mute={70}>Читання цього дня в джерелі не вказані.</Body>
+            )}
+            {day.readingLines.length > 0 && (
+              <View style={{ marginTop: 8, gap: 6 }}>
+                {day.readingLines.map((l, i) => (
+                  <Body key={i} size={12.5} mute={65}>
+                    {l}
+                  </Body>
+                ))}
+              </View>
+            )}
           </View>
         </View>
 
