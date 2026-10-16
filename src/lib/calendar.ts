@@ -422,6 +422,13 @@ export const memorialRows = (cal: CalendarType, L: Lang, from: Date): MemorialRo
   });
 };
 
+/** Назви поминальних днів, що припадають на цей день. */
+export const memorialsOn = (day: Date, cal: CalendarType, L: Lang) =>
+  MEM.filter((m) => {
+    const [y, mo, d] = m[cal];
+    return y === day.getFullYear() && mo === day.getMonth() + 1 && d === day.getDate();
+  }).map((m) => m[L]);
+
 export interface MonthCell {
   date: Date | null;
   inMonth: boolean;

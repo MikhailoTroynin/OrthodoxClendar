@@ -90,6 +90,13 @@ Object.assign(S.uk, {
   nAngEveM: 'Пом’яніть близьких у вечірній молитві — про здоров’я, спасіння й заступництво їхніх святих.',
   nAngDay: 'Помоліться сьогодні за близьку людину — про здоров’я, спасіння й заступництво її святого.',
   nAngDayM: 'Помоліться сьогодні за близьких — про здоров’я, спасіння й заступництво їхніх святих.',
+  // Поминальні дні
+  rMem: 'Поминальні дні',
+  rMemSub: 'Увечері напередодні й у сам день — помолитися за спочилих',
+  nMemTomorrow: 'Завтра поминальний день: ',
+  nMemToday: 'Сьогодні поминальний день: ',
+  nMemEve: 'Підготуйте записки за упокій і пом’яніть спочилих рідних у вечірній молитві.',
+  nMemDay: 'Сьогодні Церква молиться за спочилих. Пом’яніть рідних на панахиді й у домашній молитві.',
 });
 Object.assign(S.en, {
   otH: 'Old Testament',
@@ -162,4 +169,10 @@ Object.assign(S.en, {
   nAngEveM: 'Remember them in your evening prayers — for health, salvation and the intercession of their patron saints.',
   nAngDay: 'Pray for them today — for health, salvation and the intercession of their patron saint.',
   nAngDayM: 'Pray for them today — for health, salvation and the intercession of their patron saints.',
+  rMem: 'Memorial days',
+  rMemSub: 'The evening before and on the day — to pray for the departed',
+  nMemTomorrow: 'Memorial day tomorrow: ',
+  nMemToday: 'Memorial day today: ',
+  nMemEve: 'Prepare the names of the departed and remember your loved ones in your evening prayers.',
+  nMemDay: 'Today the Church prays for the departed. Remember your loved ones at the memorial service and at home.',
 });

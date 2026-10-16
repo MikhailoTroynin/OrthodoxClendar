@@ -1,9 +1,9 @@
 // Локальні нагадування: увечері — про завтрашній день (докладно й коротко, у свій час), вранці — про сьогоднішній,
-// за 5 днів — про велике свято, дні ангела близьких, а також час молитов. У веб-версії нічого не надсилається.
+// за 5 днів — про велике свято, дні ангела близьких, поминальні дні, а також час молитов. У веб-версії нічого не надсилається.
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import type { CalendarType, Lang } from '../data/calendar';
-import { addDays, dayInfo, fastKind, fmtDate, toKey, weekdayName } from './calendar';
+import { addDays, dayInfo, fastKind, fmtDate, memorialsOn, toKey, weekdayName } from './calendar';
 
 export interface Reminders {
   /** Вечірнє нагадування про завтрашній день. */
@@ -19,6 +19,8 @@ export interface Reminders {
   pre: boolean;
   /** Дні ангела близьких: увечері напередодні й у сам день. */
   ang: boolean;
+  /** Поминальні дні: увечері напередодні й у сам день. */
+  mem: boolean;
   /** Що показувати: піст, читання, іменини, час молитов. */
   show: { f: boolean; r: boolean; n: boolean; p: boolean };
 }
@@ -32,6 +34,7 @@ export const REMINDER_DEFAULTS: Reminders = {
   tmrT: '21:00',
   pre: false,
   ang: true,
+  mem: true,
   show: { f: true, r: true, n: true, p: false },
 };
 
@@ -97,7 +100,7 @@ export async function reschedule(rm: Reminders, cal: CalendarType, lang: Lang, t
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();
     const angOn = rm.ang && angels.length > 0;
-    const any = rm.eve || rm.morn || rm.tmr || rm.pre || rm.show.p || angOn;
+    const any = rm.eve || rm.morn || rm.tmr || rm.pre || rm.mem || rm.show.p || angOn;
     if (!any) return;
     if ((await notifPermission(ask)) !== 'granted') return;
 
@@ -183,6 +186,15 @@ export async function reschedule(rm: Reminders, cal: CalendarType, lang: Lang, t
         if (eveN.length) add(at(day, rm.eveT, 1), `${t.nAngTomorrow}${eveN.join(', ')}`, eveN.length > 1 ? t.nAngEveM : t.nAngEve, next, 'angE');
         const todayN = angelsOn(angels, day);
         if (todayN.length) add(at(day, rm.mornT, 2), `${t.nAngToday}${todayN.join(', ')}`, todayN.length > 1 ? t.nAngDayM : t.nAngDay, day, 'angM');
+      }
+
+      if (rm.mem) {
+        // Як і дні ангела: увечері напередодні й у сам день.
+        const next = addDays(day, 1);
+        const eveM = memorialsOn(next, cal, lang);
+        if (eveM.length) add(at(day, rm.eveT, 2), `${t.nMemTomorrow}${eveM.join(', ')}`, t.nMemEve, next, 'memE');
+        const todayM = memorialsOn(day, cal, lang);
+        if (todayM.length) add(at(day, rm.mornT, 3), `${t.nMemToday}${todayM.join(', ')}`, t.nMemDay, day, 'memM');
       }
 
       if (rm.show.p) {
