@@ -92,7 +92,7 @@ interface Ctx extends Persisted {
   openDay: (d: Date) => void;
 }
 
-export type CalView = 'month' | 'feasts' | 'fasts';
+export type CalView = 'month' | 'feasts' | 'fasts' | 'mem';
 
 const StoreCtx = createContext<Ctx | null>(null);
 
@@ -117,7 +117,8 @@ export function StoreProvider({ children, onReady }: { children: React.ReactNode
     const year = loadYears([today.getFullYear()]).catch((e) => console.warn('Не вдалося завантажити календар', e));
     Promise.all([loadJSON<Persisted & { date?: string }>(), year])
       .then(([v]) => {
-        if (v) setSaved((s) => ({ ...s, ...v, rm: { ...s.rm, ...v.rm, show: { ...s.rm.show, ...v.rm?.show } }, pom: { ...s.pom, ...v.pom } }));
+        // Англійських текстів поки немає, тож мова завжди українська (навіть якщо раніше збережено «en»).
+        if (v) setSaved((s) => ({ ...s, ...v, lang: 'uk', rm: { ...s.rm, ...v.rm, show: { ...s.rm.show, ...v.rm?.show } }, pom: { ...s.pom, ...v.pom } }));
       })
       .catch((e) => console.warn('Не вдалося відновити налаштування', e))
       // Застосунок відкривається за будь-якого результату: інакше лишається порожній екран.

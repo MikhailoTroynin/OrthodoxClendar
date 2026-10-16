@@ -47,3 +47,23 @@ export const FA: Fast[] = [
   { s: 2, uk: 'Світла седмиця', en: 'Bright Week', nj: [5, 3, 5, 9], oj: [5, 3, 5, 9], mv: 1 },
   { s: 2, uk: 'Трійцька седмиця', en: 'Trinity Week', nj: [6, 21, 6, 27], oj: [6, 21, 6, 27], mv: 1 },
 ];
+
+/** Поминальний день: дати [рік, місяць, число] за кожним календарем. */
+export interface Memorial {
+  uk: string;
+  en: string;
+  nj: [number, number, number];
+  oj: [number, number, number];
+  mv?: 1;
+}
+/** Поминальні дні церковного року 2026–2027. Дмитрівська субота — субота перед днем вмч. Димитрія (26 жовтня за кожним календарем); решта залежить від Пасхи. */
+export const MEM: Memorial[] = [
+  { uk: 'Дмитрівська батьківська субота', en: 'Saturday of St Demetrius', nj: [2026, 10, 24], oj: [2026, 11, 7] },
+  { uk: 'Вселенська (мʼясопусна) батьківська субота', en: 'Meatfare Saturday of Souls', nj: [2027, 3, 6], oj: [2027, 3, 6], mv: 1 },
+  { uk: 'Субота 2-ї седмиці Великого посту', en: 'Saturday of the 2nd week of Lent', nj: [2027, 3, 27], oj: [2027, 3, 27], mv: 1 },
+  { uk: 'Субота 3-ї седмиці Великого посту', en: 'Saturday of the 3rd week of Lent', nj: [2027, 4, 3], oj: [2027, 4, 3], mv: 1 },
+  { uk: 'Субота 4-ї седмиці Великого посту', en: 'Saturday of the 4th week of Lent', nj: [2027, 4, 10], oj: [2027, 4, 10], mv: 1 },
+  { uk: 'Поминання померлих воїнів', en: 'Commemoration of fallen soldiers', nj: [2027, 5, 9], oj: [2027, 5, 9], mv: 1 },
+  { uk: 'Радониця', en: 'Radonitsa', nj: [2027, 5, 11], oj: [2027, 5, 11], mv: 1 },
+  { uk: 'Троїцька батьківська субота', en: 'Trinity Saturday of Souls', nj: [2027, 6, 19], oj: [2027, 6, 19], mv: 1 },
+];

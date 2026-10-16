@@ -628,7 +628,7 @@ function Search() {
 }
 
 function Settings() {
-  const { p, t, lang, cal, fs, rm, ang, set, push } = useStore();
+  const { p, t, cal, fs, rm, ang, set, push } = useStore();
   const on = [rm.eve && rm.eveT, rm.tmr && rm.tmrT, rm.morn && rm.mornT].filter(Boolean) as string[];
   const rmSub = on.length || rm.pre ? [...on, rm.pre ? t.rPre : ''].filter(Boolean).join(' · ') : t.rOffAll;
   return (
@@ -636,9 +636,7 @@ function Settings() {
       <BackBar kicker={t.app} />
       <Scroll>
         <Title>{t.settings}</Title>
-        <Kicker style={{ marginBottom: 8 }}>{t.lang}</Kicker>
-        <Seg opts={[{ label: 'Українська', on: lang === 'uk', onPress: () => set({ lang: 'uk' }) }, { label: 'English', on: lang === 'en', onPress: () => set({ lang: 'en' }) }]} />
-        <Kicker style={{ marginTop: 24, marginBottom: 8 }}>{t.calendar}</Kicker>
+        <Kicker style={{ marginBottom: 8 }}>{t.calendar}</Kicker>
         <Seg opts={[{ label: t.nj, on: cal === 'nj', onPress: () => set({ cal: 'nj' }) }, { label: t.oj, on: cal === 'oj', onPress: () => set({ cal: 'oj' }) }]} />
         <Body size={12.5} mute={65} style={{ marginTop: 8 }}>{(cal === 'nj' ? t.helpNj : t.helpOj) + t.helpP}</Body>
         <Kicker style={{ marginTop: 24, marginBottom: 4 }}>{t.textSize}</Kicker>

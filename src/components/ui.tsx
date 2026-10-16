@@ -197,7 +197,7 @@ export function Seg({ opts, height = 40 }: { opts: SegOpt[]; height?: number }) 
             borderColor: o.on ? p.accent : 'transparent',
           }}
         >
-          <Text style={{ fontFamily: FONT.body, fontSize: 14, color: o.on ? p.a700 : p.text }}>{o.label}</Text>
+          <Text numberOfLines={1} style={{ fontFamily: FONT.body, fontSize: opts.length > 3 ? 13 : 14, color: o.on ? p.a700 : p.text }}>{o.label}</Text>
         </Pressable>
       ))}
     </View>

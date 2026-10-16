@@ -6,6 +6,7 @@ import {
   Feast,
   Lang,
   LIVES,
+  MEM,
   MG,
   NJ,
   POK,
@@ -290,6 +291,8 @@ export const weekdayName = (dt: Date, L: Lang) => WD[L][weekdayIdx(dt)];
 
 export interface FeastRow {
   date: string;
+  /** Рік, до якого належить дата. */
+  year: string;
   name: string;
   mv: boolean;
   next: boolean;
@@ -320,6 +323,7 @@ export const feastSections = (cal: CalendarType, L: Lang, from: Date) => {
     s,
     rows: FE.filter((f) => f.s === s).map<FeastRow>((f) => ({
       date: fmtMD(f[cal][0], f[cal][1], L),
+      year: String(churchYearOf(f[cal][0], f[cal][1], cal, f.mv)),
       name: f[L],
       mv: !!f.mv,
       next: f === nx,
@@ -331,6 +335,8 @@ export interface FastRow {
   start: string;
   /** Кінець для багатоденних постів (порожньо для одноденних). */
   end: string;
+  /** Рік або роки («2026–2027»), до яких належать дати. */
+  year: string;
   name: string;
   days: string;
   mv: boolean;
@@ -338,8 +344,14 @@ export interface FastRow {
   next: boolean;
 }
 
-/** Рік, на який указано перехідні дати постів у FA. */
-const FAST_MV_YEAR = 2027;
+/** Церковний рік, який показують списки свят, постів і поминальних днів (FE, FA, MEM): вересень 2026 — серпень 2027. */
+const CHURCH_YEAR = 2026;
+/** Рік, на який указано перехідні дати постів у FA (рік Пасхи). */
+const FAST_MV_YEAR = CHURCH_YEAR + 1;
+
+/** Цивільний рік неперехідної дати в церковному році; рік починається 1 вересня (за юліанським — 14 вересня цивільного). */
+const churchYearOf = (m: number, d: number, cal: CalendarType, mv?: 1) =>
+  mv ? FAST_MV_YEAR : m * 100 + d >= (cal === 'nj' ? 901 : 914) ? CHURCH_YEAR : CHURCH_YEAR + 1;
 
 const daysLabel = (n: number, L: Lang) => {
   if (L === 'en') return `${n} ${n === 1 ? 'day' : 'days'}`;
@@ -375,9 +387,12 @@ export const fastSections = (cal: CalendarType, L: Lang, from: Date) => {
         const [m1, d1, m2, d2] = f[cal];
         const one = m1 === m2 && d1 === d2;
         const n = Math.round((spans[i][0].b - spans[i][0].a) / DAY_MS) + 1;
+        const y1 = churchYearOf(m1, d1, cal, f.mv);
+        const y2 = m2 < m1 ? y1 + 1 : y1;
         return {
           start: fmtMD(m1, d1, L),
           end: one ? '' : fmtMD(m2, d2, L),
+          year: y1 === y2 ? String(y1) : `${y1}–${y2}`,
           name: f[L],
           days: f.s === 1 ? '' : daysLabel(n, L),
           mv: !!f.mv,
@@ -386,6 +401,25 @@ export const fastSections = (cal: CalendarType, L: Lang, from: Date) => {
         };
       }),
   }));
+};
+
+export interface MemorialRow {
+  date: string;
+  year: string;
+  weekday: string;
+  name: string;
+  mv: boolean;
+  next: boolean;
+}
+
+/** Поминальні дні церковного року з позначкою «найближчий». */
+export const memorialRows = (cal: CalendarType, L: Lang, from: Date): MemorialRow[] => {
+  const t0 = ymd(from.getFullYear(), from.getMonth() + 1, from.getDate()).getTime();
+  const nx = MEM.findIndex((m) => ymd(...m[cal]).getTime() >= t0);
+  return MEM.map((m, i) => {
+    const [y, mo, d] = m[cal];
+    return { date: fmtMD(mo, d, L), year: String(y), weekday: weekdayName(ymd(y, mo, d), L), name: m[L], mv: !!m.mv, next: i === nx };
+  });
 };
 
 export interface MonthCell {
