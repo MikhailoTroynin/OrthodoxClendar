@@ -14,6 +14,8 @@ export interface Item {
   full?: 1; r?: Bi; p?: Bi[]; b?: Block[];
   /** Готовий текст (молитви й тропарі з каналу «Київський Ізвод») і зображення святого. */
   x?: string; /** Повний текст із MOLYTVOSLOV (молитвослов, Київський ізвод). */ mv?: MvRef[]; img?: { id: number; w: number; h: number };
+  /** Тематична група в переліку розділу (підзаголовок над першою молитвою групи). */
+  g?: Bi;
 }
 export interface Section { u: string; e: string; items: Item[] }
 /** Книга Біблії (i — індекс у BOOKS із data/bible/books) або група книг. */
@@ -66,16 +68,17 @@ export const MB: Section[] = [
 {u:'Канони',e:'Canons',items:[MV(KN('Канон покаянний','Canon of Repentance'),{b:7}),MV(KN('Молебний канон до Богородиці','Supplicatory Canon to the Theotokos'),{b:8}),MV(KN('Канон Ангелу Хоронителю','Canon to the Guardian Angel'),{b:9}),MV(KN('Великий канон прп. Андрія Критського','Great Canon of St Andrew of Crete',H('Читають у перші чотири дні Великого посту і в четвер пʼятого тижня.','Read on the first four days of Great Lent and on Thursday of the fifth week.')),...kn(0,1,2,3,4)),MV(KN('Пасхальний канон','Paschal Canon',H('Співають від Великодня до Віддання Пасхи.','Sung from Pascha until the Leave-taking of Pascha.')),...kn(5,7)),MV(KN('Канон Богородиці перед іконою «Скоропослушниця»','Canon to the Theotokos before her icon “Quick to Hearken”'),...kn(8))]},
 {u:'Часослов',e:'Horologion',items:[MV({u:'Шестопсалміє',e:'The Six Psalms',mu:'≈ 12 хв',me:'≈ 12 min',p:['3','37','62','87','102','142'].map(n=>H('Псалом '+n,'Psalm '+n))},...kn(9)),HR('Перший час','First Hour','5, 89, 100'),HR('Третій час','Third Hour','16, 24, 50'),HR('Шостий час','Sixth Hour','53, 54, 90'),HR('Девʼятий час','Ninth Hour','83, 84, 85'),{u:'Мале повечірʼя',e:'Small Compline',mu:'≈ 20 хв',me:'≈ 20 min',p:[H('Псалми 50, 69, 142','Psalms 50, 69, 142'),H('Символ віри','The Creed'),H('Канон','Canon'),H('«Достойно є» і молитва','“It is truly meet” and prayer')]},MV({u:'Часи Святої Пасхи',e:'Paschal Hours',mu:'≈ 10 хв',me:'≈ 10 min',r:H('Протягом Світлого тижня читають замість звичайних ранкових і вечірніх молитов.','Read throughout Bright Week in place of the usual morning and evening prayers.')},...kn(6))]},
 {u:'На різні потреби',e:'For various needs',items:[TX('Молитва за Україну','Prayer for Ukraine','ukraine',H('Духовний гімн на слова Олександра Кониського.','A hymn to words by Oleksandr Konysky.')),MV(ND('Молитва за хворих','Prayer for the sick'),mvs(10,'Молитва за недужих')),MV(ND('Молитва за подорожніх','Prayer for travellers'),mvs(10,'Молитва за тих, хто в дорозі')),MV(ND('Молитва перед навчанням','Prayer before study'),mvs(10,'Молитва перед початком навчання','Молитва після навчання')),MV(ND('Молитва за спочилих','Prayer for the departed'),mvs(1,'Молитва за померлих'),mvs(10,'Молитва за спочилих батьків')),MV(ND('Подячна молитва','Prayer of thanksgiving'),mvs(10,'Подяка за отримання просимого','Пісня хвалебна святого Амвросія'))]}];
-const chItem = (c: ChItem): Item => ({ u: c.u, e: c.u, mu: '', me: '', full: 1, x: c.t, img: c.im && { id: c.id, w: c.im[0], h: c.im[1] } });
+const chItem = (c: ChItem): Item => ({ u: c.u, e: c.u, mu: '', me: '', full: 1, x: c.t, img: c.im && { id: c.id, w: c.im[0], h: c.im[1] }, g: c.g ? [c.g, c.g] : undefined });
+// Спершу повні книги Київського ізводу, потім доповнення з каналу «Київський Ізвод» — лише те, чого в цих книгах немає.
 MB.push(
-  { u: 'Молитви Київського ізводу', e: 'Prayers of the Kyiv Use', items: CH.filter((c) => c.k === 'p').map(chItem) },
+  {
+    u: 'Молитвослов (Київський ізвод)', e: 'Prayer book (Kyiv Use)',
+    items: MOLYTVOSLOV.map((b, i): Item => ({ u: b.u, e: b.e, mu: '', me: '', full: 1, mv: [{ b: i }] })),
+  },
+  {
+    u: 'Канонник (Київський ізвод)', e: 'Book of canons (Kyiv Use)',
+    items: KANONNYK.map((b, i): Item => ({ u: b.u, e: b.e, mu: '', me: '', full: 1, mv: [{ b: i, k: 1 }] })),
+  },
+  { u: 'Додаткові молитви (Київський ізвод)', e: 'Additional prayers (Kyiv Use)', items: CH.filter((c) => c.k === 'p').map(chItem) },
   { u: 'Святі й свята: тропарі та ікони', e: 'Saints and feasts: troparia and icons', items: CH.filter((c) => c.k === 's').map(chItem) },
 );
-MB.push({
-  u: 'Молитвослов (Київський ізвод)', e: 'Prayer book (Kyiv Use)',
-  items: MOLYTVOSLOV.map((b, i): Item => ({ u: b.u, e: b.e, mu: '', me: '', full: 1, mv: [{ b: i }] })),
-});
-MB.push({
-  u: 'Канонник (Київський ізвод)', e: 'Book of canons (Kyiv Use)',
-  items: KANONNYK.map((b, i): Item => ({ u: b.u, e: b.e, mu: '', me: '', full: 1, mv: [{ b: i, k: 1 }] })),
-});

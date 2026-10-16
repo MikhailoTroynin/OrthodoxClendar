@@ -198,23 +198,39 @@ function Sec({ o }: { o: Of<'sec'> }) {
   const { p, t, lang, push } = useStore();
   const ul = lang === 'uk';
   const s = prayersL()!.MB[o.s];
+  // Молитви з тематичною групою (it.g) ідуть окремими картками з підзаголовком; решта — однією карткою.
+  const groups: { g?: string; js: number[] }[] = [];
+  s.items.forEach((it, j) => {
+    const g = it.g?.[ul ? 0 : 1];
+    const last = groups[groups.length - 1];
+    if (last && last.g === g) last.js.push(j);
+    else groups.push({ g, js: [j] });
+  });
   return (
     <>
       <BackBar kicker={t.prayerBook} />
       <Scroll>
         <Kicker style={{ marginBottom: 6 }}>{ROM[o.s]}</Kicker>
         <Title>{ul ? s.u : s.e}</Title>
-        <View style={card(p)}>
-          {s.items.map((it, j) => (
-            <NavRow
-              key={j}
-              title={ul ? it.u : it.e}
-              sub={ul ? it.mu : it.me}
-              onPress={() => push({ t: 'read', s: o.s, j })}
-              last={j === s.items.length - 1}
-            />
-          ))}
-        </View>
+        {groups.map(({ g, js }, k) => (
+          <View key={k} style={{ marginBottom: k === groups.length - 1 ? 0 : 22 }}>
+            {!!g && <Kicker style={{ marginBottom: 8 }}>{g}</Kicker>}
+            <View style={card(p)}>
+              {js.map((j, n) => {
+                const it = s.items[j];
+                return (
+                  <NavRow
+                    key={j}
+                    title={ul ? it.u : it.e}
+                    sub={ul ? it.mu : it.me}
+                    onPress={() => push({ t: 'read', s: o.s, j })}
+                    last={n === js.length - 1}
+                  />
+                );
+              })}
+            </View>
+          </View>
+        ))}
       </Scroll>
     </>
   );
