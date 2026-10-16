@@ -7,6 +7,7 @@ import type { MvBook } from '../data/molytvoslov';
 import { KATH, ROM } from '../data/prayerLists';
 import { PL, VERS } from '../data/strings';
 import { BackBar } from '../components/Chrome';
+import { ReadScroll } from '../components/ReadScroll';
 import { Body, Divider, Heading, Icon, Kicker, NavRow, NUM, OutlineButton, Press, Seg, Switch, card } from '../components/ui';
 import { Rope } from './BookTab';
 import { bookRow, PsalterBlock } from './BibleTab';
@@ -222,7 +223,7 @@ function Reader({ o }: { o: Of<'read'> }) {
           ...(it.mv ?? []).flatMap((m) => bookText(mvBook(m), m.s)),
         ]} />}
       />
-      <Scroll>
+      <ReadScroll>
         <Title>{ul ? it.u : it.e}</Title>
         {!!(ul ? it.mu : it.me) && <Body size={12.5} mute={60} style={{ marginBottom: 14 }}>{ul ? it.mu : it.me}</Body>}
         {it.img && CH_IMG[it.img.id] && (
@@ -270,7 +271,7 @@ function Reader({ o }: { o: Of<'read'> }) {
           </View>
         )}
         {!it.full && <Body size={12.5} mute={55} style={{ marginTop: 18 }}>{t.outlineNote}</Body>}
-      </Scroll>
+      </ReadScroll>
     </>
   );
 }
@@ -423,7 +424,7 @@ function Kathisma({ o }: { o: Of<'kath'> }) {
   return (
     <>
       <BackBar right={<SizeBtns read={() => [`${t.kathisma} ${o.k}`, ...bookText(PSALTYR[kathIdx(o.k)])]} />} />
-      <Scroll>
+      <ReadScroll>
         <Kicker style={{ marginBottom: 6 }}>{t.psalter}</Kicker>
         <Title>{`${t.kathisma} ${o.k}`}</Title>
         <Kicker style={{ marginBottom: 12 }}>{`${t.psalmsW} ${KATH[o.k - 1]}`}</Kicker>
@@ -436,7 +437,7 @@ function Kathisma({ o }: { o: Of<'kath'> }) {
           {mark}
           {o.k < 20 && <OutlineButton label={`${t.kathisma} ${o.k + 1} →`} onPress={() => push({ t: 'kath', k: o.k + 1 })} />}
         </View>
-      </Scroll>
+      </ReadScroll>
     </>
   );
 }
@@ -448,12 +449,12 @@ function PsPage({ o }: { o: Of<'ps'> }) {
   return (
     <>
       <BackBar right={<SizeBtns read={() => [lang === 'uk' ? b.u : b.e, ...bookText(b)]} />} />
-      <Scroll>
+      <ReadScroll>
         <Kicker style={{ marginBottom: 6 }}>{t.psalter}</Kicker>
         <Title>{lang === 'uk' ? b.u : b.e}</Title>
         {lang !== 'uk' && <Body size={12.5} mute={60} style={{ marginBottom: 14 }}>{t.fullText}</Body>}
         <PrayerBook b={b} fs={fs} />
-      </Scroll>
+      </ReadScroll>
     </>
   );
 }
