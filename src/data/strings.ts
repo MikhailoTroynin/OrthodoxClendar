@@ -52,7 +52,6 @@ Object.assign(S.uk, {
   rNames: 'Іменини',
   rPray: 'Час молитов (ранок і вечір)',
   rDenied: 'Сповіщення вимкнені в налаштуваннях телефону. Увімкніть їх для «Православного календаря», щоб отримувати нагадування.',
-  rWeb: 'У веб-версії нагадування не надсилаються — вони працюють у застосунку на телефоні.',
   rOffAll: 'вимкнено',
   // Тексти сповіщень
   nApp: 'Православний календар',
@@ -133,7 +132,6 @@ Object.assign(S.en, {
   rNames: 'Name days',
   rPray: 'Prayer times (morning and evening)',
   rDenied: 'Notifications are turned off in your phone settings. Allow them for Orthodox Calendar to receive reminders.',
-  rWeb: 'Reminders are not sent in the web version — they work in the phone app.',
   rOffAll: 'off',
   nApp: 'Orthodox Calendar',
   nTomorrow: 'Tomorrow, ',

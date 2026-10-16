@@ -8,13 +8,11 @@ import { groupItem } from '../lib/bible';
 import { GOSPELS, gospelRead } from './BibleTab';
 
 export default function MenuTab() {
-  const { p, t, lang, cal, theme, set, push, pom, jc, kd, bd, bm } = useStore();
+  const { p, t, lang, theme, set, push, pom, jc, kd, bd, bm } = useStore();
   const ul = lang === 'uk';
   const pomN = pom.h.length + pom.r.length;
   const pomWord = ul ? PL(pomN, t.nmW) : pomN === 1 ? t.nmW[0] : t.nmW[1];
   const gos = gospelRead(bd);
-  const left = GOSPELS - gos;
-  const leftSub = `${t.left} ${left} ${ul ? PL(left, t.chW) : left === 1 ? t.chW[0] : t.chW[1]}`;
 
   return (
     <View style={{ flex: 1 }}>
@@ -30,7 +28,7 @@ export default function MenuTab() {
           <NavRow title={t.pom} value={`${pomN} ${pomWord}`} onPress={() => push({ t: 'pom' })} />
           <NavRow title={t.jesus} value={`${t.todayW}: ${jc}`} onPress={() => push({ t: 'jesus' })} />
           <NavRow title={t.psRead} value={`${kd.length} / 20`} onPress={() => push({ t: 'psalter' })} />
-          <NavRow title={t.gosRead} sub={leftSub} value={`${gos} / ${GOSPELS}`} onPress={() => push({ t: 'book', b: groupItem(5) })} last />
+          <NavRow title={t.gosRead} value={`${gos} / ${GOSPELS}`} onPress={() => push({ t: 'book', b: groupItem(5) })} last />
         </View>
 
         <Kicker style={{ marginBottom: 8 }}>{t.app}</Kicker>
@@ -44,12 +42,7 @@ export default function MenuTab() {
           />
         </View>
         <View style={[card(p), { marginBottom: 24 }]}>
-          <NavRow
-            title={t.settings}
-            sub={cal === 'nj' ? t.nj : t.oj}
-            onPress={() => push({ t: 'settings' })}
-            last
-          />
+          <NavRow title={t.settings} onPress={() => push({ t: 'settings' })} last />
         </View>
       </ScrollView>
     </View>
