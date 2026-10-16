@@ -34,7 +34,7 @@ class P(HTMLParser):
             s.start(t)
         elif t=='br' and s.cur is not None: s.cur.append('\n')
         elif t=='sup' and s.cur is not None:
-            s.notes.append(a.get('data-bs-original-title','').strip()); n=len(s.notes)
+            s.notes.append((a.get('data-bs-original-title') or a.get('title') or '').strip()); n=len(s.notes)
             s.cur.append('⁽'+str(n)+'⁾'); s.in_sup=True
         elif t=='span' and 'red' in (a.get('class') or ''): s.red+=1
         if t=='span': s.tagstack.append('red' in (a.get('class') or ''))
