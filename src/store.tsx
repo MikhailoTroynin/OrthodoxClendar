@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { BackHandler } from 'react-native';
 import { CalendarType, Lang } from './data/calendar';
 import type { Book } from './data/prayers';
+import { BM_VERSION, migrateMarks } from './data/markMigrate';
 import { S } from './data/strings';
 import { dayInfo, fromKey, loadYears, toKey } from './lib/calendar';
 import { useDataVersion } from './lib/lazy';
@@ -77,6 +78,8 @@ export interface Persisted {
   amt: number;
   /** Закладки в текстах молитов і Псалтиря. */
   bm: Mark[];
+  /** Версія номерів у закладках (див. data/markMigrate). */
+  bmv: number;
 }
 
 const DEFAULTS: Persisted = {
@@ -93,6 +96,7 @@ const DEFAULTS: Persisted = {
   jt: 100,
   amt: 100,
   bm: [],
+  bmv: BM_VERSION,
 };
 
 /** Посилання на банку monobank; замініть на справжнє перед випуском. */
@@ -148,7 +152,7 @@ export function StoreProvider({ children, onReady }: { children: React.ReactNode
     Promise.all([loadJSON<Persisted & { date?: string }>(), year])
       .then(([v]) => {
         // Англійських текстів поки немає, тож мова завжди українська (навіть якщо раніше збережено «en»).
-        if (v) setSaved((s) => ({ ...s, ...v, lang: 'uk', rm: { ...s.rm, ...v.rm, show: { ...s.rm.show, ...v.rm?.show } }, pom: { ...s.pom, ...v.pom }, bm: Array.isArray(v.bm) ? v.bm : [] }));
+        if (v) setSaved((s) => ({ ...s, ...v, lang: 'uk', rm: { ...s.rm, ...v.rm, show: { ...s.rm.show, ...v.rm?.show } }, pom: { ...s.pom, ...v.pom }, bm: Array.isArray(v.bm) ? migrateMarks(v.bm, v.bmv) : [], bmv: BM_VERSION }));
       })
       .catch((e) => console.warn('Не вдалося відновити налаштування', e))
       // Застосунок відкривається за будь-якого результату: інакше лишається порожній екран.

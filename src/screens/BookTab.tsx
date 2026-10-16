@@ -72,7 +72,7 @@ export default function BookTab() {
               onPress={() => push({ t: 'sec', s: i })}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, borderRadius: 0, borderBottomWidth: 1, borderBottomColor: p.divider }}
             >
-              <Text style={{ width: 28, fontFamily: FONT.heading, fontSize: 18, color: p.a700 }}>{ROM[i]}</Text>
+              <Text numberOfLines={1} style={{ width: 36, fontFamily: FONT.heading, fontSize: 18, color: p.a700 }}>{ROM[i]}</Text>
               <View style={{ flex: 1, gap: 2 }}>
                 <Heading size={19}>{nm(s)}</Heading>
                 <Text numberOfLines={1} style={{ fontFamily: FONT.body, fontSize: 12, color: p.mute(60) }}>
