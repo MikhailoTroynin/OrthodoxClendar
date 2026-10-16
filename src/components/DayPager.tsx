@@ -74,13 +74,17 @@ export function DayPager({ date, setDate, render }: { date: Date; setDate: (d: D
   }, [x, anchor]);
 
   const pages = [...new Set([idx - 1, idx, idx + 1, shown.current])];
+  // Стрічка сторінок має охоплювати всі намальовані дні: на Android дотики не доходять до дочірніх View
+  // поза межами батька, і після свайпу сторінку не можна було прокрутити вертикально.
+  const lo = Math.min(...pages);
+  const hi = Math.max(...pages);
   return (
     <View style={{ flex: 1, overflow: 'hidden' }} onLayout={(e) => setW(e.nativeEvent.layout.width)} {...pan.panHandlers}>
-      <Animated.View style={{ flex: 1, transform: [{ translateX: x }] }}>
+      <Animated.View style={{ position: 'absolute', top: 0, bottom: 0, left: lo * w, width: (hi - lo + 1) * w, transform: [{ translateX: x }] }}>
         {pages.map((k) => {
           const d = fromNum(anchor + k);
           return (
-            <View key={toKey(d)} style={{ position: 'absolute', top: 0, bottom: 0, left: k * w, width: w }}>
+            <View key={toKey(d)} style={{ position: 'absolute', top: 0, bottom: 0, left: (k - lo) * w, width: w }}>
               {render(d)}
             </View>
           );
