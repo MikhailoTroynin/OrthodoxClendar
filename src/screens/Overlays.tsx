@@ -659,7 +659,7 @@ function Search() {
 function Settings() {
   const { p, t, cal, fs, rm, ang, set, push } = useStore();
   const on = [rm.eve && rm.eveT, rm.tmr && rm.tmrT, rm.morn && rm.mornT].filter(Boolean) as string[];
-  const rmSub = on.length || rm.pre ? [...on, rm.pre ? t.rPre : ''].filter(Boolean).join(' · ') : t.rOffAll;
+  const rmSub = on.length || rm.pre || rm.mem ? [...on, rm.pre ? t.rPre : '', rm.mem ? t.rMem : ''].filter(Boolean).join(' · ') : t.rOffAll;
   return (
     <>
       <BackBar kicker={t.app} />
@@ -767,7 +767,7 @@ function Remind() {
     const next = { ...rm, ...patch };
     set({ rm: next });
     // Дозвіл питаємо, коли людина вмикає нагадування.
-    if (NATIVE && (next.eve || next.morn || next.tmr || next.pre || next.show.p || next.ang)) notifPermission(true).then((r) => setDenied(r === 'denied'));
+    if (NATIVE && (next.eve || next.morn || next.tmr || next.pre || next.mem || next.show.p || next.ang)) notifPermission(true).then((r) => setDenied(r === 'denied'));
   };
 
   const chip = (label: string, on: boolean, onPress: () => void, num = true) => (
@@ -835,6 +835,13 @@ function Remind() {
               <Body size={12.5} mute={60} style={{ marginTop: 3 }}>{t.rAngSub}</Body>
             </View>
             <Switch on={rm.ang} label={t.angTitle} onPress={() => upd({ ang: !rm.ang })} />
+          </View>
+          <View style={{ paddingHorizontal: 16, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderTopWidth: 1, borderTopColor: p.divider }}>
+            <View style={{ flex: 1 }}>
+              <Heading size={19}>{t.rMem}</Heading>
+              <Body size={12.5} mute={60} style={{ marginTop: 3 }}>{t.rMemSub}</Body>
+            </View>
+            <Switch on={rm.mem} label={t.rMem} onPress={() => upd({ mem: !rm.mem })} />
           </View>
         </View>
         <Kicker style={{ marginTop: 26, marginBottom: 8 }}>{t.rShow}</Kicker>
