@@ -673,9 +673,7 @@ function Search() {
 }
 
 function Settings() {
-  const { p, t, cal, fs, rm, ang, set, push } = useStore();
-  const on = [rm.eve && rm.eveT, rm.tmr && rm.tmrT, rm.morn && rm.mornT].filter(Boolean) as string[];
-  const rmSub = on.length || rm.pre || rm.mem ? [...on, rm.pre ? t.rPre : '', rm.mem ? t.rMem : ''].filter(Boolean).join(' · ') : t.rOffAll;
+  const { p, t, cal, fs, ang, set, push } = useStore();
   return (
     <>
       <BackBar kicker={t.app} />
@@ -688,10 +686,9 @@ function Settings() {
         <Seg opts={[17, 19, 21].map((v, i) => ({ label: t.sizes[i], on: fs === v, onPress: () => set({ fs: v }) }))} />
         <Kicker style={{ marginTop: 24, marginBottom: 8 }}>{t.notif}</Kicker>
         <View style={card(p)}>
-          <NavRow title={t.rTitle} sub={rmSub} onPress={() => push({ t: 'remind' })} />
+          <NavRow title={t.rTitle} onPress={() => push({ t: 'remind' })} />
           <NavRow
             title={t.angTitle}
-            sub={ang.length ? ang.map((a) => a.n).join(', ') : t.angNone}
             value={ang.length ? String(ang.length) : undefined}
             onPress={() => push({ t: 'angels' })}
             last
@@ -885,9 +882,7 @@ function Remind() {
             </Press>
           ))}
         </View>
-        {(denied || !NATIVE) && (
-          <Body size={12.5} mute={65} style={{ marginTop: 16 }}>{NATIVE ? t.rDenied : t.rWeb}</Body>
-        )}
+        {NATIVE && denied && <Body size={12.5} mute={65} style={{ marginTop: 16 }}>{t.rDenied}</Body>}
       </Scroll>
     </>
   );
@@ -987,9 +982,8 @@ function Angels() {
         <OutlineButton label={t.add} onPress={addOne} style={{ marginTop: 14, alignSelf: 'flex-start' }} />
 
         <View style={[card(p), { marginTop: 26 }]}>
-          <NavRow title={t.rTitle} sub={rm.ang ? `${t.angWhen} · ${rm.eveT}, ${rm.mornT}` : t.rOffAll} onPress={() => push({ t: 'remind' })} last />
+          <NavRow title={t.rTitle} onPress={() => push({ t: 'remind' })} last />
         </View>
-        {!NATIVE && <Body size={12.5} mute={65} style={{ marginTop: 16 }}>{t.rWeb}</Body>}
       </Scroll>
     </>
   );
