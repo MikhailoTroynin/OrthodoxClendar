@@ -7,7 +7,7 @@ import type { MvBook } from '../data/molytvoslov';
 import { KATH, ROM } from '../data/prayerLists';
 import { PL, VERS } from '../data/strings';
 import { BackBar } from '../components/Chrome';
-import { ReadScroll } from '../components/ReadScroll';
+import { Anchor, MarkBtn, ReadScroll, ReadScrollHandle, useToast } from '../components/ReadScroll';
 import { Body, Divider, Heading, Icon, Kicker, NavRow, NUM, OutlineButton, Press, Seg, Switch, card } from '../components/ui';
 import { Rope } from './BookTab';
 import { bookRow, PsalterBlock } from './BibleTab';
@@ -17,7 +17,7 @@ import { Lazy, prayersL, psaltyrL, useLazy } from '../lib/lazy';
 import { yearsL } from '../lib/calendar';
 import { Gate, Loading } from '../components/Lazy';
 import { dayInfo, entryFor, fmtDate, fmtMD, addDays, searchYear, toKey, ymd, FULL_YEARS, MN } from '../lib/calendar';
-import { JAR_URL, Overlay, useStore } from '../store';
+import { JAR_URL, Mark, Overlay, markKey, useStore } from '../store';
 import { Angel, angelDate, NATIVE, notifPermission, Reminders } from '../lib/notify';
 import { FONT, RADIUS } from '../theme';
 import { bookText, speak, stopSpeaking, useSpeaking } from '../lib/speech';
@@ -61,12 +61,12 @@ export function OverlayHost() {
     <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: p.bg }}>
       {top.t === 'life' && <Life />}
       {top.t === 'sec' && need([prayersL], <Sec o={top} />)}
-      {top.t === 'read' && need([prayersL], <Reader o={top} />)}
+      {top.t === 'read' && need([prayersL], <Reader key={`${top.s}.${top.j}`} o={top} />)}
       {top.t === 'book' && <BookOv o={top} />}
       {top.t === 'chap' && need([BOOK[top.b]], <Chapter key={`${top.b}.${top.c}.${top.v ?? 0}`} o={top} />)}
       {top.t === 'pass' && need([...new Set(parseRefs(top.s).map((r) => BOOK[r.b]))], <Passage o={top} />)}
-      {top.t === 'kath' && need([psaltyrL], <Kathisma o={top} />)}
-      {top.t === 'ps' && need([psaltyrL], <PsPage o={top} />)}
+      {top.t === 'kath' && need([psaltyrL], <Kathisma key={top.k} o={top} />)}
+      {top.t === 'ps' && need([psaltyrL], <PsPage key={top.i} o={top} />)}
       {top.t === 'psalter' && need([psaltyrL], <Psalter />)}
       {top.t === 'pom' && <Pom />}
       {top.t === 'jesus' && <Jesus />}
@@ -76,6 +76,7 @@ export function OverlayHost() {
       {top.t === 'angels' && <Angels />}
       {top.t === 'donate' && <Donate />}
       {top.t === 'ver' && <Versions />}
+      {top.t === 'marks' && <Marks />}
     </View>
   );
 }
@@ -84,7 +85,7 @@ const SUP = '⁰¹²³⁴⁵⁶⁷⁸⁹';
 
 /** Кнопки розміру тексту для читання; з read — ще й кнопка читання вголос.
  *  Українською кнопку поки сховано: системний синтез мовлення ставить хибні наголоси й читає з англійським акцентом. */
-function SizeBtns({ read }: { read?: () => string[] }) {
+function SizeBtns({ read, mark }: { read?: () => string[]; mark?: () => void }) {
   const { p, fs, set, t, lang } = useStore();
   const speaking = useSpeaking();
   const btn = (label: string, delta: number) => (
@@ -99,6 +100,7 @@ function SizeBtns({ read }: { read?: () => string[] }) {
   );
   return (
     <View style={{ flexDirection: 'row' }}>
+      {mark && <MarkBtn onPress={mark} />}
       {read && lang !== 'uk' && (
         <Press
           label={speaking ? t.stopListen : t.listen}
@@ -123,22 +125,38 @@ function PrayerBook({ b, only, title, fs }: { b: MvBook; only?: number[]; title?
   const used = new Set([...secs.flatMap((s) => [s.h ?? '', ...s.ps]).join('\n').matchAll(/⁽(\d+)⁾/g)].map((m) => +m[1] - 1));
   return (
     <View>
-      {!!title && <Heading size={24} style={{ marginTop: 10, marginBottom: 4 }}>{title}</Heading>}
+      {!!title && (
+        <Anchor text={title} h>
+          <Heading size={24} style={{ marginTop: 10, marginBottom: 4 }}>{title}</Heading>
+        </Anchor>
+      )}
       {secs.map((s, i) => (
         <View key={i} style={{ marginBottom: 12 }}>
-          {!!s.h && <Heading size={20} style={{ marginTop: 14, marginBottom: 8 }}>{s.h}</Heading>}
+          {!!s.h && (
+            <Anchor text={s.h} h>
+              <Heading size={20} style={{ marginTop: 14, marginBottom: 8 }}>{s.h}</Heading>
+            </Anchor>
+          )}
           {s.ps.map((t, j) =>
             t[0] === '§' ? (
-              <Text key={j} style={{ ...body, fontStyle: 'italic', fontSize: fs - 2, lineHeight: (fs - 2) * 1.5, color: p.mute(65), marginBottom: 10 }}>{t.slice(1)}</Text>
+              <Anchor key={j} text={t.slice(1)}>
+                <Text style={{ ...body, fontStyle: 'italic', fontSize: fs - 2, lineHeight: (fs - 2) * 1.5, color: p.mute(65), marginBottom: 10 }}>{t.slice(1)}</Text>
+              </Anchor>
             ) : t[0] === '#' ? (
-              <Kicker key={j} style={{ marginTop: 6, marginBottom: 6 }}>{t.slice(1)}</Kicker>
+              <Anchor key={j} text={t.slice(1)} h>
+                <Kicker style={{ marginTop: 6, marginBottom: 6 }}>{t.slice(1)}</Kicker>
+              </Anchor>
             ) : t[0] === '@' ? (
-              <Text key={j} style={{ ...body, marginBottom: 6 }}>
-                <Text style={[{ fontFamily: FONT.headingBold, fontSize: fs - 3, color: p.a700 }, NUM]}>{t.slice(1, t.indexOf(' '))}</Text>
-                {'\u2002' + t.slice(t.indexOf(' ') + 1)}
-              </Text>
+              <Anchor key={j} text={t.slice(t.indexOf(' ') + 1)}>
+                <Text style={{ ...body, marginBottom: 6 }}>
+                  <Text style={[{ fontFamily: FONT.headingBold, fontSize: fs - 3, color: p.a700 }, NUM]}>{t.slice(1, t.indexOf(' '))}</Text>
+                  {'\u2002' + t.slice(t.indexOf(' ') + 1)}
+                </Text>
+              </Anchor>
             ) : (
-              <Text key={j} style={{ ...body, marginBottom: 10 }}>{t}</Text>
+              <Anchor key={j} text={t}>
+                <Text style={{ ...body, marginBottom: 10 }}>{t}</Text>
+              </Anchor>
             ),
           )}
         </View>
@@ -211,11 +229,12 @@ function Reader({ o }: { o: Of<'read'> }) {
   const it = s.items[o.j];
   // Українською повний текст замінює план читання; англійською план лишається, а повний текст іде після нього.
   const outline = !it.mv || !ul;
+  const rs = useRef<ReadScrollHandle>(null);
   return (
     <>
       <BackBar
         kicker={ul ? s.u : s.e}
-        right={<SizeBtns read={() => [
+        right={<SizeBtns mark={() => rs.current?.addMark()} read={() => [
           ul ? it.u : it.e,
           it.x ?? '',
           ...(outline ? (it.b ?? []).flatMap((b) => [b.h?.[li] ?? '', b.t ? T[b.t][li] : '']) : []),
@@ -223,7 +242,7 @@ function Reader({ o }: { o: Of<'read'> }) {
           ...(it.mv ?? []).flatMap((m) => bookText(mvBook(m), m.s)),
         ]} />}
       />
-      <ReadScroll>
+      <ReadScroll ref={rs} mark={{ o: { t: 'read', s: o.s, j: o.j }, title: ul ? it.u : it.e, kicker: ul ? s.u : s.e }} goto={o.m}>
         <Title>{ul ? it.u : it.e}</Title>
         {!!(ul ? it.mu : it.me) && <Body size={12.5} mute={60} style={{ marginBottom: 14 }}>{ul ? it.mu : it.me}</Body>}
         {it.img && CH_IMG[it.img.id] && (
@@ -234,7 +253,11 @@ function Reader({ o }: { o: Of<'read'> }) {
             style={{ width: '100%', aspectRatio: it.img.w / it.img.h, maxHeight: 420, marginBottom: 18, borderRadius: RADIUS, backgroundColor: p.divider }}
           />
         )}
-        {!!it.x && <Text style={{ fontFamily: FONT.body, fontSize: fs, lineHeight: fs * 1.65, color: p.text }}>{it.x}</Text>}
+        {!!it.x && (
+          <Anchor text={it.x}>
+            <Text style={{ fontFamily: FONT.body, fontSize: fs, lineHeight: fs * 1.65, color: p.text }}>{it.x}</Text>
+          </Anchor>
+        )}
         {it.r && (
           <Text style={{ fontFamily: FONT.body, fontStyle: 'italic', fontSize: fs - 3, lineHeight: (fs - 3) * 1.5, color: p.mute(65), marginBottom: 16 }}>
             {it.r[li]}
@@ -248,7 +271,11 @@ function Reader({ o }: { o: Of<'read'> }) {
                 {b.r[li]}
               </Text>
             )}
-            {b.t && <Text style={{ fontFamily: FONT.body, fontSize: fs, lineHeight: fs * 1.65, color: p.text }}>{T[b.t][li]}</Text>}
+            {b.t && (
+              <Anchor text={T[b.t][li]}>
+                <Text style={{ fontFamily: FONT.body, fontSize: fs, lineHeight: fs * 1.65, color: p.text }}>{T[b.t][li]}</Text>
+              </Anchor>
+            )}
           </View>
         ))}
         {outline && it.p && it.p.length > 0 && (
@@ -414,6 +441,7 @@ function Kathisma({ o }: { o: Of<'kath'> }) {
   const { t, kd, set, p, fs, lang, push } = useStore();
   const done = kd.includes(o.k);
   const { PSALTYR, kathIdx } = psaltyrL()!;
+  const rs = useRef<ReadScrollHandle>(null);
   const mark = (
     <OutlineButton
       label={done ? t.marked : t.markRead}
@@ -423,8 +451,8 @@ function Kathisma({ o }: { o: Of<'kath'> }) {
   );
   return (
     <>
-      <BackBar right={<SizeBtns read={() => [`${t.kathisma} ${o.k}`, ...bookText(PSALTYR[kathIdx(o.k)])]} />} />
-      <ReadScroll>
+      <BackBar right={<SizeBtns mark={() => rs.current?.addMark()} read={() => [`${t.kathisma} ${o.k}`, ...bookText(PSALTYR[kathIdx(o.k)])]} />} />
+      <ReadScroll ref={rs} mark={{ o: { t: 'kath', k: o.k }, title: `${t.kathisma} ${o.k}`, kicker: t.psalter }} goto={o.m}>
         <Kicker style={{ marginBottom: 6 }}>{t.psalter}</Kicker>
         <Title>{`${t.kathisma} ${o.k}`}</Title>
         <Kicker style={{ marginBottom: 12 }}>{`${t.psalmsW} ${KATH[o.k - 1]}`}</Kicker>
@@ -446,10 +474,11 @@ function Kathisma({ o }: { o: Of<'kath'> }) {
 function PsPage({ o }: { o: Of<'ps'> }) {
   const { t, fs, lang } = useStore();
   const b = psaltyrL()!.PSALTYR[o.i];
+  const rs = useRef<ReadScrollHandle>(null);
   return (
     <>
-      <BackBar right={<SizeBtns read={() => [lang === 'uk' ? b.u : b.e, ...bookText(b)]} />} />
-      <ReadScroll>
+      <BackBar right={<SizeBtns mark={() => rs.current?.addMark()} read={() => [lang === 'uk' ? b.u : b.e, ...bookText(b)]} />} />
+      <ReadScroll ref={rs} mark={{ o: { t: 'ps', i: o.i }, title: lang === 'uk' ? b.u : b.e, kicker: t.psalter }} goto={o.m}>
         <Kicker style={{ marginBottom: 6 }}>{t.psalter}</Kicker>
         <Title>{lang === 'uk' ? b.u : b.e}</Title>
         {lang !== 'uk' && <Body size={12.5} mute={60} style={{ marginBottom: 14 }}>{t.fullText}</Body>}
@@ -970,6 +999,65 @@ function Donate() {
         />
         {copied && <Body size={13} style={{ color: p.a700, marginTop: 12 }}>{t.thanks}</Body>}
       </Scroll>
+    </>
+  );
+}
+
+/** Усі закладки, згруповані за молитвою (текстом): спершу тексти з найновішими закладками, у тексті — за порядком читання. */
+function Marks() {
+  const { p, t, lang, bm, set, push } = useStore();
+  const ul = lang === 'uk';
+  const [toast, showToast] = useToast();
+  const bmRef = useRef(bm);
+  bmRef.current = bm;
+  const groups = new Map<string, Mark[]>();
+  bm.forEach((m) => groups.set(markKey(m.o), [...(groups.get(markKey(m.o)) ?? []), m]));
+  const list = [...groups.values()]
+    .map((ms) => ms.sort((a, b) => a.i - b.i || a.f - b.f))
+    .sort((a, b) => Math.max(...b.map((m) => m.at)) - Math.max(...a.map((m) => m.at)));
+  const del = (m: Mark) => {
+    set({ bm: bm.filter((x) => x.id !== m.id) });
+    showToast(t.markRemoved, { label: t.restore, fn: () => set({ bm: [...bmRef.current.filter((x) => x.id !== m.id), m] }) });
+  };
+  const n = bm.length;
+  return (
+    <>
+      <BackBar kicker={n ? `${n} ${ul ? PL(n, t.marksW) : n === 1 ? t.marksW[0] : t.marksW[1]}` : undefined} />
+      <Scroll>
+        <Title>{t.marks}</Title>
+        {!n && <Body size={14} mute={65}>{t.marksEmpty}</Body>}
+        {list.map((ms) => {
+          const g = ms[ms.length - 1];
+          return (
+            <View key={markKey(g.o)} style={{ marginBottom: 22 }}>
+              <Kicker style={{ marginBottom: 4 }}>{g.kicker}</Kicker>
+              <Heading size={21} style={{ marginBottom: 10 }}>{g.title}</Heading>
+              <View style={card(p)}>
+                {ms.map((m, k) => (
+                  <View key={m.id} style={{ flexDirection: 'row', alignItems: 'stretch', borderBottomWidth: k === ms.length - 1 ? 0 : 1, borderBottomColor: p.divider }}>
+                    <Press onPress={() => push({ ...m.o, m: m.id })} style={{ flex: 1, flexDirection: 'row', gap: 10, paddingVertical: 12, paddingLeft: 14, paddingRight: 4, borderRadius: 0 }}>
+                      <View style={{ paddingTop: 3 }}>
+                        <Icon name="bookmark" size={15} color={p.accent} fill={p.accent} />
+                      </View>
+                      <View style={{ flex: 1, gap: 4 }}>
+                        <Text numberOfLines={3} style={{ fontFamily: FONT.body, fontSize: 15, lineHeight: 22, color: p.text }}>{`«${m.q}»`}</Text>
+                        <Text numberOfLines={2} style={[{ fontFamily: FONT.body, fontSize: 12, color: p.mute(60) }, NUM]}>
+                          {[m.h, `${Math.round(m.pos * 100)} %`, fmtDate(new Date(m.at), lang)].filter(Boolean).join(' · ')}
+                        </Text>
+                      </View>
+                    </Press>
+                    <Press label={`${t.markDel}: ${m.q}`} onPress={() => del(m)} style={{ width: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 0 }}>
+                      <Icon name="x" size={18} color={p.mute(50)} />
+                    </Press>
+                  </View>
+                ))}
+              </View>
+            </View>
+          );
+        })}
+        {n > 0 && <Body size={12.5} mute={55}>{t.marksHint}</Body>}
+      </Scroll>
+      {toast}
     </>
   );
 }
