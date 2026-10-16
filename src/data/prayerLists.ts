@@ -1,6 +1,6 @@
 // Короткі переліки для екранів «Молитвослов» і «Письмо»; вони потрібні одразу, тож винесені з великого модуля prayers.ts.
 /** Римські номери розділів молитвослова. */
-export const ROM: string[] = ['I','II','III','IV','V','VI','VII','VIII','IX','X'];
+export const ROM: string[] = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
 /** Акафіст за днем тижня (Пн–Нд): номер у розділі «Акафісти» і кому присвячено день. */
 export const WK: [number, string, string][] = [[7,'безплотним силам','the Bodiless Powers'],[5,'святому Іоанну Предтечі','St John the Forerunner'],[1,'Хресту і Богородиці','the Cross and the Theotokos'],[6,'апостолам і святителю Миколаю','the Apostles and St Nicholas'],[4,'Хресту Господньому','the Cross'],[1,'усім святим і спочилим','all saints and the departed'],[3,'Воскресінню Христовому','the Resurrection']];
 /** Псалми кожної з 20 кафизм. */
