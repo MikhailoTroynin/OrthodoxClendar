@@ -45,7 +45,7 @@ export default function MenuTab() {
         <View style={[card(p), { marginBottom: 24 }]}>
           <NavRow
             title={t.settings}
-            sub={`${ul ? 'Українська' : 'English'} · ${cal === 'nj' ? t.nj : t.oj}`}
+            sub={cal === 'nj' ? t.nj : t.oj}
             onPress={() => push({ t: 'settings' })}
             last
           />
