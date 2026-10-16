@@ -14,14 +14,15 @@ export type Tab = 'today' | 'cal' | 'book' | 'bible' | 'more';
 export type Overlay =
   | { t: 'life' }
   | { t: 'sec'; s: number }
-  | { t: 'read'; s: number; j: number }
+  /** m — закладка, до якої прокрутити (id у Persisted.bm). */
+  | { t: 'read'; s: number; j: number; m?: string }
   | { t: 'book'; b: Book }
   /** Глава c книги b (індекс у BOOKS); v…v2 — виділені вірші, до v прокручується. */
   | { t: 'chap'; b: number; c: number; v?: number; v2?: number }
   /** Читання за посиланням s («Гал. 5:22–6:2; Лк. 8:16–21»). */
   | { t: 'pass'; s: string; title: string }
-  | { t: 'kath'; k: number }
-  | { t: 'ps'; i: number }
+  | { t: 'kath'; k: number; m?: string }
+  | { t: 'ps'; i: number; m?: string }
   | { t: 'psalter' }
   | { t: 'pom' }
   | { t: 'jesus' }
@@ -30,7 +31,33 @@ export type Overlay =
   | { t: 'remind' }
   | { t: 'angels' }
   | { t: 'donate' }
-  | { t: 'ver' };
+  | { t: 'ver' }
+  | { t: 'marks' };
+
+/** Текст, у якому можна поставити закладку: молитва, кафизма чи сторінка Псалтиря. */
+export type MarkTarget = { t: 'read'; s: number; j: number } | { t: 'kath'; k: number } | { t: 'ps'; i: number };
+
+/** Закладка в конкретному місці тексту. */
+export interface Mark {
+  id: string;
+  o: MarkTarget;
+  /** Назва тексту і розділу на момент створення (для переліку закладок). */
+  title: string;
+  kicker: string;
+  /** Абзац (порядковий номер серед абзаців тексту), початок його тексту і місце всередині (0…1). */
+  i: number;
+  a: string;
+  f: number;
+  /** Глибина в тексті (0…1) — запасний варіант і відсоток у переліку. */
+  pos: number;
+  /** Уривок тексту біля закладки і найближчий заголовок над нею. */
+  q: string;
+  h?: string;
+  at: number;
+}
+
+/** Ключ тексту: закладки з однаковим ключем належать одній молитві. */
+export const markKey = (o: MarkTarget) => (o.t === 'read' ? `r${o.s}.${o.j}` : o.t === 'kath' ? `k${o.k}` : `p${o.i}`);
 
 export interface Persisted {
   lang: Lang;
@@ -48,6 +75,8 @@ export interface Persisted {
   jc: number;
   jt: number;
   amt: number;
+  /** Закладки в текстах молитов і Псалтиря. */
+  bm: Mark[];
 }
 
 const DEFAULTS: Persisted = {
@@ -63,6 +92,7 @@ const DEFAULTS: Persisted = {
   jc: 0,
   jt: 100,
   amt: 100,
+  bm: [],
 };
 
 /** Посилання на банку monobank; замініть на справжнє перед випуском. */
@@ -118,7 +148,7 @@ export function StoreProvider({ children, onReady }: { children: React.ReactNode
     Promise.all([loadJSON<Persisted & { date?: string }>(), year])
       .then(([v]) => {
         // Англійських текстів поки немає, тож мова завжди українська (навіть якщо раніше збережено «en»).
-        if (v) setSaved((s) => ({ ...s, ...v, lang: 'uk', rm: { ...s.rm, ...v.rm, show: { ...s.rm.show, ...v.rm?.show } }, pom: { ...s.pom, ...v.pom } }));
+        if (v) setSaved((s) => ({ ...s, ...v, lang: 'uk', rm: { ...s.rm, ...v.rm, show: { ...s.rm.show, ...v.rm?.show } }, pom: { ...s.pom, ...v.pom }, bm: Array.isArray(v.bm) ? v.bm : [] }));
       })
       .catch((e) => console.warn('Не вдалося відновити налаштування', e))
       // Застосунок відкривається за будь-якого результату: інакше лишається порожній екран.

@@ -8,7 +8,7 @@ import { groupItem } from '../lib/bible';
 import { GOSPELS, gospelRead } from './BibleTab';
 
 export default function MenuTab() {
-  const { p, t, lang, cal, theme, set, push, pom, jc, kd, bd } = useStore();
+  const { p, t, lang, cal, theme, set, push, pom, jc, kd, bd, bm } = useStore();
   const ul = lang === 'uk';
   const pomN = pom.h.length + pom.r.length;
   const pomWord = ul ? PL(pomN, t.nmW) : pomN === 1 ? t.nmW[0] : t.nmW[1];
@@ -26,6 +26,7 @@ export default function MenuTab() {
 
         <Kicker style={{ marginBottom: 8 }}>{t.personal}</Kicker>
         <View style={[card(p), { marginBottom: 24 }]}>
+          <NavRow title={t.marks} value={String(bm.length)} onPress={() => push({ t: 'marks' })} />
           <NavRow title={t.pom} value={`${pomN} ${pomWord}`} onPress={() => push({ t: 'pom' })} />
           <NavRow title={t.jesus} value={`${t.todayW}: ${jc}`} onPress={() => push({ t: 'jesus' })} />
           <NavRow title={t.psRead} value={`${kd.length} / 20`} onPress={() => push({ t: 'psalter' })} />

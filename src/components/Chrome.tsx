@@ -15,6 +15,13 @@ export function TopBar({ kicker }: { kicker: string }) {
       <Kicker>{kicker}</Kicker>
       <View style={{ flexDirection: 'row', gap: 2 }}>
         <Press
+          label={t.marks}
+          onPress={() => push({ t: 'marks' })}
+          style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Icon name="bookmark" color={p.text} />
+        </Press>
+        <Press
           label={night ? t.toDay : t.toNight}
           onPress={() => set({ theme: night ? 'day' : 'night' })}
           style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
@@ -56,6 +63,8 @@ function screenName(o: Overlay | undefined, tab: Tab, t: Record<string, any>, ul
     case 'jesus': return t.jesus;
     case 'donate': return t.supportRow;
     case 'ver': return t.versions;
+    case 'psalter': return t.psalter;
+    case 'marks': return t.marks;
   }
 }
 

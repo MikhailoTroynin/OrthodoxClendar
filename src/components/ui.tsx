@@ -24,10 +24,11 @@ const PATHS: Record<string, string> = {
   undo: 'M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8M3 3v5h5',
   speaker: 'M11 5 6 9H2v6h4l5 4V5ZM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14',
   stop: 'M7 7h10v10H7Z',
+  bookmark: 'M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z',
 };
 
-export function Icon({ name, size = 21, color, sw = 1.5 }: { name: string; size?: number; color: string; sw?: number }) {
-  const common = { stroke: color, strokeWidth: sw, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, fill: 'none' };
+export function Icon({ name, size = 21, color, sw = 1.5, fill }: { name: string; size?: number; color: string; sw?: number; fill?: string }) {
+  const common = { stroke: color, strokeWidth: sw, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, fill: fill ?? 'none' };
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       {name === 'sun' && (
