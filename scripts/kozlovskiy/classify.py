@@ -49,6 +49,10 @@ AK={54:('ok','акафісти: Сладчайшому Ісусу'),55:('ok','а
 for l in open(os.path.join(HERE,'akafisty_titles.tsv'),encoding='utf8'):
     if l.strip():
         i,u,_=l.rstrip('\n').split('\t'); AK[int(i)]=('ok','акафісти (src/data/kz)')
+# Канони, перенесені збиранням scripts/build_kz_kanony.py (назви — kanony_titles.tsv; тексти — src/data/kz/kn<N>.ts)
+for l in open(os.path.join(HERE,'kanony_titles.tsv'),encoding='utf8'):
+    if l.strip():
+        i,u,_=l.rstrip('\n').split('\t'); AK[int(i)]=('ok','канони (src/data/kz)')
 # У джерелі замість акафіста — лише довідка про відсутність грифа Видавничої ради (тексту акафіста немає)
 NONE_AK={57,58}
 # дублікати між таблицями: однакові тексти в prayers_ru_pr і prayers_ru_ak

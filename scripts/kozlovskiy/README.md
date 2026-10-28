@@ -15,3 +15,6 @@ python3 -I scripts/kozlovskiy/gen_md.py "$W"       # → $W/CHECKLIST.md
 
 Акафісти збирає `scripts/build_kz_akafisty.py` (див. PLAN.md, розділ «Акафісти»): `python3 -I scripts/build_kz_akafisty.py "$W/ext/src.db" <каталог scripts навички cs-kyiv-translit> src/data/kz "$W/report.json"`.
 Назви — `akafisty_titles.tsv`, переклади сучасних російських текстів — `translated/<id>.json`.
+
+Канони збирає `scripts/build_kz_kanony.py` (див. PLAN.md, розділ «Канони»): `python3 -I scripts/build_kz_kanony.py "$W/ext/src.db" <каталог scripts навички cs-kyiv-translit> src/data/kz "$W/report.json"`.
+Назви — `kanony_titles.tsv`, переклад тексту сучасною російською (ак#74) — `translated/74.json`.
