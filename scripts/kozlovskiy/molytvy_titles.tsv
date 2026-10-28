@@ -522,3 +522,13 @@ W	30018	Седмиця 5-та по Пасці (четвер — субота)	Fi
 W	30019	Седмиця 6-та по Пасці (понеділок — вівторок)	Sixth Week after Pascha (Monday to Tuesday)
 W	30020	Передсвяття Різдва Христового (з 3 по 5 січня)	Forefeast of the Nativity of Christ (3–5 January)
 W	30021	Передсвяття Богоявлення (16–17 січня)	Forefeast of Theophany (16–17 January)
+C	291	Перший час	First Hour
+C	292	Міжчасся першого часу	Interval after the First Hour
+C	293	Третій час	Third Hour
+C	294	Міжчасся третього часу	Interval after the Third Hour
+C	295	Шостий час	Sixth Hour
+C	296	Міжчасся шостого часу	Interval after the Sixth Hour
+C	297	Зображальні	Typica (Izobrazitelny)
+C	298	Девʼятий час	Ninth Hour
+C	299	Міжчасся девʼятого часу	Interval after the Ninth Hour
+C	302	Мале повечірʼя	Small Compline

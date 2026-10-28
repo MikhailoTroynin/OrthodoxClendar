@@ -18,7 +18,7 @@ A.translit_text = A.translit_text if hasattr(A, 'translit_text') else A.T.transl
 import molytvy_rubrics as R  # noqa: E402
 
 # Код групи в molytvy_titles.tsv; порядок = номер групи в prMeta.ts (див. prayers.ts: PRG)
-CODES = 'RGBAITSMLHFUDOW'
+CODES = 'RGBAITSMLHFUDOWC'
 TITLES = []
 for l in open(os.path.join(HERE, 'kozlovskiy', 'molytvy_titles.tsv'), encoding='utf8'):
     if l.strip():
@@ -285,7 +285,7 @@ def main():
         f.write("// Перелік молитов з ./pr<N>.ts (генерує scripts/build_kz_molytvy.py): [id у джерелі, шард, номер у шарді, група, назва, назва англ.].\n"
                 "// Група — індекс у рядку CODES скрипта (R правила, G Господу й Хресту, B Богородиці, A Небесним Силам, I перед іконами,\n"
                 "// T загальні тропарі й кондаки, S святим, M різні, L про хворих, H родина, F трапеза, U за спочилих, D тропарі й кондаки дня седмиці,\n"
-                "// O і W тропарі й кондаки свят). Тексти шардів завантажуються за потреби.\n"
+                "// O і W тропарі й кондаки свят, C Часослов). Тексти шардів завантажуються за потреби.\n"
                 f"export const KZ_PR: [number, number, number, number, string, string][] = {json.dumps(meta, ensure_ascii=False, separators=(',', ':'))};\n"
                 "import type { MvBook } from '../molytvoslov';\n"
                 "/** Ліниве завантаження шарда з текстами молитов. */\n"
