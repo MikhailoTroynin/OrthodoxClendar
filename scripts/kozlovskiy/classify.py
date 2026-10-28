@@ -1,5 +1,6 @@
 """Статус кожної молитви джерела щодо додатка. Використання: classify.py <робочий_каталог>"""
 import os,sys
+HERE=os.path.dirname(os.path.abspath(__file__))
 os.chdir(sys.argv[1])
 import sqlite3,sys,re
 db=sqlite3.connect('ext/src.db')
@@ -44,6 +45,12 @@ AK={54:('ok','акафісти: Сладчайшому Ісусу'),55:('ok','а
 64:('ok','канонник: Часи Пасхи'),65:('ok','канонник: Канон Пасхи'),66:('ok','канонник: Стихири Пасхи'),
 266:('ok','канонник: «Скоропослушниця»'),107:('ok','молитвослов: Канон покаянний'),108:('ok','молитвослов: Канон молебний'),109:('ok','молитвослов: Канон Ангелу Хранителю'),
 }
+# Акафісти, перенесені збиранням scripts/build_kz_akafisty.py (назви — akafisty_titles.tsv; тексти — src/data/kz)
+for l in open(os.path.join(HERE,'akafisty_titles.tsv'),encoding='utf8'):
+    if l.strip():
+        i,u,_=l.rstrip('\n').split('\t'); AK[int(i)]=('ok','акафісти (src/data/kz)')
+# У джерелі замість акафіста — лише довідка про відсутність грифа Видавничої ради (тексту акафіста немає)
+NONE_AK={57,58}
 # дублікати між таблицями: однакові тексти в prayers_ru_pr і prayers_ru_ak
 DUP_AK={308:5,  # Акафист Воскресению Христову
  222:57, 223:195, 224:111, 225:203, 226:217, 325:112}
@@ -56,7 +63,8 @@ rows=[]
 for t,m,dup in [('prayers_ru_pr',PR,DUP_AK),('prayers_ru_ak',AK,{})]:
     for _id,g,gn,name,ln in db.execute(f'select _id,id_group,name_group,name_prayers,length(text_prayers) from {t} order by id_group,id2'):
         st,where=m.get(_id,('miss',''))
-        if st=='miss' and (SKIP_RE.search(name) or (t=='prayers_ru_pr' and _id in SKIP_PR)):
+        if t=='prayers_ru_ak' and _id in NONE_AK: st,where='none','у джерелі немає тексту акафіста, лише довідка про гриф Видавничої ради'
+        elif st=='miss' and (SKIP_RE.search(name) or (t=='prayers_ru_pr' and _id in SKIP_PR)):
             st,where='skip','відкладено рішенням редактора'
         if _id in dup and st=='miss': st,where='dup',f'та сама назва в prayers_ru_ak#{dup[_id]} — переносити один раз'
         rows.append((t,_id,g,gn,name.strip(),ln,st,where))
