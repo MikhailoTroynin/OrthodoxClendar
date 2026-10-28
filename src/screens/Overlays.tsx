@@ -1,8 +1,7 @@
 import React, { useRef, useState } from 'react';
-import { Image, Linking, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Linking, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { FE, LIVES } from '../data/calendar';
-import { CH_IMG } from '../data/channelImages';
 import type { MvBook } from '../data/molytvoslov';
 import { KATH, ROM } from '../data/prayerLists';
 import { PL, VERS } from '../data/strings';
@@ -280,14 +279,6 @@ function Reader({ o }: { o: Of<'read'> }) {
       <ReadScroll ref={rs} mark={{ o: { t: 'read', s: o.s, j: o.j }, title: ul ? it.u : it.e, kicker: ul ? s.u : s.e }} goto={o.m}>
         <Title>{ul ? it.u : it.e}</Title>
         {!!(ul ? it.mu : it.me) && <Body size={12.5} mute={60} style={{ marginBottom: 14 }}>{ul ? it.mu : it.me}</Body>}
-        {it.img && CH_IMG[it.img.id] && (
-          <Image
-            source={CH_IMG[it.img.id]}
-            accessibilityIgnoresInvertColors
-            resizeMode="contain"
-            style={{ width: '100%', aspectRatio: it.img.w / it.img.h, maxHeight: 420, marginBottom: 18, borderRadius: RADIUS, backgroundColor: p.divider }}
-          />
-        )}
         {!!it.x && (
           <Anchor text={it.x}>
             <Text style={{ fontFamily: FONT.body, fontSize: fs, lineHeight: fs * 1.65, color: p.text }}>{it.x}</Text>
