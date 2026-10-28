@@ -5,10 +5,11 @@ import { KANONNYK } from './kanonnyk';
 import { MOLYTVOSLOV, MvBook } from './molytvoslov';
 import { KZ_AK, KZ_LOAD } from './kz/akMeta';
 import { KZ_KN, KN_LOAD } from './kz/knMeta';
+import { KZ_PR, PR_LOAD } from './kz/prMeta';
 import { lazy } from '../lib/lazy';
 export { AKAFISTY, KANONNYK, MOLYTVOSLOV };
-/** Шарди з текстами акафістів і канонів (data/kz): спершу акафісти, далі канони; кожен вантажиться за потреби. */
-export const KZB = [...KZ_LOAD, ...KN_LOAD].map((l) => lazy(l));
+/** Шарди з текстами акафістів, канонів і молитов (data/kz): спершу акафісти, далі канони, далі молитви; кожен вантажиться за потреби. */
+export const KZB = [...KZ_LOAD, ...KN_LOAD, ...PR_LOAD].map((l) => lazy(l));
 export type Bi = [string, string];
 export interface Block { h?: Bi; r?: Bi; t?: string }
 /** Посилання на повний текст у MOLYTVOSLOV (в AKAFISTY, якщо a; у KANONNYK, якщо k; у шарді z з KZB, якщо z): книга b, за потреби — лише розділи s. */
@@ -68,6 +69,14 @@ const KNI: Record<number, [number, number]> = Object.fromEntries(KZ_KN.map(([id,
 const KNF = (id: number, it: Item): Item => MV(it, { b: KNI[id][1], z: KNI[id][0] });
 /** Підзаголовки груп канонів з data/kz. */
 const KNG: Bi[] = [H('Празникам і Господнім подіям','Feasts and events of the Lord'),H('Святим','Saints'),H('Пресвятій Богородиці перед іконами','The Theotokos before her icons'),H('Різні','Other canons')];
+/** Молитва із шарда data/kz за номером у джерелі (id з KZ_PR); шарди молитов у KZB йдуть після шардів канонів. */
+const PRI: Record<number, [number, number]> = Object.fromEntries(KZ_PR.map(([id, sh, ix]) => [id, [sh + KZ_LOAD.length + KN_LOAD.length, ix]]));
+/** Молитви з data/kz однієї з груп (код групи — індекс у KZ_PR: 0 правила, 1 Господу й Хресту, 2 Богородиці, 3 Небесним Силам, 4 перед іконами Богородиці, 5 загальні тропарі й кондаки, 6 святим, 7 різні, 8 про хворих, 9 родина, 10 трапеза, 11 за спочилих, 12 тропарі й кондаки дня седмиці, 13 і 14 тропарі й кондаки свят). */
+const pr = (g: number, gr?: Bi): Item[] =>
+  KZ_PR.filter((x) => x[3] === g).map(([id, , , , u, e]) => {
+    const it = MV(ND(u, e), { b: PRI[id][1], z: PRI[id][0] });
+    return gr ? G(it, gr) : it;
+  });
 /** Заглушки, що замінено повними текстами (id у KZ_AK): вони стоять у переліку на своїх місцях, решту дописано в кінець. */
 const KZ_STUB = new Set([9, 5, 193, 23, 26, 145, 30, 129, 56]);
 /** Книги i… з KANONNYK. */
@@ -75,6 +84,11 @@ const kn = (...i: number[]): MvRef[] => i.map((b) => ({ b, k: 1 }));
 const G = (it: Item, g: Bi): Item => ({ ...it, g });
 /** Тематичні групи розділу «На різні потреби». */
 const NG: Bi[] = [H('Щодня','Every day'),H('Слово Боже і навчання','The word of God and study'),H('Подяка','Thanksgiving'),H('За ближніх','For others'),H('У біді й спокусі','In trouble and temptation'),H('За Україну','For Ukraine'),H('За спочилих','For the departed')];
+/** Підзаголовки молитов з data/kz у розділах «На різні потреби» і «Молитви Господу, Богородиці й Небесним Силам». */
+const PRN: Bi[] = [H('Про родину, батьків і дітей','Family, parents and children'),H('Про хворих','For the sick'),H('Перед їжею і після неї','Before and after meals'),H('Різні молитви','Various prayers'),
+H('Молитовні правила','Prayer rules'),H('Господу Ісусу Христу і Хресту','To the Lord Jesus Christ and the Cross'),H('Пресвятій Богородиці','To the Most Holy Theotokos'),H('Небесним Силам і Ангелу Хоронителю','To the heavenly powers and the Guardian Angel')];
+/** Підзаголовки розділу «Тропарі й кондаки». */
+const PRT: Bi[] = [H('Дні седмиці','Days of the week'),H('Святим (загальні)','Common of the saints'),H('Празники','Feasts'),H('Інші свята й дні','Other feasts and days')];
 /** Молитви книги «Молитви на всяку потребу» (номер розділу, назва англійською, група з NG) у порядку переліку. */
 const NEEDS: [number, string, number][] = [
 [3,'The Jesus Prayer',0],[2,'Prayer on the way to church',0],[4,'Prayer against distraction in prayer',0],[5,'Prayer before any work',0],[6,'Prayer after any work',0],[9,'Prayer of St Ephrem the Syrian',0],[22,'Prayer on taking prosphora and holy water',0],[24,'Prayer of the Optina Elders',0],
@@ -103,7 +117,12 @@ MV({u:'Пом’янник',e:'Commemoration book',mu:'',me:'',r:H('Помина
 ...NEEDS.filter((n) => n[2] < 5).map(need),
 G(TX('Молитва за Україну','Prayer for Ukraine','ukraine',H('Духовний гімн на слова Олександра Кониського.','A hymn to words by Oleksandr Konysky.')),NG[5]),
 ...NEEDS.filter((n) => n[2] >= 5).map(need),
-G(MV(ND('Заупокійна літія, що звершується мирянином','Litiya for the departed served by a layman'),{b:13}),NG[6])]},
+G(MV(ND('Заупокійна літія, що звершується мирянином','Litiya for the departed served by a layman'),{b:13}),NG[6]),
+...pr(11,NG[6]),...pr(9,PRN[0]),...pr(8,PRN[1]),...pr(10,PRN[2]),...pr(7,PRN[3])]},
+{u:'Молитви Господу, Богородиці й Небесним Силам',e:'Prayers to the Lord, the Theotokos and the Heavenly Powers',items:[...pr(0,PRN[4]),...pr(1,PRN[5]),...pr(2,PRN[6]),...pr(3,PRN[7])]},
+{u:'Перед іконами Богородиці',e:'Before icons of the Theotokos',items:pr(4)},
+{u:'Молитви святим',e:'Prayers to the saints',items:pr(6)},
+{u:'Тропарі й кондаки',e:'Troparia and kontakia',items:[...pr(12,PRT[0]),...pr(5,PRT[1]),...pr(14,PRT[2]),...pr(13,PRT[3])]},
 {u:'Піснеспіви і заповіді',e:'Hymns and commandments',items:[
 ...MOLYTVOSLOV[12].secs.map((x, si) => G(MV(ND(x.h!, HYMNS[si]), { b: 12, s: [si] }), H('Піснеспіви','Hymns'))),
 ...MOLYTVOSLOV[11].secs.map((x, si) => G(MV(ND(x.h!, si ? 'The Beatitudes' : 'The two great commandments of our Lord Jesus Christ'), { b: 11, s: [si] }), H('Заповіді','Commandments'))),

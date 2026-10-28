@@ -1,0 +1,524 @@
+R	5	Богородичне правило	Rule of the Theotokos
+R	6	Повне Богородичне правило	Full Rule of the Theotokos
+R	7	Правило від осквернення	Rule for Defilement
+R	8	Правило про визволення від злих помислів	Rule for Deliverance from Evil Thoughts
+R	267	Чин келійного (домашнього) читання канонів і акафістів	Order for the Cell (Home) Reading of Canons and Akathists
+T	406	Тропарі й кондаки недільні	Sunday troparia and kontakia
+T	407	Тропарі й кондаки щоденні	Troparia and kontakia of the weekdays
+T	408	У празники Богородичні	On feasts of the Theotokos
+T	409	Святих Безплотних Сил	Of the Holy Bodiless Powers
+T	410	Святих отців	Of the Holy Fathers
+T	411	Пророка	Of a Prophet
+T	412	Апостола	Of an Apostle
+T	413	Апостолів	Of Apostles
+T	414	Святителя	Of a Hierarch
+T	415	Святителів	Of Hierarchs
+T	416	Мученика	Of a Martyr
+T	418	Мучениці	Of a Female Martyr
+T	420	Мучеників	Of Martyrs
+T	421	Мучениць	Of Female Martyrs
+T	422	Священномученика	Of a Hieromartyr
+T	424	Священномучеників	Of Hieromartyrs
+T	425	Преподобномученика	Of a Venerable Martyr
+T	427	Преподобномучениці	Of a Venerable Female Martyr
+T	429	Преподобномучеників	Of Venerable Martyrs
+T	430	Священноісповідника й преподобноісповідника	Of a Hieroconfessor and a Venerable Confessor
+T	436	Преподобного	Of a Venerable Father
+T	437	Преподобної	Of a Venerable Mother
+T	438	Преподобних	Of Venerable Fathers
+T	439	Преподобних жон	Of Venerable Women
+T	440	Безсрібників	Of the Unmercenary Healers
+T	441	Христа ради юродивого	Of a Fool for Christ
+G	19	Молитва на Воздвиження Чесного і Животворящого Хреста Господнього	Prayer for the Exaltation of the Precious and Life-giving Cross of the Lord
+G	20	Молитва всемилостивому Спасу і Пресвятій Богородиці	Prayer to the All-merciful Saviour and the Most Holy Theotokos
+G	21	Молитва на Хрещення Господнє. Богоявлення	Prayer for the Baptism of the Lord. Theophany
+G	22	Молитва Нерукотвореному образу Господньому (Убрусу)	Prayer to the Image of the Lord Not Made by Hands (Holy Mandylion)
+G	23	Молитва на Преображення Господнє	Prayer for the Transfiguration of the Lord
+G	24	Молитва на Стрітення Господнє	Prayer for the Presentation of the Lord
+G	195	Молитва «Нехай воскресне Бог»	Prayer “Let God Arise”
+G	209	Поклоніння Святій Тройці	Worship of the Holy Trinity
+G	211	Молитва Чесному і Животворящому Хресту Господньому	Prayer to the Precious and Life-giving Cross of the Lord
+G	252	Молитва до Господа про прощення, заступництво і допомогу	Prayer to the Lord for Forgiveness, Protection and Help
+G	278	Молитва Пресвятій Тройці, твір Марка ченця	Prayer to the Most Holy Trinity, by Mark the Monk
+G	320	Молитва подячна до Господа	Prayer of Thanksgiving to the Lord
+G	323	Давня молитва до Господа з келійної книжиці о. Івана (Крестьянкіна)	An Ancient Prayer to the Lord from the Cell Book of Fr John (Krestyankin)
+G	212	Молитва Святому і Животворящому Хресту Господньому (Годеновський Хрест)	Prayer to the Holy and Life-giving Cross of the Lord (Godenovo Cross)
+G	383	Молитви до Господа Ісуса Христа	Prayers to the Lord Jesus Christ
+G	384	Молитви до Господа св. Івана Кронштадтського	Prayers to the Lord by St John of Kronstadt
+B	25	Молитва на Благовіщення Пресвятої Богородиці	Prayer for the Annunciation of the Most Holy Theotokos
+B	26	Молитва на Введення в храм Пресвятої Богородиці	Prayer for the Entry of the Most Holy Theotokos into the Temple
+B	27	Молитва на Покрову Пресвятої Богородиці	Prayer for the Protection of the Most Holy Theotokos
+B	28	Молитва на Різдво Пресвятої Богородиці	Prayer for the Nativity of the Most Holy Theotokos
+B	29	Молитва на Успіння Пресвятої Богородиці	Prayer for the Dormition of the Most Holy Theotokos
+B	169	Молитви до Пресвятої Богородиці на кожен день седмиці прп. ієросхимонаха Нила Сорського	Prayers to the Most Holy Theotokos for Each Day of the Week by St Nilus of Sora
+B	208	Хвалебна пісня до Пресвятої Богородиці, подібна до твору Амвросія Медіоланського	Hymn of Praise to the Most Holy Theotokos, after St Ambrose of Milan
+B	167	Пісня Пресвятій Богородиці	Hymn to the Most Holy Theotokos
+B	321	Молитва подячна до Пресвятої Богородиці	Prayer of Thanksgiving to the Most Holy Theotokos
+B	522	Молитви прп. Єфрема Сиріна до Пресвятої Богородиці на кожну годину	Prayers of St Ephrem the Syrian to the Most Holy Theotokos for Each Hour
+B	548	Волання до Богородиці	A Cry to the Mother of God
+I	31	Молитва Пресвятій Богородиці перед іконою «Охтирська»	Prayer to the Theotokos before her icon “Okhtyrka”
+I	32	Молитва Пресвятій Богородиці перед іконою «Благодатне Небо»	Prayer to the Theotokos before her icon “Blessed Heaven”
+I	33	Молитва Пресвятій Богородиці перед іконою «Боголюбська»	Prayer to the Theotokos before her icon “Bogolyubovo”
+I	34	Молитва Пресвятій Богородиці перед іконою «Взискання погибших»	Prayer to the Theotokos before her icon “Seeker of the Lost”
+I	35	Молитва Пресвятій Богородиці перед іконою «Володимирська»	Prayer to the Theotokos before her icon “Vladimir”
+I	36	Молитва Пресвятій Богородиці перед іконою «Всеблаженна» («Памакариста»)	Prayer to the Theotokos before her icon “Most Blessed” (“Pammakaristos”)
+I	37	Молитва Пресвятій Богородиці перед іконою «Всіх скорботних Радість»	Prayer to the Theotokos before her icon “Joy of All Who Sorrow”
+I	38	Молитва Пресвятій Богородиці перед іконою «Всецариця» (Пантанасса)	Prayer to the Theotokos before her icon “Queen of All” (Pantanassa)
+I	40	Молитва Пресвятій Богородиці перед іконою «Глинська»	Prayer to the Theotokos before her icon “Glinsk”
+I	41	Молитва Пресвятій Богородиці перед іконою «Грузинська» (Красногорська)	Prayer to the Theotokos before her icon “Georgian” (Krasnogorsk)
+I	42	Молитва Пресвятій Богородиці перед іконою «Державна»	Prayer to the Theotokos before her icon “Derzhavna” (Sovereign)
+I	43	Молитва Пресвятій Богородиці перед іконою «Донська»	Prayer to the Theotokos before her icon “Don”
+I	44	Молитва Пресвятій Богородиці перед іконою «Достойно є» («Милуюча»)	Prayer to the Theotokos before her icon “It Is Truly Meet” (“The Merciful”)
+I	45	Молитва Пресвятій Богородиці перед іконою «Єлецька-Харківська»	Prayer to the Theotokos before her icon “Yelets-Kharkiv”
+I	46	Молитва Пресвятій Богородиці перед іконою «Жировицька»	Prayer to the Theotokos before her icon “Zhyrovichy”
+I	47	Молитва Пресвятій Богородиці перед іконою «Живоносне Джерело»	Prayer to the Theotokos before her icon “The Life-giving Spring”
+I	48	Молитва Пресвятій Богородиці перед іконою «Знамення»	Prayer to the Theotokos before her icon “of the Sign”
+I	50	Молитва Пресвятій Богородиці перед іконою «Іверська»	Prayer to the Theotokos before her icon “Iveron”
+I	51	Молитва Пресвятій Богородиці перед іконою «Іверська-Моздоцька»	Prayer to the Theotokos before her icon “Iveron-Mozdok”
+I	52	Молитва Пресвятій Богородиці перед іконою «Єрусалимська»	Prayer to the Theotokos before her icon “Jerusalem”
+I	53	Молитва Пресвятій Богородиці перед іконою «Ізбавительниця»	Prayer to the Theotokos before her icon “Deliverer”
+I	54	Молитва Пресвятій Богородиці перед іконою «Ізборська»	Prayer to the Theotokos before her icon “Izborsk”
+I	55	Молитва Пресвятій Богородиці перед іконою «Казанська»	Prayer to the Theotokos before her icon “Kazan”
+I	56	Молитва Пресвятій Богородиці перед іконою «Калузька»	Prayer to the Theotokos before her icon “Kaluga”
+I	57	Молитва Пресвятій Богородиці перед іконою «Козельщанська»	Prayer to the Theotokos before her icon “Kozelshchyna”
+I	58	Молитва Пресвятій Богородиці перед іконою «Коневська»	Prayer to the Theotokos before her icon “Konevets”
+I	59	Молитва Пресвятій Богородиці перед іконою «Любецька»	Prayer to the Theotokos before her icon “Lyubech”
+I	61	Молитва Пресвятій Богородиці перед іконою «Млекопитательниця»	Prayer to the Theotokos before her icon “The Milk-Giver”
+I	63	Молитва Пресвятій Богородиці перед іконою «Муромська»	Prayer to the Theotokos before her icon “Murom”
+I	64	Молитва Пресвятій Богородиці перед іконою «Неопалима Купина»	Prayer to the Theotokos before her icon “Unburnt Bush”
+I	67	Молитва Пресвятій Богородиці перед іконою «Неупиваєма Чаша»	Prayer to the Theotokos before her icon “The Inexhaustible Chalice”
+I	68	Молитва Пресвятій Богородиці перед іконою «Нечаянная Радість»	Prayer to the Theotokos before her icon “Unexpected Joy”
+I	70	Молитва Пресвятій Богородиці перед іконою «Озерянська»	Prayer to the Theotokos before her icon “Ozeryany”
+I	72	Молитва Пресвятій Богородиці перед іконою «Утіха» або «Розрада»	Prayer to the Theotokos before her icon “Consolation” or “Comfort”
+I	74	Молитва Пресвятій Богородиці перед іконою «Печерська»	Prayer to the Theotokos before her icon “of the Caves”
+I	76	Молитва Пресвятій Богородиці перед іконою «Почаївська»	Prayer to the Theotokos before her icon “Pochaiv”
+I	79	Молитва Пресвятій Богородиці перед іконою «Рудненська»	Prayer to the Theotokos before her icon “Rudna”
+I	80	Молитва Пресвятій Богородиці перед іконою «Семистрільна» або «Пом’якшення злих сердець»	Prayer to the Theotokos before her icon “Seven Arrows” or “Softener of Evil Hearts”
+I	81	Молитва Пресвятій Богородиці перед іконою «Скоропослушниця»	Prayer to the Theotokos before her icon “Quick to Hear”
+I	83	Молитва Пресвятій Богородиці перед іконою «Одигітрія» Смоленська (Путівниця)	Prayer to the Theotokos before her icon “Hodegetria” of Smolensk (She Who Shows the Way)
+I	84	Молитва Пресвятій Богородиці перед іконою «Софія, Премудрість Божа» (Новгородська)	Prayer to the Theotokos before her icon “Sophia, the Wisdom of God” (of Novgorod)
+I	86	Молитва Пресвятій Богородиці перед іконою «Поручителька грішних»	Prayer to the Theotokos before her icon “Surety of Sinners”
+I	87	Молитва Пресвятій Богородиці перед іконою «Страсна»	Prayer to the Theotokos before her icon “of the Passion”
+I	88	Молитва Пресвятій Богородиці перед іконою «Табинська»	Prayer to the Theotokos before her icon “Tabynsk”
+I	89	Молитва Пресвятій Богородиці перед іконою «Тихвінська»	Prayer to the Theotokos before her icon “Tikhvin”
+I	90	Молитва Пресвятій Богородиці перед іконою «Толзька»	Prayer to the Theotokos before her icon “Tolga”
+I	92	Молитва Пресвятій Богородиці перед іконою «Розчулення» Новгородська	Prayer to the Theotokos before her icon “Tenderness” of Novgorod
+I	93	Молитва Пресвятій Богородиці перед іконою «Розчулення» Псково-Печерська	Prayer to the Theotokos before her icon “Tenderness” of Pskov-Caves
+I	94	Молитва Пресвятій Богородиці перед іконою «Розчулення» Серафимо-Дівеєвська	Prayer to the Theotokos before her icon “Tenderness” of Seraphim-Diveyevo
+I	96	Молитва Пресвятій Богородиці перед іконою «Утоли моя печалі»	Prayer to the Theotokos before her icon “Soothe My Sorrows”
+I	97	Молитва Пресвятій Богородиці перед іконою «Феодорівська»	Prayer to the Theotokos before her icon “Feodorovskaya”
+I	98	Молитва Пресвятій Богородиці перед іконою «Царгородська»	Prayer to the Theotokos before her icon “of Constantinople”
+I	100	Молитва Пресвятій Богородиці перед іконою «Чернігівська Гетсиманська»	Prayer to the Theotokos before her icon “Chernihiv Gethsemane”
+I	39	Молитва Пресвятій Богородиці перед іконою «Геронтісса» (Стариця)	Prayer to the Theotokos before her icon “Gerontissa” (the Elder)
+I	73	Молитва Пресвятій Богородиці перед іконою «Піщанська»	Prayer to the Theotokos before her icon “Peschansk”
+I	99	Молитва Пресвятій Богородиці перед іконою «Цілителька»	Prayer to the Theotokos before her icon “The Healer”
+I	101	Молитва Пресвятій Богородиці перед іконою «Економісса» (Домобудівниця)	Prayer to the Theotokos before her icon “Oikonomissa” (Housekeeper)
+I	85	Молитва Пресвятій Богородиці перед іконою «Примножувальниця хлібів»	Prayer to the Theotokos before her icon “Multiplier of Bread”
+I	66	Молитва Пресвятій Богородиці перед іконою «Неув’ядаємий Цвіт»	Prayer to the Theotokos before her icon “Unfading Blossom”
+I	65	Молитва Пресвятій Богородиці перед іконою «Непорушна Стіна»	Prayer to the Theotokos before her icon “The Unbreakable Wall”
+I	77	Молитва Пресвятій Богородиці перед іконою «Прибавлення ума»	Prayer to the Theotokos before her icon “Increaser of Intellect”
+I	71	Молитва Пресвятій Богородиці перед іконою «Остробрамська Віленська»	Prayer to the Theotokos before her icon “Ostrobramska” of Vilnius
+I	75	Молитва Пресвятій Богородиці перед іконою «Помічниця в пологах»	Prayer to the Theotokos before her icon “Helper in Childbirth”
+I	78	Молитва Пресвятій Богородиці перед іконою «Поглянь на смирення»	Prayer to the Theotokos before her icon “Look Upon My Humility”
+I	30	Молитва Пресвятій Богородиці перед іконою «Аз єсьм з вами, і ніхто же на вы»	Prayer to the Theotokos before her icon “I Am with You, and No One Shall Be Against You”
+I	60	Молитва Пресвятій Богородиці перед іконою «Мінська»	Prayer to the Theotokos before her icon “Minsk”
+I	49	Молитва Пресвятій Богородиці перед іконою «Знамення» Абалацька	Prayer to the Theotokos before her icon “of the Sign” of Abalak
+I	69	Молитва Пресвятій Богородиці перед іконою «Новоникитська»	Prayer to the Theotokos before her icon “Novonikitsk”
+I	82	Молитва Пресвятій Богородиці перед іконою «Слово плоть бисть» Албазинська	Prayer to the Theotokos before her icon “The Word Was Made Flesh” of Albazin
+I	62	Молитва Пресвятій Богородиці перед іконою «Молченська»	Prayer to the Theotokos before her icon “Molchensk”
+I	95	Молитва Пресвятій Богородиці перед іконою «Урюпінська»	Prayer to the Theotokos before her icon “Uryupinsk”
+S	102	Молитва пророку Іоанну, Предтечі і Хрестителю Господньому	Prayer to the Prophet John, the Forerunner and Baptist of the Lord
+S	103	Молитва апостолам Петру і Павлу, первоверховним	Prayer to the Apostles Peter and Paul, the Chief Apostles
+S	105	Молитва святителю Василію Великому, архієпископу Кесарії Каппадокійської	Prayer to St Basil the Great, Archbishop of Caesarea in Cappadocia
+S	106	Молитва апостолу Іоанну, Євангелисту, Богослову	Prayer to the Apostle John, Evangelist and Theologian
+S	107	Молитва святителю Григорію Богослову	Prayer to St Gregory the Theologian
+S	109	Молитва святителю Іоанну Золотоустому	Prayer to St John Chrysostom
+S	110	Молитва преподобній Марії Єгипетській	Prayer to St Mary of Egypt
+S	111	Молитва преподобному Сергію, ігумену Радонезькому	Prayer to St Sergius, Abbot of Radonezh
+S	112	Молитва преподобному Серафиму Саровському, чудотворцю	Prayer to St Seraphim of Sarov, the Wonderworker
+S	113	Молитва праведному Іоанну Кронштадтському, чудотворцю	Prayer to St John of Kronstadt, the Wonderworker
+S	114	Молитва святителю Феофану, Затворнику, Вишенському	Prayer to St Theophan the Recluse of Vyshen
+S	116	Молитва великомученику Пантелеймону, цілителю	Prayer to the Great Martyr Panteleimon the Healer
+S	119	Молитва преподобному Антонію Великому, Єгипетському	Prayer to St Anthony the Great of Egypt
+S	120	Молитва рівноапостольним Кирилу і Мефодію, учителям Словенським	Prayer to the Equals-to-the-Apostles Cyril and Methodius, Teachers of the Slavs
+S	121	Молитва преподобним Зосимі й Савватію Соловецьким	Prayer to Sts Zosima and Savvaty of Solovki
+S	122	Молитва святителю Ігнатію Брянчанінову, єпископу Кавказькому і Чорноморському	Prayer to St Ignatius Brianchaninov, Bishop of the Caucasus and the Black Sea
+S	123	Молитва преподобному Феодосію, ігумену Києво-Печерському	Prayer to St Theodosius, Abbot of the Kyiv Caves
+S	124	Молитва апостолу Симону Зилоту	Prayer to the Apostle Simon the Zealot
+S	125	Молитва князю Димитрію Донському	Prayer to Prince Dimitry Donskoy
+S	126	Молитва рівноапостольним Костянтину царю і матері його цариці Олені	Prayer to the Equals-to-the-Apostles Emperor Constantine and his mother Empress Helena
+S	128	Молитва преподобному Мефодію, ігумену Пешношському	Prayer to St Methodius, Abbot of Peshnosha
+S	131	Молитва святителю Іоанну (Максимовичу), архієпископу Шанхайському і Сан-Франциському	Prayer to St John (Maximovitch), Archbishop of Shanghai and San Francisco
+S	132	Молитва преподобним Сергію і Герману, Валаамським чудотворцям	Prayer to Sts Sergius and Herman, the Wonderworkers of Valaam
+S	133	Молитва преподобному Андрію Рубльову, іконописцю	Prayer to St Andrei Rublev, the Iconographer
+S	134	Молитва Царственним Страстотерпцям	Prayer to the Royal Passion-Bearers
+S	135	Молитва преподобному Афанасію Афонському	Prayer to St Athanasius of Athos
+S	136	Молитва преподобному Антонію, ігумену Києво-Печерському	Prayer to St Anthony, Abbot of the Kyiv Caves
+S	137	Молитва рівноапостольному Володимиру, великому князю, у святому хрещенні Василію	Prayer to the Equal-to-the-Apostles Volodymyr, Grand Prince, in Holy Baptism Basil
+S	138	Молитва пророку Іллі	Prayer to the Prophet Elijah
+S	140	Молитва святителю Тихону, єпископу Воронезькому, Задонському чудотворцю	Prayer to St Tikhon, Bishop of Voronezh, Wonderworker of Zadonsk
+S	141	Молитва преподобному Іову, ігумену Почаївському	Prayer to St Job, Abbot of Pochaiv
+S	142	Молитва князю Олександру Невському, у схимі Олексію	Prayer to Prince Alexander Nevsky, in the schema Alexis
+S	144	Молитва преподобному Силуану Афонському	Prayer to St Silouan of Athos
+S	145	Молитва святителю Димитрію, митрополиту Ростовському	Prayer to St Dimitry, Metropolitan of Rostov
+S	147	Молитва преподобному Харитону, сповіднику	Prayer to St Chariton the Confessor
+S	150	Молитва преподобному Амвросію Оптинському	Prayer to St Ambrose of Optina
+S	151	Молитва великомученику Димитрію Солунському, мироточцю	Prayer to the Great Martyr Demetrius of Thessalonica, the Myrrh-Streamer
+S	153	Молитва святителю Іннокентію, єпископу Іркутському	Prayer to St Innocent, Bishop of Irkutsk
+S	154	Молитва преподобному Сави Освяченому	Prayer to St Sabbas the Sanctified
+S	156	Молитва преподобному Агапіту Печерському, лікарю безмездному	Prayer to St Agapetus of the Caves, the Unmercenary Physician
+S	157	Молитва блаженній Ксенії Петербурзькій, Христа ради юродивій	Prayer to Blessed Xenia of Petersburg, Fool for Christ
+S	158	Молитва святителю Луці (Войно-Ясенецькому) Кримському	Prayer to St Luke (Voyno-Yasenetsky) of Crimea
+S	160	Молитва святителю Питириму, єпископу Тамбовському	Prayer to St Pitirim, Bishop of Tambov
+S	161	Молитва преподобному Нилу Селигерському, Столобенському чудотворцю	Prayer to St Nilus of Stolobny, the Wonderworker of Seliger
+S	162	Молитва великомучениці Варварі Іліопольській	Prayer to the Great Martyr Barbara of Heliopolis
+S	240	Молитва мученику Трифону Апамейському	Prayer to the Martyr Tryphon of Apamea
+S	241	Молитва святителю Спиридону Трімифунтському	Prayer to St Spyridon of Trimythous
+S	242	Молитва святій мучениці Тетяні	Prayer to the Holy Martyr Tatiana
+S	243	Молитва святим благовірним князю Петру і княгині Февронії, Муромським	Prayer to Sts Peter and Fevronia, Prince and Princess of Murom
+S	248	Молитва великомученику Іоанну Новому, Сочавському	Prayer to the Great Martyr John the New of Suceava
+S	249	Молитва преподобному Олександру Свірському	Prayer to St Alexander of Svir
+S	250	Молитва мученицям Вірі, Надії, Любові та матері їхній Софії	Prayer to the Martyrs Faith, Hope, Love and their mother Sophia
+S	251	Молитва преподобній Софії Суздальській	Prayer to St Sophia of Suzdal
+S	254	Молитва святій преподобномучениці великій княгині Єлисаветі	Prayer to the Holy Venerable Martyr Grand Duchess Elizabeth
+S	256	Молитва благовірній княгині Анні Кашинській	Prayer to the Right-believing Princess Anna of Kashin
+S	257	Молитва преподобному Макарію, ігумену Калязинському	Prayer to St Macarius, Abbot of Kalyazin
+S	258	Молитва великомучениці Катерині	Prayer to the Great Martyr Catherine
+S	259	Молитва праведному Феодору Томському	Prayer to the Righteous Theodore of Tomsk
+S	264	Молитва праведному Артемію Веркольському, чудотворцю	Prayer to the Righteous Artemius of Verkola, the Wonderworker
+S	265	Молитва преподобному Гавриїлу Ургебадзе	Prayer to St Gabriel Urgebadze
+S	266	Молитва святому апостолу Андрію Первозваному	Prayer to the Holy Apostle Andrew the First-Called
+S	269	Молитва рівноапостольній Марії Магдалині, мироносиці	Prayer to the Equal-to-the-Apostles Mary Magdalene, the Myrrh-Bearer
+S	270	Молитва мученикам і сповідникам Гурію, Самону і Авіву	Prayer to the Martyrs and Confessors Gurias, Samonas and Abibus
+S	273	Молитва святому праведному Олексію Мечеву	Prayer to the Holy Righteous Alexis Mechev
+S	274	Молитва святителю Іоасафу Білгородському	Prayer to St Joasaph of Belgorod
+S	276	Молитва праведному Феодору (Ушакову) воїну, Синаксарському	Prayer to the Righteous Warrior Theodore (Ushakov) of Sanaxar
+S	277	Молитва святому благовірному Олегу Брянському	Prayer to the Holy Right-believing Oleg of Bryansk
+S	279	Молитва святій мучениці Фотинії Самарянці	Prayer to the Holy Martyr Photini the Samaritan Woman
+S	281	Молитва преподобному Севастіану Карагандинському	Prayer to St Sebastian of Karaganda
+S	283	Молитва святителю Нектарію Пентапольському	Prayer to St Nectarius of Pentapolis
+S	284	Молитва святим семи отрокам в Ефесі	Prayer to the Holy Seven Youths of Ephesus
+S	326	Молитва великомучениці Анастасії Узорозрішительці	Prayer to the Great Martyr Anastasia the Deliverer from Bonds
+S	327	Молитва преподобному Кирилу, ігумену Білозерському	Prayer to St Cyril, Abbot of Beloozero
+S	328	Молитва священномученику Кипріану і мучениці Юстині	Prayer to the Hieromartyr Cyprian and the Martyr Justina
+S	329	Молитва преподобному Мойсею Угрину, Печерському	Prayer to St Moses the Hungarian of the Caves
+S	330	Молитва святителю Іоанну Милостивому, Патріарху Александрійському	Prayer to St John the Merciful, Patriarch of Alexandria
+S	331	Молитва священномученику Власію, єпископу Севастійському	Prayer to the Hieromartyr Blaise, Bishop of Sebaste
+S	332	Молитва мученику Авраамію Болгарському, Володимирському чудотворцю	Prayer to the Martyr Abraham of Bulgaria, Wonderworker of Vladimir
+S	333	Молитва мученикам Косьмі й Даміану, безсрібникам і чудотворцям Римським	Prayer to the Martyrs Cosmas and Damian, Unmercenary Healers and Wonderworkers of Rome
+S	334	Молитва святому великомученику Никиті	Prayer to the Holy Great Martyr Nicetas
+S	335	Молитва мучениці Людмилі, княгині Чеській	Prayer to the Martyr Ludmila, Princess of Bohemia
+S	345	Молитва преподобним Кирилу і Марії, батькам преподобного Сергія Радонезького	Prayer to Sts Cyril and Maria, parents of St Sergius of Radonezh
+S	350	Молитва святій рівноапостольній княгині Ользі, у святому хрещенні Олені	Prayer to the Holy Equal-to-the-Apostles Princess Olga, in Holy Baptism Helena
+S	353	Молитва священномученику Харалампію	Prayer to the Hieromartyr Haralambos
+S	360	Молитва святому преподобному Роману Солодкоспівцю	Prayer to St Romanos the Melodist
+S	361	Молитва преподобному Олексію, чоловіку Божому	Prayer to St Alexis, the Man of God
+S	362	Молитва священномученику Антипі, єпископу Пергама Асійського	Prayer to the Hieromartyr Antipas, Bishop of Pergamum in Asia
+S	363	Молитва святим мученицям Євдокії, Дарії, Дарії і Марії	Prayer to the Holy Martyrs Eudocia, Daria, Daria and Maria
+S	364	Молитва святим мученикам Адріану і Наталії	Prayer to the Holy Martyrs Adrian and Natalia
+S	365	Молитва праведній Софії, княжні Слуцькій	Prayer to the Righteous Sophia, Princess of Sluck
+S	366	Молитва преподобним Олександрі, Марфі та Олені Дівеєвським	Prayer to Sts Alexandra, Martha and Helen of Diveyevo
+S	367	Молитва Соборові Дівеєвських святих	Prayer to the Synaxis of the Saints of Diveyevo
+S	368	Молитва святому мученику Леоніду і мученицям Харієссі, Ніці, Галині, Каліссі, Нунехії, Василіссі, Феодорі, Ірині та іже з ними постраждалим	Prayer to the Holy Martyr Leonidas and the Martyrs Chariessa, Nike, Galina, Kalisa, Nunekhia, Basilissa, Theodora, Irene and those who suffered with them
+S	369	Молитва святій мучениці Фомаїді Єгипетській	Prayer to the Holy Martyr Thomais of Egypt
+S	370	Молитва святителю Євфимію, архієпископу Новгородському	Prayer to St Euthymius, Archbishop of Novgorod
+S	371	Молитва праведному Павлу Таганрозькому	Prayer to the Righteous Paul of Taganrog
+S	373	Молитва святому мученику Мамонту Кесарійському	Prayer to the Holy Martyr Mamas of Caesarea
+S	393	Молитва преподобному Паїсію Святогорцю	Prayer to St Paisios the Athonite
+S	394	Молитва святому мученику Олександру Римському	Prayer to the Holy Martyr Alexander of Rome
+S	395	Молитва преподобному Сампсону Странноприймцю	Prayer to St Sampson the Hospitable
+S	396	Молитва преподобному Петру, царевичу Ординському, Ростовському	Prayer to St Peter, Tsarevich of the Horde, of Rostov
+S	397	Молитва преподобному Феодору Студиту	Prayer to St Theodore the Studite
+S	398	Молитва святим дев’яти мученикам Кизицьким	Prayer to the Holy Nine Martyrs of Cyzicus
+S	442	Молитва святителю Никиті, затворнику Печерському, єпископу Новгородському	Prayer to St Nikita the Recluse of the Caves, Bishop of Novgorod
+S	461	Молитва безсрібникам Косьмі й Даміану, чудотворцям Асійським	Prayer to the Unmercenary Healers Cosmas and Damian, Wonderworkers of Asia
+S	463	Молитва преподобному Давиду Гареджійському	Prayer to St David of Gareja
+S	464	Молитва преподобному Афанасію Сяндемському	Prayer to St Athanasius of Syandema
+S	465	Молитва преподобному Віталію Александрійському	Prayer to St Vitalis of Alexandria
+S	467	Молитва мучениці Валентині Кесарійській	Prayer to the Martyr Valentina of Caesarea
+S	468	Молитва благовірному князю Ігорю Чернігівському і Київському	Prayer to the Right-believing Prince Igor of Chernihiv and Kyiv
+S	470	Молитва мученику Іоанну Новому, Яніньському	Prayer to the Martyr John the New of Ioannina
+S	471	Молитва праведному Симеону Верхотурському	Prayer to the Righteous Simeon of Verkhoturye
+S	473	Молитва блаженному Августину, єпископу Іппонійському	Prayer to Blessed Augustine, Bishop of Hippo
+S	474	Молитва святій мучениці Юлії Карфагенській	Prayer to the Holy Martyr Julia of Carthage
+S	475	Молитва праведному Євгенію Боткіну, страстотерпцю	Prayer to the Righteous Passion-Bearer Eugene Botkin
+S	477	Молитва преподобному Саві, ігумену Сторожевському, Звенигородському	Prayer to St Sabbas, Abbot of Storozhi, Zvenigorod
+S	479	Молитва преподобному Йоні (у схимі Петру) Київському	Prayer to St Jonah (in the schema Peter) of Kyiv
+S	480	Молитва святителю Митрофану, єпископу Воронезькому	Prayer to St Mitrophan, Bishop of Voronezh
+S	481	Молитва блаженній Валентині Мінській	Prayer to Blessed Valentina of Minsk
+S	483	Молитва благовірному великому князю Андрію Боголюбському	Prayer to the Right-believing Grand Prince Andrei Bogolyubsky
+S	484	Молитва преподобному Павлу Препростому	Prayer to St Paul the Simple
+S	485	Молитва священномученику Іоанну (Поммеру), архієпископу Ризькому	Prayer to the Hieromartyr John (Pommer), Archbishop of Riga
+S	486	Молитва великомучениці Парасковії, нареченій П’ятниця	Prayer to the Great Martyr Paraskeva, called Friday
+S	488	Молитва преподобному Антонію Димському	Prayer to St Anthony of Dymsk
+S	489	Молитва преподобному Кукші Одеському	Prayer to St Kuksha of Odesa
+S	490	Молитва великомученику Феодору Тирону	Prayer to the Great Martyr Theodore the Recruit
+S	491	Молитва преподобній Єфросинії, ігуменії Полоцькій	Prayer to St Euphrosyne, Abbess of Polotsk
+S	492	Молитва преподобному Феофілу Київському	Prayer to St Theophilus of Kyiv
+S	493	Молитва святителю Іоанну, митрополиту Тобольському	Prayer to St John, Metropolitan of Tobolsk
+S	494	Молитва мученику Андрію Стратилату	Prayer to the Martyr Andrew Stratelates
+S	497	Молитва священномученику Клименту, папі Римському	Prayer to the Hieromartyr Clement, Pope of Rome
+S	498	Молитва благовірному великому князю Святославу	Prayer to the Right-believing Grand Prince Sviatoslav
+S	500	Молитва праведному Йосифу Обручнику	Prayer to the Righteous Joseph the Betrothed
+S	501	Молитва праведному цареві Давиду, псалмоспівцю	Prayer to the Righteous King David the Psalmist
+S	502	Молитва праведному Симеону Богоприїмцю	Prayer to the Righteous Simeon the God-Receiver
+S	503	Молитва благовірному князю Роману Рязанському	Prayer to the Right-believing Prince Roman of Ryazan
+S	504	Молитва преподобному Димитрію, ігумену Прилуцькому, Вологодському	Prayer to St Demetrius, Abbot of Pryluky, of Vologda
+S	505	Молитва мученику Вонифатію Тарсійському	Prayer to the Martyr Boniface of Tarsus
+S	506	Молитва преподобному Йосифу, ігумену Волоцькому	Prayer to St Joseph, Abbot of Volokolamsk
+S	507	Молитва преподобному Іоанну Рильському	Prayer to St John of Rila
+S	508	Молитва благовірному князю Владиславу Сербському	Prayer to the Right-believing Prince Vladislav of Serbia
+S	510	Молитва преподобному Ахілі, дияконові Печерському	Prayer to St Achilles, Deacon of the Caves
+S	511	Молитва святому мученику Уару Єгипетському	Prayer to the Holy Martyr Uar of Egypt
+S	512	Молитва всім святим	Prayer to All the Saints
+S	513	Молитва святителю Павліну Милостивому	Prayer to St Paulinus the Merciful
+S	514	Молитва святому апостолу Фомі	Prayer to the Holy Apostle Thomas
+S	515	Молитва преподобному Іоанну Многостраждальному	Prayer to St John the Long-Suffering
+S	516	Молитва святителю Амвросію, єпископу Медіоланському	Prayer to St Ambrose, Bishop of Milan
+S	518	Молитва преподобному Макарію Великому, Єгипетському	Prayer to St Macarius the Great of Egypt
+S	520	Молитва преподобному Антонію Сійському	Prayer to St Anthony of Siya
+S	521	Молитва преподобному Геннадію, Костромському і Любимоградському чудотворцю	Prayer to St Gennadius, Wonderworker of Kostroma and Lyubimograd
+S	523	Молитва святителю Серафиму, архієпископу Богучарському	Prayer to St Seraphim, Archbishop of Boguchar
+S	526	Молитва мученику Іоанну Воїну	Prayer to the Martyr John the Warrior
+S	527	Молитва преподобному Серафиму, Вирицькому чудотворцю	Prayer to St Seraphim of Vyritsa, the Wonderworker
+S	531	Молитва преподобному Пимену, архімандриту Угрешському	Prayer to St Pimen, Archimandrite of Ugresha
+S	533	Молитва преподобному Далмату Ісетському	Prayer to St Dalmatus of Isetsk
+S	535	Молитва преподобному Максиму Греку	Prayer to St Maximus the Greek
+S	537	Молитва великомученику Феодору Стратилату	Prayer to the Great Martyr Theodore Stratelates
+S	542	Молитва преподобному Варлааму Керетському	Prayer to St Barlaam of Keret
+S	544	Молитва Соборові Кримських святих	Prayer to the Synaxis of the Saints of Crimea
+S	545	Молитва святим праотцям Адаму та Єві	Prayer to the Holy Forefathers Adam and Eve
+S	547	Молитва преподобному Нилу Сорському	Prayer to St Nilus of Sora
+S	549	Молитва Соборові Кемеровських святих	Prayer to the Synaxis of the Saints of Kemerovo
+S	552	Молитва мучениці Дарії Римській	Prayer to the Martyr Daria of Rome
+A	177	Молитви Архангелам на кожен день	Prayers to the Archangels for Each Day
+A	178	Молитва Архистратигу Божому Михаїлу	Prayer to the Archangel Michael, Commander of God’s Hosts
+A	262	Молитовні прохання до Ангела Хоронителя на кожен день місяця	Petitions to the Guardian Angel for Each Day of the Month
+A	271	Молитва всім святим і Безплотним небесним силам	Prayer to All the Saints and the Bodiless Heavenly Powers
+A	351	Молитва Святим Небесним Силам	Prayer to the Holy Heavenly Powers
+A	352	Молитва Святим Архангелам	Prayer to the Holy Archangels
+A	536	Молитва Архангелу Рафаїлу	Prayer to the Archangel Raphael
+A	538	Молитва Архангелу Єремиїлу	Prayer to the Archangel Jeremiel
+M	166	П’ятичисленні молитви	Prayers in Fives
+M	190	Молитва перед навчанням отроків	Prayer before the Teaching of Boys
+M	194	Молитва за згодою	Prayer by Agreement
+M	197	Молитви про духовного отця	Prayers for a Spiritual Father
+M	198	Молитва водія	Prayer of a Driver
+M	200	Молитви матері за занапащені в утробі її душі (після абортів)	Prayers of a Mother for the Souls Destroyed in Her Womb (after Abortion)
+M	201	Молитва від куріння	Prayer against Smoking
+M	202	Молитви про визволення від пияцтва	Prayers for Deliverance from Drunkenness
+M	204	Молитви перед сповіддю	Prayers before Confession
+M	205	Молитва про прощення забутих гріхів	Prayer for the Forgiveness of Forgotten Sins
+M	206	Молитва після сповіді гріхів	Prayer after the Confession of Sins
+M	210	Молитви під час вагітності	Prayers during Pregnancy
+M	213	Молитва ієросхимонаха Парфенія Київського	Prayer of Hieroschemamonk Parthenius of Kyiv
+M	214	Молитва в день народження	Prayer on One’s Birthday
+M	216	Молитви про невіруючих і навернення заблудлих	Prayers for Unbelievers and the Conversion of the Lost
+M	217	Молитва перед виходом із дому	Prayer before Leaving Home
+M	220	Молитви для вишивання ікон	Prayers for Embroidering Icons
+M	239	Молитва переслідуваного людьми (свт. Ігнатія Брянчанінова)	Prayer of One Persecuted by Men (St Ignatius Brianchaninov)
+M	253	Молитва про дарування розуміння	Prayer for the Gift of Understanding
+M	272	Молитва собору славних і всехвальних 12 апостолів	Prayer to the Synaxis of the Twelve Glorious and All-praised Apostles
+M	275	Молитва на сон	Prayer at Bedtime
+M	282	Молитви про ближніх св. Івана Кронштадтського	Prayers for Our Neighbours by St John of Kronstadt
+M	309	Молитва того, хто подає милостиню	Prayer of One Giving Alms
+M	310	Молитва, що читається при запалюванні лампади	Prayer at the Lighting of an Icon Lamp
+M	311	Молитва в скорботі або недузі святителя Димитрія Ростовського	Prayer in Sorrow or Illness by St Dimitry of Rostov
+M	312	Молитви про дарування терпіння	Prayers for the Gift of Patience
+M	313	Молитва Оптинських старців про дарування молитви Ісусової	Prayer of the Optina Elders for the Gift of the Jesus Prayer
+M	315	Молитва на входження в дім святителя Миколая Сербського	Prayer on Entering a House by St Nikolaj of Žiča
+M	317	Молитва перед Всенічним бдінням	Prayer before the All-Night Vigil
+M	318	Молитва перед початком Богослужіння	Prayer before the Beginning of the Divine Service
+M	319	Молитва після Божественної Літургії	Prayer after the Divine Liturgy
+M	322	Молитва покаянна, що читається в дні смути	Penitential Prayer for Days of Turmoil
+M	336	Молитва в день Нового року	Prayer on New Year’s Day
+M	346	Молитва преподобного Феодора Студита	Prayer of St Theodore the Studite
+M	348	Дві ранішні маловідомі молитви	Two Little-Known Morning Prayers
+M	354	Молитва про отрока, що погано вчиться	Prayer for a Boy Who Does Poorly in His Studies
+M	355	Молитва ув’язненого до Матері Божої	Prayer of a Prisoner to the Mother of God
+M	356	Молитва ув’язненого до Ангела Хоронителя	Prayer of a Prisoner to the Guardian Angel
+M	357	Молитва в’язня, ув’язненого в темниці	Prayer of a Prisoner in Confinement
+M	358	Молитва ув’язненого до святого Іоанна Предтечі	Prayer of a Prisoner to St John the Forerunner
+M	374	Молитва преподобного Антонія Оптинського на початок усякої справи	Prayer of St Anthony of Optina at the Beginning of Any Work
+M	376	Молитва преподобного Антонія Оптинського за ворогів	Prayer of St Anthony of Optina for Enemies
+M	377	Молитва преподобного Макарія Оптинського при плотській боротьбі	Prayer of St Macarius of Optina in the Struggle with the Flesh
+M	378	Молитва преподобного Йосифа Оптинського при нашесті помислів	Prayer of St Joseph of Optina When Thoughts Assail
+M	379	Молитва преподобного Никона Оптинського, сповідника, у скорботі	Prayer of St Nikon of Optina, Confessor, in Sorrow
+M	380	Молитва преподобного Анатолія Оптинського (Потапова) від антихриста	Prayer of St Anatoly of Optina (Potapov) against the Antichrist
+M	381	Молитва преподобного Нектарія Оптинського від антихриста	Prayer of St Nectarius of Optina against the Antichrist
+M	385	Молитви при ослабленні духу й безчутті до гріха	Prayers in Weakness of Spirit and Insensibility to Sin
+M	386	Молитви при охолодженні любові до ближніх	Prayers When Love for Neighbours Grows Cold
+M	387	Молитви про допомогу Божу у виправленні життя	Prayers for God’s Help in Amending One’s Life
+M	388	Молитва від гніву	Prayer against Anger
+M	389	Молитви в бісівських нападах і спокусах	Prayers in Demonic Assaults and Temptations
+M	390	Молитва, коли не прощаються образи й пам’ятається зле	Prayer When Offences Are Not Forgiven and Evil Is Remembered
+M	391	Молитви в зневірі	Prayers in Despondency
+M	392	Молитви у відчаї	Prayers in Despair
+M	402	Молитва до улюбленого святого	Prayer to a Favourite Saint
+M	403	Молитва преподобного Нектарія Оптинського	Prayer of St Nectarius of Optina
+M	404	Молитва про зміцнення й дарування мудрості святителя Миколая Сербського (Велимировича)	Prayer for Strength and the Gift of Wisdom by St Nikolaj Velimirović
+M	405	Щоденне сповідання гріхів	Daily Confession of Sins
+M	469	Молитва тих, хто йде до лісу	Prayer of Those Going into the Forest
+M	476	Молитва після сну	Prayer on Waking
+M	478	Молитовне правило преподобного Амвросія Оптинського, що читається під час спокус	Prayer Rule of St Ambrose of Optina, Read in Times of Temptation
+M	487	Молитва св. Івана Кронштадтського при марнославних помислах	Prayer of St John of Kronstadt against Vainglorious Thoughts
+M	495	Молитва, що читається під час поширення шкідливого поморку	Prayer Read When a Harmful Plague Spreads
+M	496	Молитва під час згубного поморку і смертоносної пошесті	Prayer in a Time of Deadly Plague and Pestilence
+M	499	Молитва перед виходом в інтернет	Prayer before Going Online
+M	517	Молитва про християнську кончину з келійної книжиці о. Івана (Крестьянкіна)	Prayer for a Christian End from the Cell Book of Fr John (Krestyankin)
+M	524	Молитва дзвонаря	Prayer of a Bell-Ringer
+M	529	Молитва покаянна преподобного Антіоха	Penitential Prayer of St Antiochus
+M	530	Молитва тих, хто в зневірі й відчаї	Prayer of Those in Despondency and Despair
+M	539	Молитва батьків про дітей, які перебувають на службі в армії	Prayer of Parents for Children Serving in the Army
+M	540	Молитва православного лікаря перед початком робочого дня	Prayer of an Orthodox Doctor before the Working Day
+M	541	Молитва про дарування мудрості	Prayer for the Gift of Wisdom
+M	543	Молитва про дарування смирення	Prayer for the Gift of Humility
+M	546	Передсмертна молитва ієросхимонаха Парфенія Київського	Deathbed Prayer of Hieroschemamonk Parthenius of Kyiv
+M	550	Молитва про припинення воєн і мир усього світу	Prayer for an End to Wars and for Peace in the Whole World
+M	553	Молитва ранішня Івана Кронштадтського	Morning Prayer of John of Kronstadt
+F	268	Молитви на благословення скоромних страв	Prayers for the Blessing of Non-Fasting Foods
+F	337	Молитвослів’я перед сніданком	Prayers before Breakfast
+F	338	Молитвослів’я після сніданку	Prayers after Breakfast
+F	339	Молитвослів’я перед обідом	Prayers before Lunch
+F	340	Молитвослів’я після обіду	Prayers after Lunch
+F	341	Молитвослів’я перед вечерею	Prayers before Supper
+F	342	Молитвослів’я після вечері	Prayers after Supper
+F	343	Молитвослів’я перед позаставними трапезами	Prayers before Meals Outside the Typikon
+F	344	Молитвослів’я після позаставних трапез	Prayers after Meals Outside the Typikon
+U	230	Молитва за померлих раптовою (несподіваною) смертю	Prayer for Those Who Died a Sudden Death
+U	231	Молитва батьків за померлих дітей своїх	Prayer of Parents for Their Departed Children
+U	233	Молитва вдівця за дружину	Prayer of a Widower for His Wife
+U	234	Молитва вдови за чоловіка	Prayer of a Widow for Her Husband
+U	229	Молитва за кожного померлого	Prayer for Every Departed Person
+U	236	Молитви за мертвонароджених і некрещених немовлят	Prayers for Stillborn and Unbaptized Infants
+U	237	Молитва по відході душі від тіла	Prayer at the Departure of the Soul from the Body
+U	235	Молитва за вмираючого	Prayer for the Dying
+U	221	Панихида для читання мирянами вдома й на цвинтарі	Panikhida for Laymen to Read at Home and at the Cemetery
+U	238	Молитва за пастирів Православної Церкви	Prayer for the Pastors of the Orthodox Church
+U	228	Чин літії в пасхальний період, що звершується мирянином удома й на цвинтарі	Order of Litiya in Paschal Time, Served by a Layman at Home and at the Cemetery
+U	372	Чин молитовної втіхи рідних тих, хто самовільно позбавив себе життя	Order of Prayerful Consolation for the Relatives of Those Who Took Their Own Lives
+U	382	Молитва про батька (матір), що помер без покаяння	Prayer for a Parent Who Died without Repentance
+U	454	Молитви про полегшення вічних мук померлих без покаяння	Prayers for the Easing of the Eternal Torments of Those Who Died without Repentance
+U	455	Молитви за всіх, хто в вірі спочив, православних християн	Prayers for All Orthodox Christians Who Have Fallen Asleep in the Faith
+U	456	Молитва про упокоєння померлих після тяжкої й тривалої хвороби	Prayer for the Repose of Those Who Died after a Grievous and Prolonged Illness
+U	457	Молитва про померлих у стані душевної хвороби	Prayer for Those Who Died in a State of Mental Illness
+U	458	Молитва до Пресвятої Богородиці за померлих	Prayer to the Most Holy Theotokos for the Departed
+U	459	Молитва Ангелу Хоронителю за померлих	Prayer to the Guardian Angel for the Departed
+U	460	Моління, щоб Бог дарував нам ревність до молитви за померлих і прийняв її	Supplication That God Grant Us Zeal in Praying for the Departed and Accept It
+H	179	Молитви про батьків	Prayers for Parents
+H	180	Молитви про родину	Prayers for the Family
+H	181	Молитви про дітей і похресників	Prayers for Children and Godchildren
+H	182	Молитва дівчини про заміжжя	Prayer of a Maiden for Marriage
+H	260	Материнська молитва за дитя своє	A Mother’s Prayer for Her Child
+H	261	Молитовне підношення батьків за дітей своїх святителя Луки (Войно-Ясенецького)	Parents’ Prayerful Offering for Their Children by St Luke (Voyno-Yasenetsky)
+H	280	Молитви на благословення дітей	Prayers for the Blessing of Children
+H	375	Молитва преподобного Антонія Оптинського про родину	Prayer of St Anthony of Optina for the Family
+H	400	Зідхання матері про дітей своїх	A Mother’s Sigh for Her Children
+H	443	Молитви про щастя шлюбу	Prayers for the Happiness of Marriage
+H	445	Молитви про всяку родинну й побутову потребу	Prayers for Every Family and Household Need
+H	446	Молитва про виховання дітей у християнській побожності	Prayer for Raising Children in Christian Piety
+H	447	Молитва про добробут дітей у суспільстві	Prayer for the Well-being of Children in Society
+H	448	Молитви в печалі про дітей, де вони й чи живі	Prayers in Sorrow for Children — Where They Are and Whether They Live
+H	449	Молитва про усунення родинних негараздів	Prayer for the Removal of Family Troubles
+H	450	Молитва про допомогу в житейських справах, про благословення Боже над домом	Prayer for Help in Daily Affairs and for God’s Blessing upon the Home
+H	462	Молитва до Господа про дарування дітей	Prayer to the Lord for the Gift of Children
+L	185	Молитва в хворобі	Prayer in Sickness
+L	196	Молитва хворої	Prayer of a Sick Woman
+L	255	Молитва про те, щоб з любов’ю доглядати хворих	Prayer to Care for the Sick with Love
+L	314	Молитва про зцілення хворого	Prayer for the Healing of a Sick Person
+L	347	Молитва за немічного й безсонного	Prayer for the Infirm and Sleepless
+L	451	Молитва всім святим і ангелам за хворого	Prayer to All the Saints and Angels for a Sick Person
+L	452	Молитва Пресвятій Богородиці за хворого	Prayer to the Most Holy Theotokos for a Sick Person
+L	453	Молитва на всяку неміч	Prayer for Every Infirmity
+L	482	Молитва на прийняття ліків та іншого лікування	Prayer on Taking Medicine and Other Treatment
+D	10001	У понеділок: Небесним чинам безплотним	Monday: the Bodiless Heavenly Hosts
+D	10002	У вівторок: Хрестителю і Предтечі Іоанну	Tuesday: John the Forerunner and Baptist
+D	10003	У середу: Хресту	Wednesday: the Cross
+D	10004	У четвер: апостолам і святителю Миколаю	Thursday: the Apostles and St Nicholas
+D	10005	У п’ятницю: Хресту	Friday: the Cross
+D	10006	У суботу: усім святим і за померлих	Saturday: All Saints and the Departed
+D	10007	У неділю, глас 1	Sunday, Tone 1
+D	10008	У неділю, глас 2	Sunday, Tone 2
+D	10009	У неділю, глас 3	Sunday, Tone 3
+D	10010	У неділю, глас 4	Sunday, Tone 4
+D	10011	У неділю, глас 5	Sunday, Tone 5
+D	10012	У неділю, глас 6	Sunday, Tone 6
+D	10013	У неділю, глас 7	Sunday, Tone 7
+D	10014	У неділю, глас 8	Sunday, Tone 8
+O	20001	Свята Пасха	Holy Pascha
+O	20002	Віддання Пасхи	Leave-taking of Pascha
+O	20003	Вхід Господній в Єрусалим	Entry of the Lord into Jerusalem
+O	20004	Передсвяття Різдва Христового	Forefeast of the Nativity of Christ
+O	20005	Передсвяття Богоявлення	Forefeast of Theophany
+O	20006	Передсвяття Стрітення Господнього	Forefeast of the Presentation of the Lord
+O	20007	Передсвяття Благовіщення Пресвятої Богородиці	Forefeast of the Annunciation
+O	20009	Передсвяття Преображення Господнього	Forefeast of the Transfiguration
+O	20010	Передсвяття Успіння Пресвятої Богородиці	Forefeast of the Dormition
+O	20011	Передсвяття Різдва Пресвятої Богородиці	Forefeast of the Nativity of the Theotokos
+O	20012	Передсвяття Воздвиження Чесного і Животворящого Хреста Господнього	Forefeast of the Exaltation of the Cross
+O	20013	Передсвяття Введення в храм Пресвятої Богородиці	Forefeast of the Entry of the Theotokos into the Temple
+O	20014	Обрізання Господнє	Circumcision of the Lord
+O	20015	Різдво Іоанна Предтечі	Nativity of John the Forerunner
+O	20016	Святих первоверховних апостолів Петра і Павла	Holy Chief Apostles Peter and Paul
+O	20017	Усікновення глави Іоанна Предтечі	Beheading of John the Forerunner
+O	20018	Покров Пресвятої Богородиці	Protection of the Theotokos
+O	20019	Неділя про митаря і фарисея	Sunday of the Publican and the Pharisee
+O	20020	Неділя про блудного сина	Sunday of the Prodigal Son
+O	20021	Субота м’ясопусна. Вселенська батьківська субота	Meatfare Saturday. Universal Saturday of the Departed
+O	20022	Неділя м’ясопусна. Про Страшний суд	Meatfare Sunday. The Last Judgment
+O	20023	Субота сиропусна. Усіх преподобних отців, у подвигу просіявших	Cheesefare Saturday. All Venerable Fathers Who Shone in Ascetic Struggle
+O	20024	Неділя сиропусна. Спомин вигнання Адама. Прощена неділя	Cheesefare Sunday. Commemoration of Adam’s Expulsion. Forgiveness Sunday
+O	20025	Субота першого тижня Великого посту. Великомученика Феодора Тирона	Saturday of the First Week of Great Lent. Great Martyr Theodore the Recruit
+O	20026	Неділя перша Великого посту. Торжество Православ’я	First Sunday of Great Lent. Triumph of Orthodoxy
+O	20027	Субота другого тижня Великого посту. Поминання померлих	Saturday of the Second Week of Great Lent. Commemoration of the Departed
+O	20028	Неділя друга Великого посту. Святителя Григорія Палами	Second Sunday of Great Lent. St Gregory Palamas
+O	20029	Субота третього тижня Великого посту. Поминання померлих	Saturday of the Third Week of Great Lent. Commemoration of the Departed
+O	20030	Неділя третя Великого посту. Хрестопоклонна	Third Sunday of Great Lent. Veneration of the Cross
+O	20031	Субота четвертого тижня Великого посту. Поминання померлих	Saturday of the Fourth Week of Great Lent. Commemoration of the Departed
+O	20032	Неділя четверта Великого посту. Преподобного Іоанна Ліствичника	Fourth Sunday of Great Lent. St John of the Ladder
+O	20033	Четвер п’ятого тижня Великого посту. Четвер Великого канону	Thursday of the Fifth Week of Great Lent. Thursday of the Great Canon
+O	20034	Похвала Пресвятої Богородиці (Субота Акафіста)	Praise of the Theotokos (Saturday of the Akathist)
+O	20035	Неділя п’ята Великого посту. Преподобної Марії Єгипетської	Fifth Sunday of Great Lent. St Mary of Egypt
+O	20036	Субота святого і праведного Лазаря	Saturday of the Holy and Righteous Lazarus
+O	20038	Великий понеділок	Great and Holy Monday
+O	20039	Великий вівторок	Great and Holy Tuesday
+O	20040	Велика середа	Great and Holy Wednesday
+O	20041	Великий четвер	Great and Holy Thursday
+O	20042	Велика п’ятниця	Great and Holy Friday
+O	20043	Велика субота	Great and Holy Saturday
+O	20044	Неділя Антипасхи. Апостола Хоми	Sunday of Thomas. Apostle Thomas
+O	20045	Неділя 3-тя по Пасці. Святих жон-мироносиць	Third Sunday after Pascha. The Holy Myrrh-Bearing Women
+O	20046	Неділя 4-та по Пасці. Про розслабленого	Fourth Sunday after Pascha. The Paralytic
+O	20047	Преполовення П’ятдесятниці	Mid-Pentecost
+O	20048	Неділя 5-та по Пасці. Про самарянку	Fifth Sunday after Pascha. The Samaritan Woman
+O	20049	Неділя 6-та по Пасці. Про сліпородженого	Sixth Sunday after Pascha. The Man Born Blind
+O	20050	Неділя 7-ма по Пасці. Святих отців I Вселенського собору	Seventh Sunday after Pascha. The Holy Fathers of the First Ecumenical Council
+O	20051	Трійцька батьківська субота	Trinity Saturday of the Departed
+O	20052	Неділя всіх святих	Sunday of All Saints
+O	20054	Святих отців (неділя перед Різдвом)	Holy Fathers (Sunday before the Nativity)
+O	20055	Навечір’я Різдва Христового (Святвечір)	Eve of the Nativity of Christ (Holy Supper)
+O	20056	Навечір’я Богоявлення (Хрещенський святвечір)	Eve of Theophany
+O	20057	Початок індикта — церковне новоліття	Beginning of the Indiction — the Church New Year
+O	20058	Димитріївська батьківська субота	Saturday of St Demetrius of the Departed
+O	20059	Святих праотців	Holy Forefathers
+W	30001	Різдво Христове	Nativity of Christ
+W	30002	Хрещення Господнє. Богоявлення	Baptism of the Lord. Theophany
+W	30003	Стрітення Господнє	Presentation of the Lord
+W	30004	Благовіщення Пресвятої Богородиці	Annunciation of the Theotokos
+W	30005	Вознесіння Господнє	Ascension of the Lord
+W	30006	День Святої Тройці. П’ятдесятниця	Holy Trinity Day. Pentecost
+W	30007	Преображення Господнє	Transfiguration of the Lord
+W	30008	Успіння Пресвятої Богородиці	Dormition of the Theotokos
+W	30009	Різдво Пресвятої Богородиці	Nativity of the Theotokos
+W	30010	Воздвиження Хреста Господнього	Exaltation of the Cross
+W	30011	Введення в храм Пресвятої Богородиці	Entry of the Theotokos into the Temple
+W	30012	На Світлій седмиці (понеділок — субота)	Bright Week (Monday to Saturday)
+W	30013	Седмиця 2-га по Пасці (понеділок — субота)	Second Week after Pascha (Monday to Saturday)
+W	30014	Седмиця 3-тя по Пасці (понеділок — субота)	Third Week after Pascha (Monday to Saturday)
+W	30015	Седмиця 4-та по Пасці (понеділок — вівторок)	Fourth Week after Pascha (Monday to Tuesday)
+W	30016	Преполовення П’ятдесятниці (четвер — субота)	Mid-Pentecost (Thursday to Saturday)
+W	30017	Преполовення П’ятдесятниці (понеділок — середа) до віддання	Mid-Pentecost (Monday to Wednesday) until the leave-taking
+W	30018	Седмиця 5-та по Пасці (четвер — субота)	Fifth Week after Pascha (Thursday to Saturday)
+W	30019	Седмиця 6-та по Пасці (понеділок — вівторок)	Sixth Week after Pascha (Monday to Tuesday)
+W	30020	Передсвяття Різдва Христового (з 3 по 5 січня)	Forefeast of the Nativity of Christ (3–5 January)
+W	30021	Передсвяття Богоявлення (16–17 січня)	Forefeast of Theophany (16–17 January)

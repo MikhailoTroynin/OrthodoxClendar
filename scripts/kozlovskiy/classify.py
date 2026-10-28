@@ -53,6 +53,11 @@ for l in open(os.path.join(HERE,'akafisty_titles.tsv'),encoding='utf8'):
 for l in open(os.path.join(HERE,'kanony_titles.tsv'),encoding='utf8'):
     if l.strip():
         i,u,_=l.rstrip('\n').split('\t'); AK[int(i)]=('ok','канони (src/data/kz)')
+# Молитви, перенесені збиранням scripts/build_kz_molytvy.py (назви — molytvy_titles.tsv; тексти — src/data/kz/pr<N>.ts); id ≥ 10000 — тропарі й кондаки з окремих таблиць
+for l in open(os.path.join(HERE,'molytvy_titles.tsv'),encoding='utf8'):
+    if l.strip():
+        c,i,u,_=l.rstrip('\n').split('\t')
+        if int(i)<10000: PR[int(i)]=('ok','молитви (src/data/kz)')
 # У джерелі замість акафіста — лише довідка про відсутність грифа Видавничої ради (тексту акафіста немає)
 NONE_AK={57,58}
 # дублікати між таблицями: однакові тексти в prayers_ru_pr і prayers_ru_ak
