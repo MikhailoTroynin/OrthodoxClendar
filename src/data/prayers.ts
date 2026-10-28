@@ -18,7 +18,7 @@ export interface Item {
   u: string; e: string; mu: string; me: string;
   full?: 1; r?: Bi; p?: Bi[]; b?: Block[];
   /** Готовий текст (молитви й тропарі з каналу «Київський Ізвод») і зображення святого. */
-  x?: string; /** Повний текст із MOLYTVOSLOV (молитвослов, Київський ізвод). */ mv?: MvRef[]; img?: { id: number; w: number; h: number };
+  x?: string; /** Повний текст із MOLYTVOSLOV (молитвослов, Київський ізвод). */ mv?: MvRef[];
   /** Тематична група в переліку розділу (підзаголовок над першою молитвою групи). */
   g?: Bi;
 }
@@ -102,9 +102,9 @@ G(MV(ND('Заупокійна літія, що звершується мирян
 ...MOLYTVOSLOV[12].secs.map((x, si) => G(MV(ND(x.h!, HYMNS[si]), { b: 12, s: [si] }), H('Піснеспіви','Hymns'))),
 ...MOLYTVOSLOV[11].secs.map((x, si) => G(MV(ND(x.h!, si ? 'The Beatitudes' : 'The two great commandments of our Lord Jesus Christ'), { b: 11, s: [si] }), H('Заповіді','Commandments'))),
 G(MV(ND('Про Київський ізвод','About the Kyiv Use'),{b:0}),H('Про молитвослов','About the prayer book'))]}];
-const chItem = (c: ChItem): Item => ({ u: c.u, e: c.u, mu: '', me: '', full: 1, x: c.t, img: c.im && { id: c.id, w: c.im[0], h: c.im[1] }, g: c.g ? [c.g, c.g] : undefined });
+const chItem = (c: ChItem): Item => ({ u: c.u, e: c.u, mu: '', me: '', full: 1, x: c.t, g: c.g ? [c.g, c.g] : undefined });
 // Доповнення з каналу «Київський Ізвод» — лише те, чого в повних книгах Київського ізводу немає.
 MB.push(
   { u: 'Додаткові молитви (Київський ізвод)', e: 'Additional prayers (Kyiv Use)', items: CH.filter((c) => c.k === 'p').map(chItem) },
-  { u: 'Святі й свята: тропарі та ікони', e: 'Saints and feasts: troparia and icons', items: CH.filter((c) => c.k === 's').map(chItem) },
+  { u: 'Святі й свята: тропарі', e: 'Saints and feasts: troparia', items: CH.filter((c) => c.k === 's').map(chItem) },
 );
