@@ -3,6 +3,7 @@ import { Linking, Pressable, ScrollView, Text, TextInput, View } from 'react-nat
 import * as Clipboard from 'expo-clipboard';
 import { FE, LIVES } from '../data/calendar';
 import type { MvBook } from '../data/molytvoslov';
+import type { Section } from '../data/prayers';
 import { KATH, ROM } from '../data/prayerLists';
 import { PL, VERS } from '../data/strings';
 import { BackBar } from '../components/Chrome';
@@ -19,6 +20,7 @@ import { dayInfo, entryFor, fmtDate, fmtMD, addDays, searchYear, toKey, ymd, FUL
 import { JAR_URL, Mark, Overlay, markKey, useStore } from '../store';
 import { Angel, angelDate, NATIVE, notifPermission, Reminders } from '../lib/notify';
 import { FONT, RADIUS } from '../theme';
+import { entry, Entry, fuzzySearch } from '../lib/fuzzy';
 import { bookText, speak, stopSpeaking, useSpeaking } from '../lib/speech';
 
 type Of<K extends Overlay['t']> = Extract<Overlay, { t: K }>;
@@ -193,10 +195,40 @@ function Life() {
   );
 }
 
+/** Розділи, довші за цю кількість молитов, не вміщаються на екран — над ними поле пошуку. */
+const SEC_SEARCH = 8;
+/** Останній запит у кожному розділі: лишається, коли повертаєшся з молитви до переліку. */
+const secQ: Record<number, string> = {};
+/** Підготовлені до нечіткого пошуку назви молитов (обома мовами і з групою) за розділами. */
+const secIdx = new WeakMap<object, Entry[]>();
+const secEntries = (items: Section['items']) => {
+  let es = secIdx.get(items);
+  if (!es) secIdx.set(items, (es = items.map((it) => entry(it.u, it.e))));
+  return es;
+};
+/** Усі молитви молитвослова одним переліком (для загального пошуку) і їхні підготовлені назви. */
+const flatIdx = new WeakMap<object, { flat: { s: Section; si: number; it: Section['items'][number]; j: number }[]; es: Entry[] }>();
+const prayerFlat = (MB: Section[]) => {
+  let r = flatIdx.get(MB);
+  if (!r) {
+    const flat = MB.flatMap((s, si) => s.items.map((it, j) => ({ s, si, it, j })));
+    flatIdx.set(MB, (r = { flat, es: flat.map((x) => entry(x.it.u, x.it.e)) }));
+  }
+  return r;
+};
+
 function Sec({ o }: { o: Of<'sec'> }) {
-  const { p, t, lang, push } = useStore();
+  const { p, t, lang, push, setQ } = useStore();
   const ul = lang === 'uk';
   const s = prayersL()!.MB[o.s];
+  const [q, setSecQ] = useState(secQ[o.s] ?? '');
+  const onQ = (v: string) => {
+    secQ[o.s] = v;
+    setSecQ(v);
+  };
+  const searchable = s.items.length > SEC_SEARCH;
+  const qt = searchable ? q.trim() : '';
+  const found = qt ? fuzzySearch(secEntries(s.items), qt) : [];
   // Молитви з тематичною групою (it.g) ідуть окремими картками з підзаголовком; решта — однією карткою.
   const groups: { g?: string; js: number[] }[] = [];
   s.items.forEach((it, j) => {
@@ -211,7 +243,60 @@ function Sec({ o }: { o: Of<'sec'> }) {
       <Scroll>
         <Kicker style={{ marginBottom: 6 }}>{ROM[o.s]}</Kicker>
         <Title>{ul ? s.u : s.e}</Title>
-        {groups.map(({ g, js }, k) => (
+        {searchable && (
+          <View
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 46, paddingLeft: 12, marginBottom: 20, borderWidth: 1, borderColor: q ? p.accent : p.divider, borderRadius: RADIUS }}
+          >
+            <Icon name="search" size={18} color={p.mute(55)} />
+            <TextInput
+              value={q}
+              onChangeText={onQ}
+              placeholder={t.secSearchPh}
+              placeholderTextColor={p.mute(45)}
+              returnKeyType="search"
+              autoCorrect={false}
+              style={{ flex: 1, minHeight: 44, color: p.text, fontFamily: FONT.body, fontSize: 16 }}
+            />
+            {!!q && (
+              <Press onPress={() => onQ('')} label={t.clear} style={{ paddingHorizontal: 14, paddingVertical: 10 }}>
+                <Text style={{ fontFamily: FONT.body, fontSize: 20, lineHeight: 22, color: p.mute(55) }}>×</Text>
+              </Press>
+            )}
+          </View>
+        )}
+        {!!qt && (
+          <>
+            {found.length > 0 ? (
+              <View style={card(p)}>
+                {found.map((j, n) => {
+                  const it = s.items[j];
+                  return (
+                    <NavRow
+                      key={j}
+                      title={ul ? it.u : it.e}
+                      sub={it.g?.[ul ? 0 : 1] ?? (ul ? it.mu : it.me)}
+                      onPress={() => push({ t: 'read', s: o.s, j })}
+                      last={n === found.length - 1}
+                    />
+                  );
+                })}
+              </View>
+            ) : (
+              <Body size={14} mute={60}>{t.noRes}</Body>
+            )}
+            <Press
+              onPress={() => {
+                setQ(qt);
+                push({ t: 'search' });
+              }}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14, paddingVertical: 8 }}
+            >
+              <Icon name="search" size={16} color={p.a700} />
+              <Text style={{ fontFamily: FONT.body, fontSize: 14, color: p.a700 }}>{t.searchAll}</Text>
+            </Press>
+          </>
+        )}
+        {!qt && groups.map(({ g, js }, k) => (
           <View key={k} style={{ marginBottom: k === groups.length - 1 ? 0 : 22 }}>
             {!!g && <Kicker style={{ marginBottom: 8 }}>{g}</Kicker>}
             <View style={card(p)}>
@@ -624,12 +709,12 @@ function Search() {
       if (f[lang].toLowerCase().includes(ql))
         results.push({ title: f[lang], sub: `${t.sFeasts} · ${fmtMD(f[cal][0], f[cal][1], lang)}`, go: openFeasts });
     });
-    MB.forEach((s, si) =>
-      s.items.forEach((it, j) => {
-        const n = ul ? it.u : it.e;
-        if (n.toLowerCase().includes(ql)) results.push({ title: n, sub: ul ? s.u : s.e, go: () => push({ t: 'read', s: si, j }) });
-      }),
-    );
+    // Молитви — нечітким пошуком: «Николаю» знайде «Миколаю», «акафист» — «акафіст».
+    const { flat, es } = prayerFlat(MB);
+    fuzzySearch(es, q.trim(), 80).forEach((k) => {
+      const { s, si, it, j } = flat[k];
+      results.push({ title: ul ? it.u : it.e, sub: ul ? s.u : s.e, go: () => push({ t: 'read', s: si, j }) });
+    });
     // Посилання на Писання («Ін. 3:16», «Gal 5:22–6:2») і назви книг Біблії.
     parseRefs(q.trim()).forEach((r) =>
       results.push({ title: r.label, sub: `${bookName(r.b, ul)} · ${t.scripture}`, go: () => push(refOverlay(r)) }),
