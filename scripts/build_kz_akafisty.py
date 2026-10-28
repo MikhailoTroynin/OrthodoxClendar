@@ -261,11 +261,27 @@ def slash(s):
     return re.sub(r'\(\s+', '(', re.sub(r'\s+([,.;:!?)])', r'\1', s))
 
 
+# тебе́/тебі́, себе́/себі́ (у «гражданці» ѣ втрачено; звіт cs-kyiv-translit): відмінок — за прийменником.
+# Родовий → «тебе́», давальний/місцевий → «тебі́». «в/во/на/по» — і знахідний, і місцевий: лишаємо як вийшло.
+_ST = '́?'
+_PREP_G = r'от|ото|без|безо|для|до|из|изо|із|у|кроме|про́?тиву?|вместо|ра́?ди|о́?коло|близ|по́?сле|среди́?|опричь'
+_PREP_D = r'к|ко|о|об|обо|при'
+_TEBE_G = re.compile(rf'(?i)(?<![\w\u0301])((?:{_PREP_G}){_ST}\s+)([тс])еб[еі]({_ST})(?!\w)')
+_TEBE_D = re.compile(rf'(?i)(?<![\w\u0301])((?:{_PREP_D}){_ST}\s+)([тс])еб[еі]({_ST})(?!\w)')
+_TEBE_RADI = re.compile(rf'(?<!\w)([ТтСс])еб[еі]({_ST})(\s+ра{_ST}ди)(?!\w)')
+
+
+def tebe(s):
+    s = _TEBE_RADI.sub(r'\1ебе\2\3', s)
+    s = _TEBE_G.sub(lambda m: f'{m[1]}{m[2]}ебе{m[3]}', s)
+    return _TEBE_D.sub(lambda m: f'{m[1]}{m[2]}ебі{m[3]}', s)
+
+
 def convert(items, aid, inl=()):
     """[(вид, текст)] розбору HTML → розділи MvBook; слова зі звіту — окремо."""
     paras = [fix_latin(x[1]) for x in items if x[0] == 'p']
     out, words, enc = translit_text('\n'.join(paras), enc='civil')
-    out = re.sub(r'(?i)(аллилу́?)їя', r'\1я', out)
+    out = tebe(re.sub(r'(?i)(аллилу́?)їя', r'\1я', out))
     out = re.sub(r'\{(\d+)\}', lambda m: inl[int(m[1])], out)
     lines = out.split('\n')
     assert len(lines) == len(paras), (aid, len(lines), len(paras))
