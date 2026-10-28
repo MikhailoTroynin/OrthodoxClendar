@@ -22,6 +22,7 @@ import { Angel, angelDate, NATIVE, notifPermission, Reminders } from '../lib/not
 import { FONT, RADIUS } from '../theme';
 import { entry, Entry, fuzzySearch } from '../lib/fuzzy';
 import { bookText, speak, stopSpeaking, useSpeaking } from '../lib/speech';
+import { TlumBtn, TlumMark } from '../components/Tlum';
 
 type Of<K extends Overlay['t']> = Extract<Overlay, { t: K }>;
 
@@ -131,11 +132,17 @@ function PrayerBook({ b, only, title, fs }: { b: MvBook; only?: number[]; title?
           <Heading size={24} style={{ marginTop: 10, marginBottom: 4 }}>{title}</Heading>
         </Anchor>
       )}
-      {secs.map((s, i) => (
+      {secs.map((s, i) => {
+        // Сторінка псалма: біля назви й номерів віршів — значок тлумачення.
+        const psN = Number(/^Псалом (\d+)$/.exec(s.h ?? '')?.[1]) || 0;
+        return (
         <View key={i} style={{ marginBottom: 12 }}>
           {!!s.h && (
             <Anchor text={s.h} h>
-              <Heading size={20} style={{ marginTop: 14, marginBottom: 8 }}>{s.h}</Heading>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 14, marginBottom: 8 }}>
+                <Heading size={20}>{s.h}</Heading>
+                {psN > 0 && <TlumBtn n={psN} />}
+              </View>
             </Anchor>
           )}
           {s.ps.map((t, j) =>
@@ -151,6 +158,7 @@ function PrayerBook({ b, only, title, fs }: { b: MvBook; only?: number[]; title?
               <Anchor key={j} text={t.slice(t.indexOf(' ') + 1)}>
                 <Text style={{ ...body, marginBottom: 6 }}>
                   <Text style={[{ fontFamily: FONT.headingBold, fontSize: fs - 3, color: p.a700 }, NUM]}>{t.slice(1, t.indexOf(' '))}</Text>
+                  {psN > 0 && <TlumMark n={psN} v={+t.slice(1, t.indexOf(' '))} size={fs * 0.7} />}
                   {'\u2002' + t.slice(t.indexOf(' ') + 1)}
                 </Text>
               </Anchor>
@@ -161,7 +169,8 @@ function PrayerBook({ b, only, title, fs }: { b: MvBook; only?: number[]; title?
             ),
           )}
         </View>
-      ))}
+        );
+      })}
       {b.notes.some((n, k) => !!n && used.has(k)) && (
         <View style={{ borderTopWidth: 1, borderTopColor: p.divider, paddingTop: 12, marginBottom: 18, gap: 6 }}>
           {b.notes.map((n, k) => !!n && used.has(k) && (
@@ -484,6 +493,8 @@ function Chapter({ o }: { o: Of<'chap'> }) {
   const next = o.c < last ? { b: o.b, c: o.c + 1 } : o.b < BOOKS.length - 1 ? { b: o.b + 1, c: 1 } : null;
   const label = (x: { b: number; c: number }) => (x.b === o.b ? chapTitle(x.b, x.c, ul) : `${BOOKS[x.b][2]} ${x.c}`);
   const book = bookItem(o.b);
+  // Псалми: значок тлумачення біля назви й номерів віршів.
+  const psalm = BOOKS[o.b][0] === 'ps';
   return (
     <>
       <BackBar right={<SizeBtns />} />
@@ -491,13 +502,23 @@ function Chapter({ o }: { o: Of<'chap'> }) {
         <Press onPress={() => push({ t: 'book', b: book })} style={{ alignSelf: 'flex-start', marginBottom: 6 }}>
           <Kicker>{`${bookName(o.b, ul)} · ${t.translation}`}</Kicker>
         </Press>
-        <Title>{chapTitle(o.b, o.c, ul)}</Title>
+        {psalm ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <Title>{chapTitle(o.b, o.c, ul)}</Title>
+            <View style={{ marginBottom: 16 }}>
+              <TlumBtn n={o.c} />
+            </View>
+          </View>
+        ) : (
+          <Title>{chapTitle(o.b, o.c, ul)}</Title>
+        )}
         {h ? <Text style={{ fontFamily: FONT.body, fontStyle: 'italic', fontSize: 14, color: p.mute(65), marginBottom: 10 }}>{h}</Text> : null}
         <View onLayout={(e) => (top.current = e.nativeEvent.layout.y)}>
         <Verses
           vs={vs}
           b={o.b}
           c={o.c}
+          tl={psalm ? o.c : undefined}
           hl={o.v ? [o.v, o.v2 ?? o.v] : undefined}
           onY={(n, y) => {
             // y — відносно списку віршів; зсув самого списку знаємо з onLayout обгортки.

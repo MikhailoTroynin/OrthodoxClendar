@@ -16,6 +16,7 @@ import BookTab from './screens/BookTab';
 import BibleTab from './screens/BibleTab';
 import MenuTab from './screens/MenuTab';
 import { OverlayHost } from './screens/Overlays';
+import { TlumHost } from './components/Tlum';
 import { Gate } from './components/Lazy';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { prayersL } from './lib/lazy';
@@ -40,6 +41,8 @@ function Shell() {
         <OverlayHost />
       </View>
       <TabBar />
+      {/* Тлумачення псалма розгортається над усім, разом із нижньою панеллю. */}
+      <TlumHost />
     </View>
   );
 }
