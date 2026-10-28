@@ -216,6 +216,11 @@ FONT = re.compile(r'<FONT COLOR=#aa2c2c>(.*?)</FONT>', re.S | re.I)
 INLINE = {'(имена)': '(імена)', '(имя рек)': '(ім’я)', '(имя)': '(ім’я)', '(имена́)': '(імена)'}
 
 
+def inline(key):
+    """Український відповідник рубрики, що стоїть у рядку з текстом («(імена)»); None — окремий рядок-рубрика."""
+    return INLINE.get(key)
+
+
 def parse(t):
     """→ [('h'|'r'|'p', текст)]; підстановки в рядку — «(імена)», «(ім’я)» — лишаються в абзаці як {N}."""
     items, buf = [], []
@@ -233,9 +238,9 @@ def parse(t):
         buf.append(t[pos:m.start()])
         inner = m.group(1).strip()
         txt = html.unescape(re.sub(r'<[^>]+>', '', inner)).strip()
-        key = txt.replace('\u0301', '')
-        if re.match(r'<i>', inner, re.I) and key in INLINE:
-            buf.append('{%d}' % len(inl)); inl.append(INLINE[key])
+        key = re.sub(r'\s+', ' ', txt.replace('\u0301', ''))
+        if re.match(r'<i>', inner, re.I) and inline(key):
+            buf.append('{%d}' % len(inl)); inl.append(inline(key))
         else:
             flush()
             if re.match(r'<b>', inner, re.I): items.append(('h', txt))
@@ -338,4 +343,5 @@ def main():
     if REPORT: json.dump(rep, open(REPORT, 'w', encoding='utf8'), ensure_ascii=False)
 
 
-main()
+if __name__ == '__main__':
+    main()
