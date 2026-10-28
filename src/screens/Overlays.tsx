@@ -61,7 +61,7 @@ export function OverlayHost() {
     <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: p.bg }}>
       {top.t === 'life' && <Life />}
       {top.t === 'sec' && need([prayersL], <Sec o={top} />)}
-      {top.t === 'read' && need([prayersL], <Reader key={`${top.s}.${top.j}`} o={top} />)}
+      {top.t === 'read' && need([prayersL], <ReaderGate key={`${top.s}.${top.j}`} o={top} />)}
       {top.t === 'book' && <BookOv o={top} />}
       {top.t === 'chap' && need([BOOK[top.b]], <Chapter key={`${top.b}.${top.c}.${top.v ?? 0}`} o={top} />)}
       {top.t === 'pass' && need([...new Set(parseRefs(top.s).map((r) => BOOK[r.b]))], <Passage o={top} />)}
@@ -233,6 +233,25 @@ function Sec({ o }: { o: Of<'sec'> }) {
         ))}
       </Scroll>
     </>
+  );
+}
+
+/** Тексти акафістів лежать у шардах (data/kz): перед читанням завантажує ті, що потрібні цій молитві. */
+function ReaderGate({ o }: { o: Of<'read'> }) {
+  const { MB, KZB } = prayersL()!;
+  const zs = [...new Set((MB[o.s].items[o.j].mv ?? []).flatMap((m) => (m.z === undefined ? [] : [m.z])))];
+  return (
+    <Gate
+      need={zs.map((z) => KZB[z])}
+      fallback={
+        <>
+          <BackBar />
+          <Loading />
+        </>
+      }
+    >
+      <Reader o={o} />
+    </Gate>
   );
 }
 

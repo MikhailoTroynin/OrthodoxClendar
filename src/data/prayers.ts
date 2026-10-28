@@ -3,12 +3,17 @@ import { CH, ChItem } from './channel';
 import { AKAFISTY } from './akafisty';
 import { KANONNYK } from './kanonnyk';
 import { MOLYTVOSLOV, MvBook } from './molytvoslov';
+import { KZ_AK, KZ_LOAD } from './kz/akMeta';
+import { lazy } from '../lib/lazy';
 export { AKAFISTY, KANONNYK, MOLYTVOSLOV };
+/** Шарди з текстами акафістів (data/kz): кожен вантажиться за потреби. */
+export const KZB = KZ_LOAD.map((l) => lazy(l));
 export type Bi = [string, string];
 export interface Block { h?: Bi; r?: Bi; t?: string }
-/** Посилання на повний текст у MOLYTVOSLOV (в AKAFISTY, якщо a; у KANONNYK, якщо k): книга b, за потреби — лише розділи s. */
-export interface MvRef { b: number; s?: number[]; a?: 1; k?: 1 }
-export const mvBook = (m: MvRef): MvBook => (m.a ? AKAFISTY : m.k ? KANONNYK : MOLYTVOSLOV)[m.b];
+/** Посилання на повний текст у MOLYTVOSLOV (в AKAFISTY, якщо a; у KANONNYK, якщо k; у шарді z з KZB, якщо z): книга b, за потреби — лише розділи s. */
+export interface MvRef { b: number; s?: number[]; a?: 1; k?: 1; z?: number }
+/** Книга за посиланням; для шарда z — undefined, доки його не завантажено (див. KZB). */
+export const mvBook = (m: MvRef): MvBook => (m.z !== undefined ? KZB[m.z]()?.[m.b] : (m.a ? AKAFISTY : m.k ? KANONNYK : MOLYTVOSLOV)[m.b]) as MvBook;
 export interface Item {
   u: string; e: string; mu: string; me: string;
   full?: 1; r?: Bi; p?: Bi[]; b?: Block[];
@@ -52,6 +57,13 @@ const ND = (u: string, e: string): Item =>({u,e,mu:'',me:''});
 const MV = (it: Item, ...mv: MvRef[]): Item => ({ ...it, full: 1, mv });
 /** Акафіст із повним текстом: книга i з AKAFISTY. */
 const AKF = (i: number, it = AK(AKAFISTY[i].u, AKAFISTY[i].e)): Item => MV(it, { b: i, a: 1 });
+/** Акафіст із шарда data/kz за номером у джерелі (id з KZ_AK). */
+const KZI: Record<number, [number, number]> = Object.fromEntries(KZ_AK.map(([id, sh, ix]) => [id, [sh, ix]]));
+const KZF = (id: number, it: Item): Item => MV(it, { b: KZI[id][1], z: KZI[id][0] });
+/** Підзаголовки груп акафістів з data/kz. */
+const KZG: Bi[] = [H('Празникам і Господнім подіям','Feasts and events of the Lord'),H('Святим','Saints'),H('Пресвятій Богородиці перед іконами','The Theotokos before her icons'),H('Різні','Other akathists')];
+/** Заглушки, що замінено повними текстами (id у KZ_AK): вони стоять у переліку на своїх місцях, решту дописано в кінець. */
+const KZ_STUB = new Set([9, 5, 193, 23, 26, 145, 30, 129, 56]);
 /** Книги i… з KANONNYK. */
 const kn = (...i: number[]): MvRef[] => i.map((b) => ({ b, k: 1 }));
 const G = (it: Item, g: Bi): Item => ({ ...it, g });
@@ -78,7 +90,7 @@ MV({u:'Молитви перед їжею і після',e:'Prayers before and a
 MV({u:'Пом’янник',e:'Commemoration book',mu:'',me:'',r:H('Поминання живих і спочилих наприкінці ранкового правила.','Commemoration of the living and the departed at the end of the morning rule.')},{b:3})]},
 {u:'Початкові молитви',e:'Opening prayers',items:[TX('Отче наш','The Lord’s Prayer','otche'),TX('Царю Небесний','O Heavenly King','tsaru'),TX('Трисвяте','Trisagion','trysv'),TX('Пресвята Тройце','O Most Holy Trinity','presv'),TX('Богородице Діво','Rejoice, O Virgin Theotokos','bogo'),TX('Достойно є','It is truly meet','dostoyno'),TX('Символ віри','The Creed','viruyu')]},
 {u:'До Святого Причастя',e:'Holy Communion',items:[MV(KN('Канон покаянний до Господа Ісуса Христа','Canon of Repentance to the Lord Jesus Christ'),{b:7}),MV(KN('Молебний канон до Пресвятої Богородиці','Supplicatory Canon to the Theotokos'),{b:8}),MV(KN('Канон Ангелу Хоронителю','Canon to the Guardian Angel'),{b:9}),MV({u:'Послідування до Святого Причастя',e:'Order of Preparation for Holy Communion',mu:'≈ 40 хв',me:'≈ 40 min',p:[H('Псалми 22, 23, 115','Psalms 22, 23, 115'),H('Канон до Святого Причастя','Canon for Holy Communion'),H('Молитви до Причастя','Prayers before Communion')]},{b:4},{b:5}),MV({u:'Подячні молитви після Причастя',e:'Thanksgiving after Communion',mu:'≈ 10 хв',me:'≈ 10 min',p:[H('Подячні молитви','Prayers of thanksgiving'),H('Пісня Симеона Богоприїмця','Song of St Simeon'),H('Трисвяте — Отче наш','Trisagion to the Lord’s Prayer'),H('Тропар і кондак','Troparion and kontakion')]},{b:6})]},
-{u:'Акафісти',e:'Akathists',items:[AKF(0,AK('Акафіст Найсолодшому Господу Ісусу Христу','Akathist to our Sweetest Lord Jesus Christ')),AKF(1,AK('Акафіст Пресвятій Богородиці','Akathist to the Most Holy Theotokos',[{h:H('Кондак 1','Kontakion 1'),t:'kondak1'}])),AK('Акафіст Покрову Пресвятої Богородиці','Akathist to the Protection of the Theotokos'),AK('Акафіст Воскресінню Христовому','Akathist to the Resurrection of Christ'),AK('Акафіст Страстям Христовим','Akathist to the Passion of Christ'),AK('Акафіст святому Іоанну Предтечі','Akathist to St John the Forerunner'),AK('Акафіст святителю Миколаю','Akathist to St Nicholas'),AK('Акафіст Архистратигу Михаїлу','Akathist to the Archangel Michael'),AK('Акафіст великомученику Пантелеймону','Akathist to the Great Martyr Panteleimon'),AKF(2,AK('Акафіст великомучениці Варварі','Akathist to the Great Martyr Barbara')),AK('Акафіст рівноапостольному князю Володимиру','Akathist to St Volodymyr, Equal-to-the-Apostles'),AK('Акафіст «Слава Богу за все»','Akathist “Glory to God for All Things”'),...AKAFISTY.slice(3).map((_, i) => AKF(i + 3))]},
+{u:'Акафісти',e:'Akathists',items:[AKF(0,AK('Акафіст Найсолодшому Господу Ісусу Христу','Akathist to our Sweetest Lord Jesus Christ')),AKF(1,AK('Акафіст Пресвятій Богородиці','Akathist to the Most Holy Theotokos',[{h:H('Кондак 1','Kontakion 1'),t:'kondak1'}])),KZF(9,AK('Акафіст Покрову Пресвятої Богородиці','Akathist to the Protection of the Theotokos')),KZF(5,AK('Акафіст Воскресінню Христовому','Akathist to the Resurrection of Christ')),KZF(193,AK('Акафіст Страстям Христовим','Akathist to the Passion of Christ')),KZF(23,AK('Акафіст святому Іоанну Предтечі','Akathist to St John the Forerunner')),KZF(26,AK('Акафіст святителю Миколаю','Akathist to St Nicholas')),KZF(145,AK('Акафіст Архистратигу Михаїлу','Akathist to the Archangel Michael')),KZF(30,AK('Акафіст великомученику Пантелеймону','Akathist to the Great Martyr Panteleimon')),AKF(2,AK('Акафіст великомучениці Варварі','Akathist to the Great Martyr Barbara')),KZF(129,AK('Акафіст рівноапостольному князю Володимиру','Akathist to St Volodymyr, Equal-to-the-Apostles')),KZF(56,AK('Акафіст «Слава Богу за все»','Akathist “Glory to God for All Things”')),...AKAFISTY.slice(3).map((_, i) => AKF(i + 3)),...KZ_AK.filter(([id]) => !KZ_STUB.has(id)).map(([id, , , g, u, e]) => G(KZF(id, AK(u, e)), KZG[g]))]},
 {u:'Канони',e:'Canons',items:[MV(KN('Канон покаянний','Canon of Repentance'),{b:7}),MV(KN('Молебний канон до Богородиці','Supplicatory Canon to the Theotokos'),{b:8}),MV(KN('Канон Ангелу Хоронителю','Canon to the Guardian Angel'),{b:9}),MV(KN('Великий канон прп. Андрія Критського','Great Canon of St Andrew of Crete',H('Читають у перші чотири дні Великого посту і в четвер пʼятого тижня.','Read on the first four days of Great Lent and on Thursday of the fifth week.')),...kn(0,1,2,3,4)),MV(KN('Пасхальний канон','Paschal Canon',H('Співають від Великодня до Віддання Пасхи.','Sung from Pascha until the Leave-taking of Pascha.')),...kn(5,7)),MV(KN('Канон Богородиці перед іконою «Скоропослушниця»','Canon to the Theotokos before her icon “Quick to Hearken”'),...kn(8))]},
 {u:'Часослов',e:'Horologion',items:[MV({u:'Шестопсалміє',e:'The Six Psalms',mu:'≈ 12 хв',me:'≈ 12 min',p:['3','37','62','87','102','142'].map(n=>H('Псалом '+n,'Psalm '+n))},...kn(9)),HR('Перший час','First Hour','5, 89, 100'),HR('Третій час','Third Hour','16, 24, 50'),HR('Шостий час','Sixth Hour','53, 54, 90'),HR('Девʼятий час','Ninth Hour','83, 84, 85'),{u:'Мале повечірʼя',e:'Small Compline',mu:'≈ 20 хв',me:'≈ 20 min',p:[H('Псалми 50, 69, 142','Psalms 50, 69, 142'),H('Символ віри','The Creed'),H('Канон','Canon'),H('«Достойно є» і молитва','“It is truly meet” and prayer')]},MV({u:'Часи Святої Пасхи',e:'Paschal Hours',mu:'≈ 10 хв',me:'≈ 10 min',r:H('Протягом Світлого тижня читають замість звичайних ранкових і вечірніх молитов.','Read throughout Bright Week in place of the usual morning and evening prayers.')},...kn(6))]},
 {u:'На різні потреби',e:'For various needs',items:[

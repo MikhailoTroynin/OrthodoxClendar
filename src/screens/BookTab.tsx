@@ -15,7 +15,7 @@ function findRef(MB: Section[], r: DayRef): { s: number; j: number } | undefined
   const order = [3, 4, ...MB.map((_, i) => i).filter((i) => i !== 3 && i !== 4)];
   for (const s of order) {
     const j = MB[s].items.findIndex((it) =>
-      it.mv?.some((m) => m.b === r.b && !m.a === !r.a && !m.k === !r.k && (r.s === undefined ? !m.s : m.s?.length === 1 && m.s[0] === r.s)),
+      it.mv?.some((m) => m.z === undefined && m.b === r.b && !m.a === !r.a && !m.k === !r.k && (r.s === undefined ? !m.s : m.s?.length === 1 && m.s[0] === r.s)),
     );
     if (j >= 0) return { s, j };
   }

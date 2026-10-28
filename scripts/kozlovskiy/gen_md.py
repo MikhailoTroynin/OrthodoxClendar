@@ -12,13 +12,14 @@ body=[]
 cur=None
 for (t,g,gn),items in by.items():
     if t!=cur: body.append(f'\n## {TBL[t]}\n'); cur=t
-    miss=[i for i in items if i[6]=='miss']; part=[i for i in items if i[6]=='part']; ok=[i for i in items if i[6] in('ok','dup')]; skip=[i for i in items if i[6]=='skip']
-    summary.append((TBL[t].split(' (')[0],gn,len(items),len(ok),len(part),len(miss),sum(i[5] for i in miss),len(skip)))
+    miss=[i for i in items if i[6]=='miss']; part=[i for i in items if i[6]=='part']; ok=[i for i in items if i[6] in('ok','dup')]; skip=[i for i in items if i[6]=='skip']; none=[i for i in items if i[6]=='none']
+    summary.append((TBL[t].split(' (')[0],gn,len(items),len(ok),len(part),len(miss),sum(i[5] for i in miss),len(skip)+len(none)))
     body.append(f'\n### {g}. {gn} — бракує {len(miss)}, частково {len(part)}, є {len(ok)}' + (f', відкладено {len(skip)}' if skip else '') + '\n')
     for i in items:
         if i[6]=='miss': body.append(f'- [ ] `{t[11:]}#{i[1]}` {i[4]} · {round(i[5]/1000) or "<1"} тис. зн.')
         elif i[6]=='part': body.append(f'- [ ] `{t[11:]}#{i[1]}` {i[4]} · **частково:** {i[7]}')
     if skip: body.append('- Відкладено: '+'; '.join(f'`#{i[1]}` {i[4]}' for i in skip))
+    if none: body.append('- Немає тексту в джерелі: '+'; '.join(f'`#{i[1]}` {i[4]}' for i in none))
     if ok: body.append('- Уже є: '+'; '.join(f'`#{i[1]}` {i[4]} → {i[7]}' for i in ok))
 md=['# Чеклист перенесення молитов з AlexandrKozlovskiy/OrthodoxCalendar','',
 'Джерело: [AlexandrKozlovskiy/OrthodoxCalendar](https://github.com/AlexandrKozlovskiy/OrthodoxCalendar) (Apache-2.0), бази `app/src/main/assets/db/create*.zip`.',

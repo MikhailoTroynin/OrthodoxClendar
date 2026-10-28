@@ -12,3 +12,6 @@ python3 -I scripts/kozlovskiy/gen_md.py "$W"       # → $W/CHECKLIST.md
 ```
 
 Після кожного перенесеного тексту додайте його `_id` у `PR`/`AK` у `classify.py` зі статусом `ok` і перегенеруйте чеклист.
+
+Акафісти збирає `scripts/build_kz_akafisty.py` (див. PLAN.md, розділ «Акафісти»): `python3 -I scripts/build_kz_akafisty.py "$W/ext/src.db" <каталог scripts навички cs-kyiv-translit> src/data/kz "$W/report.json"`.
+Назви — `akafisty_titles.tsv`, переклади сучасних російських текстів — `translated/<id>.json`.
