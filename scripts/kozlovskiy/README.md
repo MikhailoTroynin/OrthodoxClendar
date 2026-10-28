@@ -18,3 +18,8 @@ python3 -I scripts/kozlovskiy/gen_md.py "$W"       # → $W/CHECKLIST.md
 
 Канони збирає `scripts/build_kz_kanony.py` (див. PLAN.md, розділ «Канони»): `python3 -I scripts/build_kz_kanony.py "$W/ext/src.db" <каталог scripts навички cs-kyiv-translit> src/data/kz "$W/report.json"`.
 Назви — `kanony_titles.tsv`, переклад тексту сучасною російською (ак#74) — `translated/74.json`.
+
+Молитви збирає `scripts/build_kz_molytvy.py` (див. PLAN.md, розділ «Молитви»): `python3 -I scripts/build_kz_molytvy.py "$W/ext/src.db" <каталог scripts навички cs-kyiv-translit> src/data/kz "$W/report.json"`.
+Назви — `molytvy_titles.tsv`, переклад заголовків і рубрик — `molytvy_rubrics.py`, переклад абзаців сучасною російською — `translated/pr_*.json` (`{"<id>": {"<номер абзацу>": "текст"}}`).
+Щоб побачити, які абзаци ще схожі на сучасну російську і не перекладені: `RU_DUMP=$W/ru python3 -I scripts/build_kz_molytvy.py "$W/ext/src.db" <каталог scripts cs-kyiv-translit> /tmp/x` (потім `<id>.tsv` у `$W/ru`; визначення — `rusc.py`).
+
