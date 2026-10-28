@@ -47,11 +47,17 @@ AK={54:('ok','акафісти: Сладчайшому Ісусу'),55:('ok','а
 # дублікати між таблицями: однакові тексти в prayers_ru_pr і prayers_ru_ak
 DUP_AK={308:5,  # Акафист Воскресению Христову
  222:57, 223:195, 224:111, 225:203, 226:217, 325:112}
+# Рішення редактора (2026-10-28): поки не переносити тексти про новомучеників XX ст. і Росію
+# та повні служби (Літургії, Всенічне, Утреня, Вечерня, Полуношниці); Часослов лишається.
+SKIP_RE=re.compile(r'Росси|Русск|русск|Московск|XX века|новомученик',re.I)
+SKIP_PR={244,245,285,286,287,288,289,290,300,301,324,534}
 csnames=[n for (n,) in db.execute('select name_prayers from prayers_cs_pr')]+[n for (n,) in db.execute('select name_prayers from prayers_cs_ak')]
 rows=[]
 for t,m,dup in [('prayers_ru_pr',PR,DUP_AK),('prayers_ru_ak',AK,{})]:
     for _id,g,gn,name,ln in db.execute(f'select _id,id_group,name_group,name_prayers,length(text_prayers) from {t} order by id_group,id2'):
         st,where=m.get(_id,('miss',''))
+        if st=='miss' and (SKIP_RE.search(name) or (t=='prayers_ru_pr' and _id in SKIP_PR)):
+            st,where='skip','відкладено рішенням редактора'
         if _id in dup and st=='miss': st,where='dup',f'та сама назва в prayers_ru_ak#{dup[_id]} — переносити один раз'
         rows.append((t,_id,g,gn,name.strip(),ln,st,where))
 import json; json.dump(rows,open('classified.json','w'),ensure_ascii=False)
