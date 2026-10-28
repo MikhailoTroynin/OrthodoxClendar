@@ -88,6 +88,11 @@ const PRN: Bi[] = [H('Про родину, батьків і дітей','Family
 H('Молитовні правила','Prayer rules'),H('Господу Ісусу Христу і Хресту','To the Lord Jesus Christ and the Cross'),H('Пресвятій Богородиці','To the Most Holy Theotokos'),H('Небесним Силам і Ангелу Хоронителю','To the heavenly powers and the Guardian Angel')];
 /** Підзаголовки розділу «Тропарі й кондаки». */
 const PRT: Bi[] = [H('Дні седмиці','Days of the week'),H('Святим (загальні)','Common of the saints'),H('Празники','Feasts'),H('Інші свята й дні','Other feasts and days')];
+/** Тропарі з каналу «Київський Ізвод» (id у CH, k: 's') за розділами: перед іконами Богородиці, свята (у порядку церковного року), окремим святим.
+ *  Решта свят каналу — Господні, Богородичні й інші дні, що вже є повніше в «Тропарях і кондаках» (з величанням і задостойником), — не повторюється. */
+const CH_ICON = [702, 746, 865, 578, 476];
+const CH_FEAST = [177, 204, 246, 777, 474, 838, 510];
+const CH_DUP = new Set([245, 253, 285, 79, 132, 135, 161, 168, 178, 181, 219, 337, 332, 146, 150, 175, 187, 747]);
 /** Молитви книги «Молитви на всяку потребу» (номер розділу, назва англійською, група з NG) у порядку переліку. */
 const NEEDS: [number, string, number][] = [
 [3,'The Jesus Prayer',0],[2,'Prayer on the way to church',0],[4,'Prayer against distraction in prayer',0],[5,'Prayer before any work',0],[6,'Prayer after any work',0],[9,'Prayer of St Ephrem the Syrian',0],[22,'Prayer on taking prosphora and holy water',0],[24,'Prayer of the Optina Elders',0],
@@ -100,6 +105,11 @@ const NEEDS: [number, string, number][] = [
 const need = ([si, e, g]: [number, string, number]): Item => G(MV(ND(MOLYTVOSLOV[10].secs[si].h!, e), { b: 10, s: [si] }), NG[g]);
 /** Англійські назви розділів книги «Піснеспіви». */
 const HYMNS: string[] = ['Having beheld the Resurrection of Christ','Rejoice, O Bride unwedded','O all-hymned Mother','Today the Virgin (Kontakion of the Nativity)','Before thy Cross we bow down, O Master','My soul doth magnify the Lord','O Gladsome Light','Today he who hung the earth upon the waters is hung upon the Tree','Psalm 135','My most gracious Queen','The Jesus Prayer','O Lord of hosts, be with us'];
+const chItem = (c: ChItem, g?: Bi): Item => ({ u: c.u, e: c.u, mu: '', me: '', full: 1, x: c.t, g: g ?? (c.g ? [c.g, c.g] : undefined) });
+const chIds = (ids: number[], g: Bi): Item[] => ids.map((id) => chItem(CH.find((c) => c.id === id)!, g));
+/** Тропарі святих з каналу — у порядку каналу (за абеткою), перенесення мощей святителя Миколая — одразу після святителя Миколая. */
+const CH_SAINT = CH.filter((c) => c.k === 's' && c.id !== 117 && !CH_DUP.has(c.id) && !CH_ICON.includes(c.id) && !CH_FEAST.includes(c.id))
+  .flatMap((c) => (c.id === 612 ? [612, 117] : [c.id]));
 export const MB: Section[] = [
 {u:'Щоденне правило',e:'Daily rule',items:[
 {u:'Ранкові молитви',e:'Morning prayers',mu:'≈ 15 хв',me:'≈ 15 min',full:1,mv:[{b:1}],b:([{r:H('Вставши від сну, стань перед іконою, перехрестися і скажи:','On rising, stand before an icon, cross yourself and say:'),t:'vimya'},{h:H('Молитва митаря','Prayer of the Publican'),r:H('З трьома поклонами','With three bows'),t:'mytar'}] as Block[]).concat(OPEN,[{r:H('Далі — тропарі Троїчні, Псалом 50, Символ віри й молитви святих отців.','Then the Trinitarian troparia, Psalm 50, the Creed and the prayers of the holy fathers. The full Church Slavonic text follows below.')}])},
@@ -119,16 +129,13 @@ G(TX('Молитва за Україну','Prayer for Ukraine','ukraine',H('Ду
 G(MV(ND('Заупокійна літія, що звершується мирянином','Litiya for the departed served by a layman'),{b:13}),NG[6]),
 ...pr(11,NG[6]),...pr(9,PRN[0]),...pr(8,PRN[1]),...pr(10,PRN[2]),...pr(7,PRN[3])]},
 {u:'Молитви Господу, Богородиці й Небесним Силам',e:'Prayers to the Lord, the Theotokos and the Heavenly Powers',items:[...pr(0,PRN[4]),...pr(1,PRN[5]),...pr(2,PRN[6]),...pr(3,PRN[7])]},
-{u:'Перед іконами Богородиці',e:'Before icons of the Theotokos',items:pr(4)},
+{u:'Перед іконами Богородиці',e:'Before icons of the Theotokos',items:[...pr(4),...chIds(CH_ICON,H('Тропарі й кондаки іконам','Troparia and kontakia of the icons'))]},
 {u:'Молитви святим',e:'Prayers to the saints',items:pr(6)},
-{u:'Тропарі й кондаки',e:'Troparia and kontakia',items:[...pr(12,PRT[0]),...pr(5,PRT[1]),...pr(14,PRT[2]),...pr(13,PRT[3])]},
+{u:'Тропарі й кондаки',e:'Troparia and kontakia',items:[...pr(12,PRT[0]),...pr(5,PRT[1]),...pr(14,PRT[2]),...pr(13,PRT[3]),...chIds(CH_FEAST,PRT[3]),
+...chIds(CH_SAINT,H('Окремим святим','Individual saints'))]},
 {u:'Піснеспіви і заповіді',e:'Hymns and commandments',items:[
 ...MOLYTVOSLOV[12].secs.map((x, si) => G(MV(ND(x.h!, HYMNS[si]), { b: 12, s: [si] }), H('Піснеспіви','Hymns'))),
 ...MOLYTVOSLOV[11].secs.map((x, si) => G(MV(ND(x.h!, si ? 'The Beatitudes' : 'The two great commandments of our Lord Jesus Christ'), { b: 11, s: [si] }), H('Заповіді','Commandments'))),
 G(MV(ND('Про Київський ізвод','About the Kyiv Use'),{b:0}),H('Про молитвослов','About the prayer book'))]}];
-const chItem = (c: ChItem): Item => ({ u: c.u, e: c.u, mu: '', me: '', full: 1, x: c.t, g: c.g ? [c.g, c.g] : undefined });
 // Доповнення з каналу «Київський Ізвод» — лише те, чого в повних книгах Київського ізводу немає.
-MB.push(
-  { u: 'Додаткові молитви (Київський ізвод)', e: 'Additional prayers (Kyiv Use)', items: CH.filter((c) => c.k === 'p').map(chItem) },
-  { u: 'Святі й свята: тропарі', e: 'Saints and feasts: troparia', items: CH.filter((c) => c.k === 's').map(chItem) },
-);
+MB.push({ u: 'Додаткові молитви (Київський ізвод)', e: 'Additional prayers (Kyiv Use)', items: CH.filter((c) => c.k === 'p').map((c) => chItem(c)) });
