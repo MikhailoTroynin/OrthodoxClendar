@@ -1,11 +1,12 @@
-import React from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, ScrollView, Text, TextStyle, View } from 'react-native';
 import { MG, WS } from '../data/calendar';
 import { Body, Divider, FastIcon, GhostButton, Heading, Icon, Kicker, Marks, NUM, Press, Tag } from '../components/ui';
 import { TopBar } from '../components/Chrome';
 import { DayPager } from '../components/DayPager';
 import { RefText } from '../components/Scripture';
 import { dayInfo, fastKind, fmtDate, julianOf, sameDay, toKey, weekOf, weekdayIdx, weekdayName } from '../lib/calendar';
+import { prayersFor } from '../lib/saintPrayers';
 import { useStore } from '../store';
 import { FONT, RADIUS } from '../theme';
 
@@ -112,9 +113,7 @@ function DayPage({ d }: { d: Date }) {
         {!!tag && <Tag label={tag} />}
       </View>
       {day.entry ? (
-        <Text style={{ fontFamily: FONT.headingBold, fontSize: 27, lineHeight: 31, letterSpacing: -0.27, color: p.text }}>
-          {day.title}
-        </Text>
+        <Memory text={day.title} match={day.entry[0]} style={{ fontFamily: FONT.headingBold, fontSize: 27, lineHeight: 31, letterSpacing: -0.27, color: p.text }} icon={20} />
       ) : (
         <Body size={14} mute={60}>{t.noData}</Body>
       )}
@@ -126,9 +125,7 @@ function DayPage({ d }: { d: Date }) {
       {day.more.length > 0 && (
         <View style={{ marginTop: 14, gap: 8 }}>
           {day.more.map((m, i) => (
-            <Body key={i} size={15} mute={85}>
-              {m}
-            </Body>
+            <Memory key={i} text={m} match={m} style={{ fontFamily: FONT.body, fontSize: 15, lineHeight: 22.5, color: p.mute(85) }} />
           ))}
         </View>
       )}
@@ -187,6 +184,48 @@ function DayPage({ d }: { d: Date }) {
         </>
       )}
     </ScrollView>
+  );
+}
+
+/**
+ * Запис пам'яті дня. Якщо в молитвослові є молитви цьому святому, святу чи іконі, назву підкреслено, а поряд — значок книжки:
+ * дотик відкриває молитву, а коли їх кілька — перелік під записом.
+ */
+function Memory({ text, match, style, icon = 16 }: { text: string; match: string; style: TextStyle; icon?: number }) {
+  const { p, t, lang, push } = useStore();
+  const [open, setOpen] = useState(false);
+  const prs = prayersFor(match);
+  if (!prs.length) return <Text style={style}>{text}</Text>;
+  const one = prs.length === 1;
+  return (
+    <View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={one ? (lang === 'uk' ? prs[0].u : prs[0].e) : t.dayPrayers}
+        accessibilityState={one ? undefined : { expanded: open }}
+        onPress={() => (one ? push({ t: 'read', s: prs[0].s, j: prs[0].j }) : setOpen((o) => !o))}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderRadius: RADIUS, backgroundColor: pressed ? p.mute(6) : 'transparent' })}
+      >
+        <Text style={[style, { flex: 1, textDecorationLine: 'underline', textDecorationColor: p.a300 }]}>{text}</Text>
+        <View style={{ paddingTop: ((style.lineHeight as number) - icon) / 2 }}>
+          <Icon name="book" size={icon} color={p.a700} sw={1.6} />
+        </View>
+      </Pressable>
+      {open && (
+        <View style={{ marginTop: 6, marginBottom: 4, paddingLeft: 12, borderLeftWidth: 1, borderLeftColor: p.a300 }}>
+          {prs.map((r) => (
+            <Press
+              key={`${r.s}.${r.j}`}
+              onPress={() => push({ t: 'read', s: r.s, j: r.j })}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, paddingHorizontal: 4 }}
+            >
+              <Icon name="book" size={14} color={p.a700} sw={1.6} />
+              <Text style={{ flex: 1, fontFamily: FONT.body, fontSize: 13.5, lineHeight: 19, color: p.a700 }}>{lang === 'uk' ? r.u : r.e}</Text>
+            </Press>
+          ))}
+        </View>
+      )}
+    </View>
   );
 }
 
