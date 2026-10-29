@@ -6,10 +6,11 @@ import { MOLYTVOSLOV, MvBook } from './molytvoslov';
 import { KZ_AK, KZ_LOAD } from './kz/akMeta';
 import { KZ_KN, KN_LOAD } from './kz/knMeta';
 import { KZ_PR, PR_LOAD } from './kz/prMeta';
+import { KZ_AZ, AZ_LOAD } from './kz/azMeta';
 import { lazy } from '../lib/lazy';
 export { AKAFISTY, KANONNYK, MOLYTVOSLOV };
-/** Шарди з текстами акафістів, канонів і молитов (data/kz): спершу акафісти, далі канони, далі молитви; кожен вантажиться за потреби. */
-export const KZB = [...KZ_LOAD, ...KN_LOAD, ...PR_LOAD].map((l) => lazy(l));
+/** Шарди з текстами акафістів, канонів і молитов (data/kz): спершу акафісти, далі канони, далі молитви, далі додаткові молитви; кожен вантажиться за потреби. */
+export const KZB = [...KZ_LOAD, ...KN_LOAD, ...PR_LOAD, ...AZ_LOAD].map((l) => lazy(l));
 export type Bi = [string, string];
 export interface Block { h?: Bi; r?: Bi; t?: string }
 /** Посилання на повний текст у MOLYTVOSLOV (в AKAFISTY, якщо a; у KANONNYK, якщо k; у шарді z з KZB, якщо z): книга b, за потреби — лише розділи s. */
@@ -76,6 +77,12 @@ const pr = (g: number, gr?: Bi): Item[] =>
     const it = MV(ND(u, e), { b: PRI[id][1], z: PRI[id][0] });
     return gr ? G(it, gr) : it;
   });
+/** Додаткова молитва із шарда data/kz (KZ_AZ); шарди додаткових молитов у KZB йдуть після шардів молитов. */
+const AZI: Record<number, [number, number]> = Object.fromEntries(KZ_AZ.map(([id, sh, ix]) => [id, [sh + KZ_LOAD.length + KN_LOAD.length + PR_LOAD.length, ix]]));
+/** Підзаголовки розділу «Додаткові молитви» (номер групи — індекс у KZ_AZ). */
+const AZG: Bi[] = [H('Пресвятій Богородиці','To the Most Holy Theotokos'),H('Про родину, дітей і хрещеників','Family, children and godchildren'),H('Про хворих','For the sick'),H('На різні потреби','Various needs'),H('За спочилих','For the departed'),H('Святим','To the saints'),H('Піснеспіви Страсної седмиці','Holy Week hymns'),H('Тропарі й кондаки','Troparia and kontakia')];
+const az = (g: number): Item[] =>
+  KZ_AZ.filter((x) => x[3] === g).map(([id, , , , u, e]) => G(MV(ND(u, e), { b: AZI[id][1], z: AZI[id][0] }), AZG[g]));
 /** Заглушки, що замінено повними текстами (id у KZ_AK): вони стоять у переліку на своїх місцях, решту дописано в кінець. */
 const KZ_STUB = new Set([9, 5, 193, 23, 26, 145, 30, 129, 56]);
 /** Книги i… з KANONNYK. */
@@ -161,4 +168,5 @@ G(MV(ND('Заупокійна літія, що звершується мирян
 ...chIds(CH_SAINT,H('Окремим святим','Individual saints'))]},
 {u:'Піснеспіви і заповіді',e:'Hymns and commandments',items:[
 ...MOLYTVOSLOV[12].secs.map((x, si) => G(MV(ND(x.h!, HYMNS[si]), { b: 12, s: [si] }), H('Піснеспіви','Hymns'))),...chIds(CH_HYMN,H('Піснеспіви','Hymns')),
-CMD(0,'The two great commandments of our Lord Jesus Christ'),G(TEN,CMDG),CMD(1,'The Beatitudes')]}];
+CMD(0,'The two great commandments of our Lord Jesus Christ'),G(TEN,CMDG),CMD(1,'The Beatitudes')]},
+{u:'Додаткові молитви',e:'Additional prayers',items:AZG.flatMap((_, g) => az(g))}];
