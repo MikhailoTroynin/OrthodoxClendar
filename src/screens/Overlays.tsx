@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { Linking, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import React, { useMemo, useRef, useState } from 'react';
+import { Linking, PanResponder, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { FE, LIVES } from '../data/calendar';
 import type { MvBook } from '../data/molytvoslov';
@@ -26,8 +26,8 @@ import { TlumBtn, TlumMark } from '../components/Tlum';
 
 type Of<K extends Overlay['t']> = Extract<Overlay, { t: K }>;
 
-const Scroll = ({ children }: { children: React.ReactNode }) => (
-  <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 4, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+const Scroll = ({ children, scrollEnabled }: { children: React.ReactNode; scrollEnabled?: boolean }) => (
+  <ScrollView scrollEnabled={scrollEnabled} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 4, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
     {children}
   </ScrollView>
 );
@@ -1136,27 +1136,36 @@ function Donate() {
   );
 }
 
-/** Усі закладки, згруповані за молитвою (текстом): спершу тексти з найновішими закладками, у тексті — за порядком читання. */
+/** Порядок закладок у тексті: спершу ті, що користувач упорядкував сам, далі — за порядком читання. */
+const byOrder = (a: Mark, b: Mark) =>
+  a.n !== undefined && b.n !== undefined ? a.n - b.n : a.n !== undefined ? -1 : b.n !== undefined ? 1 : a.i - b.i || a.f - b.f;
+
+/** Усі закладки, згруповані за молитвою (текстом): спершу тексти з найновішими закладками, у тексті — за порядком читання або як упорядкував користувач. */
 function Marks() {
-  const { p, t, lang, bm, set, push } = useStore();
+  const { t, lang, bm, set } = useStore();
   const ul = lang === 'uk';
   const [toast, showToast] = useToast();
+  const [dragging, setDragging] = useState(false);
   const bmRef = useRef(bm);
   bmRef.current = bm;
   const groups = new Map<string, Mark[]>();
   bm.forEach((m) => groups.set(markKey(m.o), [...(groups.get(markKey(m.o)) ?? []), m]));
   const list = [...groups.values()]
-    .map((ms) => ms.sort((a, b) => a.i - b.i || a.f - b.f))
+    .map((ms) => ms.sort(byOrder))
     .sort((a, b) => Math.max(...b.map((m) => m.at)) - Math.max(...a.map((m) => m.at)));
   const del = (m: Mark) => {
     set({ bm: bm.filter((x) => x.id !== m.id) });
     showToast(t.markRemoved, { label: t.restore, fn: () => set({ bm: [...bmRef.current.filter((x) => x.id !== m.id), m] }) });
   };
+  const reorder = (ms: Mark[]) => {
+    const n = new Map(ms.map((m, k) => [m.id, k]));
+    set({ bm: bmRef.current.map((m) => (n.has(m.id) ? { ...m, n: n.get(m.id) } : m)) });
+  };
   const n = bm.length;
   return (
     <>
       <BackBar kicker={n ? `${n} ${ul ? PL(n, t.marksW) : n === 1 ? t.marksW[0] : t.marksW[1]}` : undefined} />
-      <Scroll>
+      <Scroll scrollEnabled={!dragging}>
         <Title>{t.marks}</Title>
         {!n && <Body size={14} mute={65}>{t.marksEmpty}</Body>}
         {list.map((ms) => {
@@ -1165,26 +1174,7 @@ function Marks() {
             <View key={markKey(g.o)} style={{ marginBottom: 22 }}>
               <Kicker style={{ marginBottom: 4 }}>{g.kicker}</Kicker>
               <Heading size={21} style={{ marginBottom: 10 }}>{g.title}</Heading>
-              <View style={card(p)}>
-                {ms.map((m, k) => (
-                  <View key={m.id} style={{ flexDirection: 'row', alignItems: 'stretch', borderBottomWidth: k === ms.length - 1 ? 0 : 1, borderBottomColor: p.divider }}>
-                    <Press onPress={() => push({ ...m.o, m: m.id })} style={{ flex: 1, flexDirection: 'row', gap: 10, paddingVertical: 12, paddingLeft: 14, paddingRight: 4, borderRadius: 0 }}>
-                      <View style={{ paddingTop: 3 }}>
-                        <Icon name="bookmark" size={15} color={p.accent} fill={p.accent} />
-                      </View>
-                      <View style={{ flex: 1, gap: 4 }}>
-                        <Text numberOfLines={3} style={{ fontFamily: FONT.body, fontSize: 15, lineHeight: 22, color: p.text }}>{`«${m.q}»`}</Text>
-                        <Text numberOfLines={2} style={[{ fontFamily: FONT.body, fontSize: 12, color: p.mute(60) }, NUM]}>
-                          {[m.h, `${Math.round(m.pos * 100)} %`, fmtDate(new Date(m.at), lang)].filter(Boolean).join(' · ')}
-                        </Text>
-                      </View>
-                    </Press>
-                    <Press label={`${t.markDel}: ${m.q}`} onPress={() => del(m)} style={{ width: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 0 }}>
-                      <Icon name="x" size={18} color={p.mute(50)} />
-                    </Press>
-                  </View>
-                ))}
-              </View>
+              <MarkRows ms={ms} del={del} reorder={reorder} onDrag={setDragging} />
             </View>
           );
         })}
@@ -1192,6 +1182,117 @@ function Marks() {
       </Scroll>
       {toast}
     </>
+  );
+}
+
+/** Закладки одного тексту. Якщо їх кілька, ручка ліворуч дає перетягнути закладку вище чи нижче. */
+function MarkRows({ ms, del, reorder, onDrag }: { ms: Mark[]; del: (m: Mark) => void; reorder: (ms: Mark[]) => void; onDrag: (on: boolean) => void }) {
+  const { p, t, lang, push } = useStore();
+  const [drag, setDrag] = useState<{ from: number; to: number; dy: number } | null>(null);
+  const heights = useRef<number[]>([]);
+  const cb = useRef({ ms, reorder, onDrag });
+  cb.current = { ms, reorder, onDrag };
+  const canDrag = ms.length > 1;
+
+  // Нове місце закладки: скільки інших рядків мають середину вище за середину перетягуваного.
+  const target = (from: number, dy: number) => {
+    const h = heights.current;
+    const top = (k: number) => h.slice(0, k).reduce((a, x) => a + (x ?? 0), 0);
+    const c = top(from) + (h[from] ?? 0) / 2 + dy;
+    let to = 0;
+    for (let k = 0; k < h.length; k++) if (k !== from && top(k) + (h[k] ?? 0) / 2 < c) to++;
+    return to;
+  };
+
+  const pans = useMemo(
+    () =>
+      ms.map((_, from) =>
+        PanResponder.create({
+          onStartShouldSetPanResponder: () => true,
+          onStartShouldSetPanResponderCapture: () => true,
+          onMoveShouldSetPanResponder: () => true,
+          onPanResponderTerminationRequest: () => false,
+          onPanResponderGrant: () => {
+            cb.current.onDrag(true);
+            setDrag({ from, to: from, dy: 0 });
+          },
+          onPanResponderMove: (_e, s) => setDrag({ from, to: target(from, s.dy), dy: s.dy }),
+          onPanResponderRelease: (_e, s) => {
+            const to = target(from, s.dy);
+            setDrag(null);
+            cb.current.onDrag(false);
+            if (to !== from) {
+              const next = [...cb.current.ms];
+              next.splice(to, 0, ...next.splice(from, 1));
+              cb.current.reorder(next);
+            }
+          },
+          onPanResponderTerminate: () => {
+            setDrag(null);
+            cb.current.onDrag(false);
+          },
+        }),
+      ),
+    [ms.length],
+  );
+
+  const shift = (k: number) => {
+    if (!drag || k === drag.from) return 0;
+    const h = heights.current[drag.from] ?? 0;
+    if (drag.from < k && k <= drag.to) return -h;
+    if (drag.to <= k && k < drag.from) return h;
+    return 0;
+  };
+
+  return (
+    <View style={card(p)}>
+      {ms.map((m, k) => {
+        const active = drag?.from === k;
+        return (
+          <View
+            key={m.id}
+            onLayout={(e) => {
+              heights.current[k] = e.nativeEvent.layout.height;
+            }}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'stretch',
+              borderBottomWidth: k === ms.length - 1 ? 0 : 1,
+              borderBottomColor: p.divider,
+              transform: [{ translateY: active ? drag.dy : shift(k) }],
+              zIndex: active ? 2 : 0,
+              backgroundColor: active ? p.bg : undefined,
+              opacity: active ? 0.92 : 1,
+              ...(active ? { shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 6 } : null),
+            }}
+          >
+            {canDrag && (
+              <View
+                {...pans[k]?.panHandlers}
+                accessibilityLabel={t.markMove}
+                style={{ width: 36, alignItems: 'center', justifyContent: 'center', ...({ cursor: 'grab', touchAction: 'none', userSelect: 'none' } as object) }}
+              >
+                <Icon name="grip" size={20} color={active ? p.accent : p.mute(45)} sw={3} />
+              </View>
+            )}
+            <Press onPress={() => push({ ...m.o, m: m.id })} style={{ flex: 1, flexDirection: 'row', gap: 10, paddingVertical: 12, paddingLeft: canDrag ? 2 : 14, paddingRight: 4, borderRadius: 0 }}>
+              <View style={{ paddingTop: 3 }}>
+                <Icon name="bookmark" size={15} color={p.accent} fill={p.accent} />
+              </View>
+              <View style={{ flex: 1, gap: 4 }}>
+                <Text numberOfLines={3} style={{ fontFamily: FONT.body, fontSize: 15, lineHeight: 22, color: p.text }}>{`«${m.q}»`}</Text>
+                <Text numberOfLines={2} style={[{ fontFamily: FONT.body, fontSize: 12, color: p.mute(60) }, NUM]}>
+                  {[m.h, `${Math.round(m.pos * 100)} %`, fmtDate(new Date(m.at), lang)].filter(Boolean).join(' · ')}
+                </Text>
+              </View>
+            </Press>
+            <Press label={`${t.markDel}: ${m.q}`} onPress={() => del(m)} style={{ width: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 0 }}>
+              <Icon name="x" size={18} color={p.mute(50)} />
+            </Press>
+          </View>
+        );
+      })}
+    </View>
   );
 }
 

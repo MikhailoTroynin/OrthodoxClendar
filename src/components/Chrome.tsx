@@ -8,7 +8,7 @@ import { Icon, Kicker, Press } from './ui';
 
 /** Верхня панель вкладки: підпис, перемикач теми, пошук. */
 export function TopBar({ kicker }: { kicker: string }) {
-  const { p, theme, set, push, t } = useStore();
+  const { p, theme, set, push, t, bm } = useStore();
   const night = theme === 'night';
   return (
     <View style={{ height: 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 24, paddingRight: 14 }}>
@@ -19,7 +19,7 @@ export function TopBar({ kicker }: { kicker: string }) {
           onPress={() => push({ t: 'marks' })}
           style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
         >
-          <Icon name="bookmark" color={p.text} />
+          <Icon name="bookmark" color={bm.length ? p.accent : p.text} fill={bm.length ? p.accent : undefined} />
         </Press>
         <Press
           label={night ? t.toDay : t.toNight}
