@@ -120,6 +120,21 @@ const chIds = (ids: number[], g?: Bi): Item[] => ids.map((id) => chItem(CH.find(
 /** Тропарі святих з каналу — у порядку каналу (за абеткою), перенесення мощей святителя Миколая — одразу після святителя Миколая. */
 const CH_SAINT = CH.filter((c) => c.k === 's' && c.id !== 117 && !CH_DUP.has(c.id) && !CH_ICON.includes(c.id) && !CH_FEAST.includes(c.id))
   .flatMap((c) => (c.id === 612 ? [612, 117] : [c.id]));
+/** Заповіді з книги «Заповіді» (розділ si) і Десять заповідей між двома головними й блаженствами. */
+const CMDG: Bi = H('Заповіді','Commandments');
+const CMD = (si: number, e: string): Item => G(MV(ND(MOLYTVOSLOV[11].secs[si].h!, e), { b: 11, s: [si] }), CMDG);
+const TEN: Item = {u:'Десять заповідей Божих',e:'The Ten Commandments',mu:'',me:'',full:1,x:[
+'1. Аз єсмь Госпо́дь Бог твой; да не бу́дут тебі́ бо́зи і́ни, ра́зві Мене́.',
+'2. Не сотвори́ собі́ куми́ра і вся́каго подо́бія, єли́ка на небесі́ горі́, і єли́ка на земли́ ни́зу, і єли́ка в вода́х под земле́ю: да не покло́нишися їм, ні послу́жиши їм.',
+'3. Не приє́мли і́мене Го́спода Бо́га твоєго́ всу́є.',
+'4. По́мни день суббо́тний, є́же святи́ти єго́: шесть дній ді́лай, і сотвори́ши в них вся діла́ твоя́; в день же седми́й, суббо́та Го́споду Бо́гу твоєму́.',
+'5. Чти отца́ твоєго́ і ма́тер твою́, да бла́го ти бу́дет, і да долголі́тен бу́деши на земли́.',
+'6. Не убі́й.',
+'7. Не прелюби́ сотвори́.',
+'8. Не укра́ди.',
+'9. Не послу́шествуй на дру́га твоєго́ свиді́тельства ло́жна.',
+'10. Не пожела́й жени́ і́скренняго твоєго́, не пожела́й до́му бли́жняго твоєго́, ні села́ єго́, ні раба́ єго́, ні раби́ні єго́, ні вола́ єго́, ні осла́ єго́, ні вся́каго ско́та єго́, ні всего́, єли́ка суть бли́жняго твоєго́.',
+'див. Вих. 20:2-17, Втор. 5:6-21'].join('\n\n')};
 export const MB: Section[] = [
 {u:'Щоденне правило',e:'Daily rule',items:[
 {u:'Ранкові молитви',e:'Morning prayers',mu:'≈ 15 хв',me:'≈ 15 min',full:1,mv:[{b:1}],b:([{r:H('Вставши від сну, стань перед іконою, перехрестися і скажи:','On rising, stand before an icon, cross yourself and say:'),t:'vimya'},{h:H('Молитва митаря','Prayer of the Publican'),r:H('З трьома поклонами','With three bows'),t:'mytar'}] as Block[]).concat(OPEN,[{r:H('Далі — тропарі Троїчні, Псалом 50, Символ віри й молитви святих отців.','Then the Trinitarian troparia, Psalm 50, the Creed and the prayers of the holy fathers. The full Church Slavonic text follows below.')}])},
@@ -146,5 +161,4 @@ G(MV(ND('Заупокійна літія, що звершується мирян
 ...chIds(CH_SAINT,H('Окремим святим','Individual saints'))]},
 {u:'Піснеспіви і заповіді',e:'Hymns and commandments',items:[
 ...MOLYTVOSLOV[12].secs.map((x, si) => G(MV(ND(x.h!, HYMNS[si]), { b: 12, s: [si] }), H('Піснеспіви','Hymns'))),...chIds(CH_HYMN,H('Піснеспіви','Hymns')),
-...MOLYTVOSLOV[11].secs.map((x, si) => G(MV(ND(x.h!, si ? 'The Beatitudes' : 'The two great commandments of our Lord Jesus Christ'), { b: 11, s: [si] }), H('Заповіді','Commandments'))),
-G(MV(ND('Про Київський ізвод','About the Kyiv Use'),{b:0}),H('Про молитвослов','About the prayer book'))]}];
+CMD(0,'The two great commandments of our Lord Jesus Christ'),G(TEN,CMDG),CMD(1,'The Beatitudes')]}];
