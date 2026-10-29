@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { AppState, Pressable, ScrollView, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { DayRef, nowPrayer, ROM, WK } from '../data/prayerLists';
+import { DayRef, nowPrayer, SEC_GROUPS, secNum, WK } from '../data/prayerLists';
 import type { Section } from '../data/prayers';
 import { prayersL } from '../lib/lazy';
 import { Body, H1, Heading, Icon, Kicker, NavRow, OutlineButton, Press, card } from '../components/ui';
 import { TopBar } from '../components/Chrome';
-import { weekdayIdx, weekdayName } from '../lib/calendar';
+import { toKey, weekdayIdx, weekdayName } from '../lib/calendar';
 import { useStore } from '../store';
 import { FONT, RADIUS } from '../theme';
 
@@ -37,7 +37,7 @@ function useNow() {
 }
 
 export default function BookTab() {
-  const { p, t, lang, push, jc, jt } = useStore();
+  const { p, t, lang, push, jc, jt, rt } = useStore();
   const ul = lang === 'uk';
   const nm = (x: { u: string; e: string }) => (ul ? x.u : x.e);
   const mt = (x: { mu: string; me: string }) => (ul ? x.mu : x.me);
@@ -46,6 +46,8 @@ export default function BookTab() {
   const MB = prayersL()!.MB; // вкладка відкривається, коли молитвослов уже завантажено (див. App)
   const np = nowPrayer(now.getHours());
   const cur = MB[0].items[np.j];
+  // Ранкове (0-0) і вечірнє (0-1) правило, позначене прочитаним сьогодні.
+  const doneToday = np.j < 2 && !!rt[toKey(now)]?.[`0-${np.j}`];
   const curK = np.part === 'morning' ? t.nowMorning : np.part === 'day' ? t.nowDay : t.nowEvening;
   const dayItems = wk[0].flatMap((r) => {
     const f = findRef(MB, r);
@@ -67,6 +69,7 @@ export default function BookTab() {
               <View style={{ flex: 1 }}>
                 <Heading size={21}>{nm(cur)}</Heading>
                 {!!mt(cur) && <Body size={12.5} mute={60}>{mt(cur)}</Body>}
+                {doneToday && <Body size={12.5} style={{ color: p.a700, marginTop: 2 }}>{`✓ ${t.readToday}`}</Body>}
               </View>
               <OutlineButton label={t.start} onPress={() => push({ t: 'read', s: 0, j: np.j })} />
             </View>
@@ -103,26 +106,33 @@ export default function BookTab() {
           <Icon name="right" size={18} color={p.mute(50)} />
         </Press>
 
-        <Kicker style={{ marginTop: 26, marginBottom: 4 }}>{t.sections}</Kicker>
-        <View style={{ borderTopWidth: 1, borderTopColor: p.divider }}>
-          {MB.map((s, i) => (
-            <Press
-              key={i}
-              onPress={() => push({ t: 'sec', s: i })}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, borderRadius: 0, borderBottomWidth: 1, borderBottomColor: p.divider }}
-            >
-              <Text numberOfLines={1} style={{ width: 36, fontFamily: FONT.heading, fontSize: 18, color: p.a700 }}>{ROM[i]}</Text>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Heading size={19}>{nm(s)}</Heading>
-                <Text numberOfLines={1} style={{ fontFamily: FONT.body, fontSize: 12, color: p.mute(60) }}>
-                  {s.items.slice(0, 3).map(nm).join(' · ')}
-                </Text>
-              </View>
-              <Text style={{ fontFamily: FONT.body, fontSize: 13, color: p.mute(55) }}>{s.items.length}</Text>
-              <Icon name="right" size={18} color={p.mute(50)} />
-            </Press>
-          ))}
-        </View>
+        {SEC_GROUPS.map((g, gi) => (
+          <View key={gi}>
+            <Kicker style={{ marginTop: gi ? 22 : 26, marginBottom: 4 }}>{nm(g)}</Kicker>
+            <View style={{ borderTopWidth: 1, borderTopColor: p.divider }}>
+              {g.ix.filter((i) => MB[i]).map((i) => {
+                const s = MB[i];
+                return (
+                  <Press
+                    key={i}
+                    onPress={() => push({ t: 'sec', s: i })}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, borderRadius: 0, borderBottomWidth: 1, borderBottomColor: p.divider }}
+                  >
+                    <Text numberOfLines={1} style={{ width: 36, fontFamily: FONT.heading, fontSize: 18, color: p.a700 }}>{secNum(i)}</Text>
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Heading size={19}>{nm(s)}</Heading>
+                      <Text numberOfLines={1} style={{ fontFamily: FONT.body, fontSize: 12, color: p.mute(60) }}>
+                        {s.items.slice(0, 3).map(nm).join(' · ')}
+                      </Text>
+                    </View>
+                    <Text style={{ fontFamily: FONT.body, fontSize: 13, color: p.mute(55) }}>{s.items.length}</Text>
+                    <Icon name="right" size={18} color={p.mute(50)} />
+                  </Press>
+                );
+              })}
+            </View>
+          </View>
+        ))}
       </ScrollView>
     </View>
   );

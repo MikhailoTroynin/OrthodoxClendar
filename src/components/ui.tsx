@@ -9,6 +9,7 @@ export { NUM };
 
 const PATHS: Record<string, string> = {
   right: 'm9 18 6-6-6-6',
+  check: 'M20 6 9 17l-5-5',
   left: 'm15 18-6-6 6-6',
   x: 'M18 6 6 18M6 6l12 12',
   moon: 'M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z',
@@ -179,6 +180,8 @@ export interface SegOpt {
   label: string;
   on: boolean;
   onPress: () => void;
+  /** Назва значка перед підписом (див. Icon). */
+  icon?: string;
 }
 
 export function Seg({ opts, height = 40 }: { opts: SegOpt[]; height?: number }) {
@@ -200,7 +203,10 @@ export function Seg({ opts, height = 40 }: { opts: SegOpt[]; height?: number }) 
             borderColor: o.on ? p.accent : 'transparent',
           }}
         >
-          <Text numberOfLines={1} style={{ fontFamily: FONT.body, fontSize: opts.length > 3 ? 13 : 14, color: o.on ? p.a700 : p.text }}>{o.label}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            {!!o.icon && <Icon name={o.icon} size={16} color={o.on ? p.a700 : p.text} />}
+            <Text numberOfLines={1} style={{ fontFamily: FONT.body, fontSize: opts.length > 3 ? 12 : 14, color: o.on ? p.a700 : p.text }}>{o.label}</Text>
+          </View>
         </Pressable>
       ))}
     </View>

@@ -1,12 +1,13 @@
-import React from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, Easing, ScrollView, Text, View } from 'react-native';
 import type { Book } from '../data/prayers';
 import { KATH } from '../data/prayerLists';
-import { BOOKS, groupItem } from '../lib/bible';
+import { BOOKS, bookName, groupItem } from '../lib/bible';
 import { psaltyrL, useLazy } from '../lib/lazy';
 import { PL } from '../data/strings';
-import { Body, H1, Kicker, NavRow, NUM, Press, card } from '../components/ui';
+import { Body, H1, Icon, Kicker, NavRow, NUM, Press, card } from '../components/ui';
 import { TopBar } from '../components/Chrome';
+import { Chevron, Collapse } from '../components/motion';
 import { dayInfo, fmtDate } from '../lib/calendar';
 import { useStore } from '../store';
 import { FONT, RADIUS } from '../theme';
@@ -28,7 +29,7 @@ export const gospelRead = (bd: string[]) => bd.filter((k) => BOOKS[+k.split('.')
 const OT: Book[] = [0, 1, 2, 3, 4].map(groupItem);
 
 export default function BibleTab() {
-  const { p, t, lang, cal, today, push, bd } = useStore();
+  const { p, t, lang, cal, today, push, bd, otOpen, set } = useStore();
   const ul = lang === 'uk';
   const day = dayInfo(today, cal, lang);
   const open = (b: Book) => push({ t: 'book', b });
@@ -52,6 +53,8 @@ export default function BibleTab() {
           <H1>{t.scripture}</H1>
         </View>
 
+        <Continue />
+
         <View style={[card(p), { padding: 16, gap: 4, marginBottom: 24 }]}>
           <Kicker>{`${t.dayRead} · ${fmtDate(today, lang)}`}</Kicker>
           {[
@@ -68,8 +71,18 @@ export default function BibleTab() {
         <Body size={12.5} mute={60} style={{ marginBottom: 14 }}>{t.bibleHelp}</Body>
         <Kicker style={{ marginBottom: 8 }}>{t.ntH}</Kicker>
         {list(NT, true)}
-        <Kicker style={{ marginBottom: 8 }}>{t.otH}</Kicker>
-        {list(OT)}
+        {/* Старий Заповіт типово згорнуто: розгортається за 320 мс, шеврон повертається на 90°. */}
+        <Press
+          onPress={() => set({ otOpen: !otOpen })}
+          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, paddingVertical: 8, marginBottom: 8 }}
+        >
+          <Kicker>{t.otH}</Kicker>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Text style={{ fontFamily: FONT.body, fontSize: 12, color: p.mute(60) }}>{t.otHint}</Text>
+            <Chevron open={otOpen} color={p.mute(60)} size={18} />
+          </View>
+        </Press>
+        <Collapse open={otOpen}>{list(OT)}</Collapse>
 
         <Kicker style={{ marginBottom: 6 }}>{t.psalter}</Kicker>
         <PsalterBlock />
@@ -135,5 +148,35 @@ export function PsalterBlock() {
       </View>
       {PSALTYR && psRows([PSALTYR.length - 2, PSALTYR.length - 1], 16)}
     </>
+  );
+}
+
+/** «Продовжити читання»: остання відкрита глава, скільки глав книги прочитано й смужка прогресу. */
+function Continue() {
+  const { p, t, lang, last, bd, push } = useStore();
+  const ul = lang === 'uk';
+  const w = useRef(new Animated.Value(0)).current;
+  const total = last ? BOOKS[last.b][5] : 0;
+  const read = last ? bd.filter((k) => k.startsWith(`${last.b}.`)).length : 0;
+  useEffect(() => {
+    Animated.timing(w, { toValue: total ? read / total : 0, duration: 350, easing: Easing.out(Easing.quad), useNativeDriver: false }).start();
+  }, [read, total, w]);
+  if (!last) return null;
+  const name = bookName(last.b, ul);
+  return (
+    <Press
+      onPress={() => push({ t: 'chap', b: last.b, c: last.c })}
+      style={{ marginBottom: 24, padding: 16, borderWidth: 1, borderColor: p.accent, gap: 6 }}
+    >
+      <Kicker>{t.continue}</Kicker>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Text style={{ flex: 1, fontFamily: FONT.headingBold, fontSize: 21, lineHeight: 25, color: p.text }}>{`${name}${t.contAt}${last.c}`}</Text>
+        <Icon name="right" size={20} color={p.accent} />
+      </View>
+      <Body size={12} mute={60}>{t.chOf.replace('{a}', String(read)).replace('{b}', String(total))}</Body>
+      <View style={{ height: 2, backgroundColor: p.divider, marginTop: 4 }}>
+        <Animated.View style={{ height: 2, backgroundColor: p.accent, width: w.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }} />
+      </View>
+    </Press>
   );
 }
