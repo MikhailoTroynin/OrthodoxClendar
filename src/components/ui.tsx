@@ -25,6 +25,7 @@ const PATHS: Record<string, string> = {
   speaker: 'M11 5 6 9H2v6h4l5 4V5ZM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14',
   stop: 'M7 7h10v10H7Z',
   bookmark: 'M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z',
+  grip: 'M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01',
 };
 
 export function Icon({ name, size = 21, color, sw = 1.5, fill }: { name: string; size?: number; color: string; sw?: number; fill?: string }) {
