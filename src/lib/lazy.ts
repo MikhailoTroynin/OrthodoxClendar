@@ -52,3 +52,4 @@ export function useLazy(...ls: Lazy<unknown>[]): boolean {
 export const psaltyrL = lazy(() => import('../data/psaltyr'));
 /** Молитвослов: розділи, повні тексти Київського ізводу і молитви з каналу. */
 export const prayersL = lazy(() => import('../data/prayers'));
+export const feofanL = lazy(() => import('../data/feofan'));
