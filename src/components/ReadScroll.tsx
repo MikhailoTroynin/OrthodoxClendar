@@ -138,7 +138,7 @@ export function MarkBtn({ onPress }: { onPress: () => void }) {
   const { p, t } = useStore();
   return (
     <Press label={t.markAdd} onPress={onPress} style={{ minWidth: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
-      <Icon name="bookmark" color={p.a700} />
+      <Icon name="bookmarkAdd" color={p.a700} />
     </Press>
   );
 }

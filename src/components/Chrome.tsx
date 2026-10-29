@@ -6,21 +6,29 @@ import { prayersL, psaltyrL } from '../lib/lazy';
 import { bookName, chapTitle } from '../lib/bible';
 import { Icon, Kicker, Press } from './ui';
 
+/** Кнопка переліку закладок; зафарбована, коли закладки є. */
+function MarksBtn() {
+  const { p, push, t, bm } = useStore();
+  return (
+    <Press
+      label={t.marks}
+      onPress={() => push({ t: 'marks' })}
+      style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
+    >
+      <Icon name="bookmark" color={bm.length ? p.accent : p.text} fill={bm.length ? p.accent : undefined} />
+    </Press>
+  );
+}
+
 /** Верхня панель вкладки: підпис, перемикач теми, пошук. */
 export function TopBar({ kicker }: { kicker: string }) {
-  const { p, theme, set, push, t, bm } = useStore();
+  const { p, theme, set, push, t } = useStore();
   const night = theme === 'night';
   return (
     <View style={{ height: 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 24, paddingRight: 14 }}>
       <Kicker>{kicker}</Kicker>
       <View style={{ flexDirection: 'row', gap: 2 }}>
-        <Press
-          label={t.marks}
-          onPress={() => push({ t: 'marks' })}
-          style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
-        >
-          <Icon name="bookmark" color={bm.length ? p.accent : p.text} fill={bm.length ? p.accent : undefined} />
-        </Press>
+        <MarksBtn />
         <Press
           label={night ? t.toDay : t.toNight}
           onPress={() => set({ theme: night ? 'day' : 'night' })}
@@ -68,17 +76,21 @@ function screenName(o: Overlay | undefined, tab: Tab, t: Record<string, any>, ul
   }
 }
 
-/** Верхня панель вторинного екрана: «Назад» із назвою попереднього екрана і підпис. */
+/** Верхня панель вторинного екрана: «Назад» із назвою попереднього екрана, підпис і кнопка закладок (крім самого переліку закладок). */
 export function BackBar({ kicker, right }: { kicker?: string; right?: React.ReactNode }) {
   const { p, pop, t, ov, tab, lang } = useStore();
   const label = screenName(ov[ov.length - 2], tab, t, lang === 'uk');
+  const marks = ov[ov.length - 1]?.t !== 'marks';
   return (
     <View style={{ height: 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, paddingLeft: 8, paddingRight: 14 }}>
       <Press onPress={pop} label={`${t.back}: ${label}`} style={{ flexDirection: 'row', alignItems: 'center', height: 44, paddingRight: 10, flexShrink: 1, maxWidth: 220 }}>
         <Icon name="left" color={p.a700} size={22} />
         <Text numberOfLines={1} style={{ flexShrink: 1, fontFamily: FONT.headingBold, fontSize: 16, color: p.a700 }}>{label}</Text>
       </Press>
-      {right ?? (kicker ? <Kicker style={{ flexShrink: 1, textAlign: 'right' }}>{kicker}</Kicker> : null)}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', flexShrink: 1 }}>
+        {right ?? (kicker ? <Kicker style={{ flexShrink: 1, textAlign: 'right' }}>{kicker}</Kicker> : null)}
+        {marks && <MarksBtn />}
+      </View>
     </View>
   );
 }
