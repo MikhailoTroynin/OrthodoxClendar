@@ -5,6 +5,7 @@ import { useLazy } from '../lib/lazy';
 import { useStore } from '../store';
 import { FONT } from '../theme';
 import { NUM, Press } from './ui';
+import { TlumMark } from './Tlum';
 
 /** Відкриває місце Писання: главу з виділеними віршами. */
 export const refOverlay = (r: Ref) => ({ t: 'chap' as const, b: r.b, c: r.c, v: r.v, v2: r.c2 === r.c ? r.v2 : undefined });
@@ -62,9 +63,10 @@ function XRefs({ xs }: { xs: Ref[] }) {
 
 /**
  * Вірші з номерами. Номер вірша з паралельними місцями підкреслено: дотик розгортає їх список,
- * кожне місце відкривається окремою главою. hl — виділені вірші, onY — позиція вірша (для прокрутки).
+ * кожне місце відкривається окремою главою. hl — виділені вірші, onY — позиція вірша (для прокрутки),
+ * tl — номер псалма, біля віршів якого показати значок тлумачення.
  */
-export function Verses({ vs, b, c, hl, onY }: { vs: Verse[]; b: number; c?: number; hl?: [number, number]; onY?: (n: number, y: number) => void }) {
+export function Verses({ vs, b, c, hl, onY, tl }: { vs: Verse[]; b: number; c?: number; hl?: [number, number]; onY?: (n: number, y: number) => void; tl?: number }) {
   const { p, fs, lang } = useStore();
   const ul = lang === 'uk';
   const [open, setOpen] = useState<Record<string, boolean>>({});
@@ -99,6 +101,7 @@ export function Verses({ vs, b, c, hl, onY }: { vs: Verse[]; b: number; c?: numb
                 >
                   {v.n}
                 </Text>
+                {!!tl && <TlumMark n={tl} v={v.n} size={fs * 0.7} />}
                 {'  '}
                 {v.t}
               </Text>
