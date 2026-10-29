@@ -6,6 +6,7 @@ import { TopBar } from '../components/Chrome';
 import { DayPager } from '../components/DayPager';
 import { RefText } from '../components/Scripture';
 import { dayInfo, fastKind, fmtDate, julianOf, sameDay, toKey, weekOf, weekdayIdx, weekdayName } from '../lib/calendar';
+import { feofanL, useLazy } from '../lib/lazy';
 import { prayersFor } from '../lib/saintPrayers';
 import { useStore } from '../store';
 import { FONT, RADIUS } from '../theme';
@@ -145,6 +146,8 @@ function DayPage({ d }: { d: Date }) {
         </View>
       </View>
 
+      <Feofan d={d} />
+
       {day.names !== '' && (
         <>
           <Divider gap={20} />
@@ -197,6 +200,48 @@ function Memory({ text, match, style, icon = 16 }: { text: string; match: string
         </View>
       )}
     </View>
+  );
+}
+
+/** Думка дня свт. Феофана Затворника (за сторінкою дня на azbyka.ru); без запису для дня розділу немає. */
+function Feofan({ d }: { d: Date }) {
+  const { p, t } = useStore();
+  const ready = useLazy(feofanL);
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+  const m = feofanL();
+  const ids = ready && m ? m.D[toKey(d)] : undefined;
+  if (!ids) return null;
+  return (
+    <>
+      <Divider gap={20} />
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        <Kicker style={{ width: COL - 12, paddingTop: 6 }}>{t.feofan}</Kicker>
+        <View style={{ flex: 1, gap: 14 }}>
+          {ids.map((id) => {
+            const [, head, ...paras] = m!.T[id];
+            const shown = open[id] ? paras : paras.slice(0, 1);
+            return (
+              <View key={id}>
+                {head !== '' && (
+                  <Text style={[{ fontFamily: FONT.body, fontSize: 13, color: p.mute(60), marginBottom: 6 }, NUM]}>{head}</Text>
+                )}
+                {shown.map((x, i) => (
+                  <Body key={i} size={14} style={{ marginTop: i ? 8 : 0 }}>
+                    {x}
+                  </Body>
+                ))}
+                {paras.length > 1 && (
+                  <Pressable accessibilityRole="button" onPress={() => setOpen({ ...open, [id]: !open[id] })} style={{ paddingVertical: 8 }}>
+                    <Text style={{ fontFamily: FONT.body, fontSize: 13, color: p.a700 }}>{open[id] ? t.less : t.more}</Text>
+                  </Pressable>
+                )}
+              </View>
+            );
+          })}
+          <Body size={11} mute={55}>{t.feofanSub}</Body>
+        </View>
+      </View>
+    </>
   );
 }
 
