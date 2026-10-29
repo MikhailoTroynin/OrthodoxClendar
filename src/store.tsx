@@ -78,6 +78,12 @@ export interface Persisted {
   jc: number;
   jt: number;
   amt: number;
+  /** Остання відкрита глава Біблії (індекс книги в BOOKS і номер глави). */
+  last: { b: number; c: number } | null;
+  /** Чи розгорнуто «Старий Заповіт» на вкладці Писання. */
+  otOpen: boolean;
+  /** Правило прочитано сьогодні: дата → «розділ-молитва» (ранкове 0-0, вечірнє 0-1). */
+  rt: Record<string, Record<string, boolean>>;
   /** Закладки в текстах молитов і Псалтиря. */
   bm: Mark[];
   /** Версія номерів у закладках (див. data/markMigrate). */
@@ -97,6 +103,9 @@ const DEFAULTS: Persisted = {
   jc: 0,
   jt: 100,
   amt: 100,
+  last: null,
+  otOpen: false,
+  rt: {},
   bm: [],
   bmv: BM_VERSION,
 };
@@ -154,7 +163,7 @@ export function StoreProvider({ children, onReady }: { children: React.ReactNode
     Promise.all([loadJSON<Persisted & { date?: string }>(), year])
       .then(([v]) => {
         // Англійських текстів поки немає, тож мова завжди українська (навіть якщо раніше збережено «en»).
-        if (v) setSaved((s) => ({ ...s, ...v, lang: 'uk', rm: { ...s.rm, ...v.rm, show: { ...s.rm.show, ...v.rm?.show } }, pom: { ...s.pom, ...v.pom }, bm: Array.isArray(v.bm) ? migrateMarks(v.bm, v.bmv) : [], bmv: BM_VERSION }));
+        if (v) setSaved((s) => ({ ...s, ...v, lang: 'uk', rm: { ...s.rm, ...v.rm, tmr: false, show: { ...s.rm.show, ...v.rm?.show } }, pom: { ...s.pom, ...v.pom }, bm: Array.isArray(v.bm) ? migrateMarks(v.bm, v.bmv) : [], bmv: BM_VERSION }));
       })
       .catch((e) => console.warn('Не вдалося відновити налаштування', e))
       // Застосунок відкривається за будь-якого результату: інакше лишається порожній екран.

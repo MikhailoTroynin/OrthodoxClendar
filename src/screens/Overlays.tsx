@@ -1,12 +1,13 @@
-import React, { useMemo, useRef, useState } from 'react';
-import { Linking, PanResponder, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, Easing, Linking, PanResponder, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { FE, LIVES } from '../data/calendar';
 import type { MvBook } from '../data/molytvoslov';
 import type { Section } from '../data/prayers';
-import { KATH, ROM } from '../data/prayerLists';
+import { KATH, ROM, secNum } from '../data/prayerLists';
 import { PL, VERS } from '../data/strings';
 import { BackBar } from '../components/Chrome';
+import { SlideIn, useSwipe } from '../components/motion';
 import { Anchor, MarkBtn, ReadScroll, ReadScrollHandle, useToast } from '../components/ReadScroll';
 import { Body, Divider, Heading, Icon, Kicker, NavRow, NUM, OutlineButton, Press, Seg, Switch, card } from '../components/ui';
 import { Rope } from './BookTab';
@@ -248,9 +249,9 @@ function Sec({ o }: { o: Of<'sec'> }) {
   });
   return (
     <>
-      <BackBar kicker={t.prayerBook} />
+      <BackBar kicker={t.prayerBook} right={<SizeBtns />} />
       <Scroll>
-        <Kicker style={{ marginBottom: 6 }}>{ROM[o.s]}</Kicker>
+        <Kicker style={{ marginBottom: 6 }}>{secNum(o.s)}</Kicker>
         <Title>{ul ? s.u : s.e}</Title>
         {searchable && (
           <View
@@ -349,10 +350,15 @@ function ReaderGate({ o }: { o: Of<'read'> }) {
 }
 
 function Reader({ o }: { o: Of<'read'> }) {
-  const { p, t, lang, fs } = useStore();
+  const { p, t, lang, fs, rt, set } = useStore();
   const ul = lang === 'uk';
   const li = ul ? 0 : 1;
   const { MB, T, mvBook } = prayersL()!;
+  // Ранкове й вечірнє правило можна позначити прочитаним на сьогодні.
+  const rule = o.s === 0 && o.j < 2;
+  const dk = toKey(new Date());
+  const rk = `${o.s}-${o.j}`;
+  const readToday = !!rt[dk]?.[rk];
   const s = MB[o.s];
   const it = s.items[o.j];
   // Українською повний текст замінює план читання; англійською план лишається, а повний текст іде після нього.
@@ -418,6 +424,14 @@ function Reader({ o }: { o: Of<'read'> }) {
           </View>
         )}
         {!it.full && <Body size={12.5} mute={55} style={{ marginTop: 18 }}>{t.outlineNote}</Body>}
+        {rule && (
+          <View style={{ marginTop: 24, alignSelf: 'flex-start' }}>
+            <OutlineButton
+              label={readToday ? `✓ ${t.readToday}` : t.markToday}
+              onPress={() => set({ rt: { [dk]: { ...rt[dk], [rk]: !readToday } } })}
+            />
+          </View>
+        )}
       </ReadScroll>
     </>
   );
@@ -478,7 +492,91 @@ function Psalter() {
   );
 }
 
-/** Глава Біблії: вірші з номерами й паралельними місцями, перехід до сусідніх глав. */
+/** Напрям останнього переходу між главами: 1 — уперед, −1 — назад (для зсуву тексту). */
+let chapDir = 0;
+
+/** Смужка номерів глав: поточна виділена, прочитані залиті; сама докручується до поточної. */
+function ChapStrip({ b, c, last, go }: { b: number; c: number; last: number; go: (c: number) => void }) {
+  const { p, bd } = useStore();
+  const ref = useRef<ScrollView>(null);
+  const [w, setW] = useState(0);
+  const cell = 44 + 6;
+  useEffect(() => {
+    if (!w) return;
+    ref.current?.scrollTo({ x: Math.max(0, (c - 1) * cell - (w - 44) / 2), animated: chapDir !== 0 });
+  }, [c, w]);
+  return (
+    <ScrollView ref={ref} horizontal showsHorizontalScrollIndicator={false} onLayout={(e) => setW(e.nativeEvent.layout.width)} style={{ flexGrow: 0, marginBottom: 14 }} contentContainerStyle={{ paddingHorizontal: 24, gap: 6 }}>
+      {Array.from({ length: last }, (_, i) => i + 1).map((n) => {
+        const cur = n === c;
+        const done = bd.includes(`${b}.${n}`);
+        return (
+          <Press
+            key={n}
+            label={String(n)}
+            onPress={() => !cur && go(n)}
+            style={{
+              width: 44,
+              height: 40,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 1,
+              borderColor: cur ? p.accent : p.divider,
+              backgroundColor: cur ? p.accentA(14) : done ? p.a100 : 'transparent',
+            }}
+          >
+            <Text style={[{ fontFamily: FONT.headingBold, fontSize: 18, color: done ? p.a800 : cur ? p.a700 : p.text }, NUM]}>{n}</Text>
+          </Press>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
+/** Кнопка «Позначити»/«Прочитано»: фон з'являється за 300 мс, галочка вискакує зі збільшенням .4→1. */
+function ReadBtn({ done, onPress, label }: { done: boolean; onPress: () => void; label: string }) {
+  const { p } = useStore();
+  const bg = useRef(new Animated.Value(done ? 1 : 0)).current;
+  const pop = useRef(new Animated.Value(done ? 1 : 0)).current;
+  useEffect(() => {
+    Animated.timing(bg, { toValue: done ? 1 : 0, duration: 300, easing: Easing.out(Easing.quad), useNativeDriver: false }).start();
+    if (done) {
+      pop.setValue(0.4);
+      Animated.timing(pop, { toValue: 1, duration: 320, easing: Easing.out(Easing.back(2)), useNativeDriver: true }).start();
+    }
+  }, [done, bg, pop]);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: done }}
+      onPress={onPress}
+      style={({ pressed }) => ({ flex: 1, minWidth: 0, borderRadius: RADIUS, backgroundColor: pressed ? p.accentA(8) : 'transparent' })}
+    >
+      <Animated.View
+        style={{
+          height: 44,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          borderWidth: 1,
+          borderColor: p.accent,
+          borderRadius: RADIUS,
+          backgroundColor: bg.interpolate({ inputRange: [0, 1], outputRange: [p.accentA(0), p.a100] }),
+        }}
+      >
+        {done && (
+          <Animated.View style={{ opacity: pop.interpolate({ inputRange: [0.4, 1], outputRange: [0, 1] }), transform: [{ scale: pop }] }}>
+            <Icon name="check" size={18} color={p.a700} sw={2} />
+          </Animated.View>
+        )}
+        <Text numberOfLines={1} style={{ fontFamily: FONT.headingBold, fontSize: 16, color: p.a700 }}>{label}</Text>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+/** Глава Біблії: вірші з номерами й паралельними місцями, смужка глав і нижня панель переходу. */
 function Chapter({ o }: { o: Of<'chap'> }) {
   const { p, t, lang, push, replace, bd, set } = useStore();
   const ul = lang === 'uk';
@@ -491,55 +589,73 @@ function Chapter({ o }: { o: Of<'chap'> }) {
   const last = BOOKS[o.b][5];
   const prev = o.c > 1 ? { b: o.b, c: o.c - 1 } : o.b > 0 ? { b: o.b - 1, c: BOOKS[o.b - 1][5] } : null;
   const next = o.c < last ? { b: o.b, c: o.c + 1 } : o.b < BOOKS.length - 1 ? { b: o.b + 1, c: 1 } : null;
-  const label = (x: { b: number; c: number }) => (x.b === o.b ? chapTitle(x.b, x.c, ul) : `${BOOKS[x.b][2]} ${x.c}`);
   const book = bookItem(o.b);
   // Псалми: значок тлумачення біля назви й номерів віршів.
   const psalm = BOOKS[o.b][0] === 'ps';
+  const go = (x: { b: number; c: number }, dir: number) => {
+    chapDir = dir;
+    replace({ t: 'chap', ...x });
+  };
+  const swipe = useSwipe(next ? () => go(next, 1) : undefined, prev ? () => go(prev, -1) : undefined);
+  // Запам'ятовуємо, де зупинилися, для картки «Продовжити читання».
+  useEffect(() => {
+    set({ last: { b: o.b, c: o.c } });
+  }, [o.b, o.c]);
+  const dir = chapDir;
   return (
     <>
       <BackBar right={<SizeBtns />} />
-      <ScrollView ref={ref} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 4, paddingBottom: 40 }}>
-        <Press onPress={() => push({ t: 'book', b: book })} style={{ alignSelf: 'flex-start', marginBottom: 6 }}>
-          <Kicker>{`${bookName(o.b, ul)} · ${t.translation}`}</Kicker>
-        </Press>
-        {psalm ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-            <Title>{chapTitle(o.b, o.c, ul)}</Title>
-            <View style={{ marginBottom: 16 }}>
-              <TlumBtn n={o.c} />
+      <View style={{ flex: 1 }} {...swipe}>
+        <ScrollView ref={ref} style={{ flex: 1 }} contentContainerStyle={{ paddingTop: 4, paddingBottom: 24 }}>
+          <SlideIn dir={dir}>
+            <View style={{ paddingHorizontal: 24 }}>
+              <Press onPress={() => push({ t: 'book', b: book })} style={{ alignSelf: 'flex-start', marginBottom: 6 }}>
+                <Kicker>{`${bookName(o.b, ul)} · ${t.translation}`}</Kicker>
+              </Press>
+              {psalm ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                  <Title>{chapTitle(o.b, o.c, ul)}</Title>
+                  <View style={{ marginBottom: 16 }}>
+                    <TlumBtn n={o.c} />
+                  </View>
+                </View>
+              ) : (
+                <Title>{chapTitle(o.b, o.c, ul)}</Title>
+              )}
             </View>
-          </View>
-        ) : (
-          <Title>{chapTitle(o.b, o.c, ul)}</Title>
-        )}
-        {h ? <Text style={{ fontFamily: FONT.body, fontStyle: 'italic', fontSize: 14, color: p.mute(65), marginBottom: 10 }}>{h}</Text> : null}
-        <View onLayout={(e) => (top.current = e.nativeEvent.layout.y)}>
-        <Verses
-          vs={vs}
-          b={o.b}
-          c={o.c}
-          tl={psalm ? o.c : undefined}
-          hl={o.v ? [o.v, o.v2 ?? o.v] : undefined}
-          onY={(n, y) => {
-            // y — відносно списку віршів; зсув самого списку знаємо з onLayout обгортки.
-            if (o.v && n === o.v && !done.current) {
-              done.current = true;
-              setTimeout(() => ref.current?.scrollTo({ y: Math.max(0, top.current + y - 12), animated: false }), 50);
-            }
-          }}
-        />
+            {last > 1 && <ChapStrip b={o.b} c={o.c} last={last} go={(c) => go({ b: o.b, c }, c > o.c ? 1 : -1)} />}
+            <View style={{ paddingHorizontal: 24 }}>
+              {h ? <Text style={{ fontFamily: FONT.body, fontStyle: 'italic', fontSize: 14, color: p.mute(65), marginBottom: 10 }}>{h}</Text> : null}
+              <View onLayout={(e) => (top.current = e.nativeEvent.layout.y)}>
+                <Verses
+                  vs={vs}
+                  b={o.b}
+                  c={o.c}
+                  tl={psalm ? o.c : undefined}
+                  hl={o.v ? [o.v, o.v2 ?? o.v] : undefined}
+                  onY={(n, y) => {
+                    // y — відносно списку віршів; зсув самого списку знаємо з onLayout обгортки.
+                    if (o.v && n === o.v && !done.current) {
+                      done.current = true;
+                      setTimeout(() => ref.current?.scrollTo({ y: Math.max(0, top.current + y - 12), animated: false }), 50);
+                    }
+                  }}
+                />
+              </View>
+              <Body size={12} mute={55} style={{ marginTop: 14 }}>{t.xrefHelp}</Body>
+            </View>
+          </SlideIn>
+        </ScrollView>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 8, borderTopWidth: 1, borderTopColor: p.divider, backgroundColor: p.bg }}>
+          <Press label={t.prevCh} onPress={() => prev && go(prev, -1)} style={{ height: 44, justifyContent: 'center', paddingHorizontal: 8, opacity: prev ? 1 : 0.35 }}>
+            <Text style={{ fontFamily: FONT.headingBold, fontSize: 16, color: p.a700 }}>{`‹ ${t.prevCh}`}</Text>
+          </Press>
+          <ReadBtn done={read} label={read ? t.chRead : t.chMark} onPress={() => set({ bd: read ? bd.filter((x) => x !== key) : [...bd, key] })} />
+          <Press label={t.nextCh} onPress={() => next && go(next, 1)} style={{ height: 44, justifyContent: 'center', paddingHorizontal: 8, opacity: next ? 1 : 0.35 }}>
+            <Text style={{ fontFamily: FONT.headingBold, fontSize: 16, color: p.a700 }}>{`${t.nextCh} ›`}</Text>
+          </Press>
         </View>
-        <Body size={12} mute={55} style={{ marginTop: 14 }}>{t.xrefHelp}</Body>
-        <OutlineButton
-          label={read ? t.marked : t.markRead}
-          onPress={() => set({ bd: read ? bd.filter((x) => x !== key) : [...bd, key] })}
-          style={{ alignSelf: 'flex-start', marginTop: 18 }}
-        />
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10, marginTop: 18 }}>
-          {prev ? <OutlineButton label={`← ${label(prev)}`} onPress={() => replace({ t: 'chap', ...prev })} /> : <View />}
-          {next ? <OutlineButton label={`${label(next)} →`} onPress={() => replace({ t: 'chap', ...next })} /> : <View />}
-        </View>
-      </ScrollView>
+      </View>
     </>
   );
 }
@@ -789,13 +905,15 @@ function Search() {
 }
 
 function Settings() {
-  const { p, t, cal, fs, ang, set, push } = useStore();
+  const { p, t, cal, fs, ang, theme, set, push } = useStore();
   return (
     <>
       <BackBar kicker={t.app} />
       <Scroll>
         <Title>{t.settings}</Title>
-        <Kicker style={{ marginBottom: 8 }}>{t.calendar}</Kicker>
+        <Kicker style={{ marginBottom: 8 }}>{t.theme}</Kicker>
+        <Seg opts={[{ label: t.day, icon: 'sun', on: theme === 'day', onPress: () => set({ theme: 'day' }) }, { label: t.night, icon: 'moon', on: theme === 'night', onPress: () => set({ theme: 'night' }) }]} />
+        <Kicker style={{ marginTop: 24, marginBottom: 8 }}>{t.calendar}</Kicker>
         <Seg opts={[{ label: t.nj, on: cal === 'nj', onPress: () => set({ cal: 'nj' }) }, { label: t.oj, on: cal === 'oj', onPress: () => set({ cal: 'oj' }) }]} />
         <Body size={12.5} mute={65} style={{ marginTop: 8 }}>{(cal === 'nj' ? t.helpNj : t.helpOj) + t.helpP}</Body>
         <Kicker style={{ marginTop: 24, marginBottom: 4 }}>{t.textSize}</Kicker>
@@ -896,7 +1014,7 @@ function Remind() {
     const next = { ...rm, ...patch };
     set({ rm: next });
     // Дозвіл питаємо, коли людина вмикає нагадування.
-    if (NATIVE && (next.eve || next.morn || next.tmr || next.pre || next.mem || next.show.p || next.ang)) notifPermission(true).then((r) => setDenied(r === 'denied'));
+    if (NATIVE && (next.eve || next.morn || next.pre || next.mem || next.show.p || next.ang)) notifPermission(true).then((r) => setDenied(r === 'denied'));
   };
 
   const chip = (label: string, on: boolean, onPress: () => void, num = true) => (
@@ -918,8 +1036,8 @@ function Remind() {
       <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: p.divider }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <View style={{ flex: 1 }}>
-            <Heading size={19}>{title}</Heading>
-            <Body size={12.5} mute={60} style={{ marginTop: 3 }}>{sub}</Body>
+            <Heading size={18}>{title}</Heading>
+            <Body size={14} mute={60} style={{ marginTop: 3 }}>{sub}</Body>
           </View>
           <Switch on={rm[k]} label={title} onPress={() => upd({ [k]: !rm[k] } as Partial<Reminders>)} />
         </View>
@@ -949,26 +1067,32 @@ function Remind() {
         <Title>{t.rTitle}</Title>
         <View style={card(p)}>
           {block('eve', t.rEve, t.rEveSub, 'eveT', EVE_TIMES)}
-          {block('tmr', t.rTmr, t.rTmrSub, 'tmrT', EVE_TIMES)}
           {block('morn', t.rMorn, t.rMornSub, 'mornT', MORN_TIMES)}
+          <View style={{ padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderBottomWidth: 1, borderBottomColor: p.divider }}>
+            <View style={{ flex: 1 }}>
+              <Heading size={18}>{t.rSmart}</Heading>
+              <Body size={14} mute={60} style={{ marginTop: 3 }}>{t.rSmartSub}</Body>
+            </View>
+            <Switch on={rm.smart} label={t.rSmart} onPress={() => upd({ smart: !rm.smart })} />
+          </View>
           <View style={{ paddingHorizontal: 16, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <View style={{ flex: 1 }}>
-              <Heading size={19}>{t.rPre}</Heading>
-              <Body size={12.5} mute={60} style={{ marginTop: 3 }}>{t.rPreSub}</Body>
+              <Heading size={18}>{t.rPre}</Heading>
+              <Body size={14} mute={60} style={{ marginTop: 3 }}>{t.rPreSub}</Body>
             </View>
             <Switch on={rm.pre} label={t.rPre} onPress={() => upd({ pre: !rm.pre })} />
           </View>
           <View style={{ paddingHorizontal: 16, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderTopWidth: 1, borderTopColor: p.divider }}>
             <View style={{ flex: 1 }}>
-              <Heading size={19}>{t.angTitle}</Heading>
-              <Body size={12.5} mute={60} style={{ marginTop: 3 }}>{t.rAngSub}</Body>
+              <Heading size={18}>{t.angTitle}</Heading>
+              <Body size={14} mute={60} style={{ marginTop: 3 }}>{t.rAngSub}</Body>
             </View>
             <Switch on={rm.ang} label={t.angTitle} onPress={() => upd({ ang: !rm.ang })} />
           </View>
           <View style={{ paddingHorizontal: 16, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderTopWidth: 1, borderTopColor: p.divider }}>
             <View style={{ flex: 1 }}>
-              <Heading size={19}>{t.rMem}</Heading>
-              <Body size={12.5} mute={60} style={{ marginTop: 3 }}>{t.rMemSub}</Body>
+              <Heading size={18}>{t.rMem}</Heading>
+              <Body size={14} mute={60} style={{ marginTop: 3 }}>{t.rMemSub}</Body>
             </View>
             <Switch on={rm.mem} label={t.rMem} onPress={() => upd({ mem: !rm.mem })} />
           </View>

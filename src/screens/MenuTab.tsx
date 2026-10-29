@@ -36,8 +36,8 @@ export default function MenuTab() {
           <Body size={12.5} mute={60} style={{ marginBottom: 8 }}>{t.theme}</Body>
           <Seg
             opts={[
-              { label: t.day, on: theme === 'day', onPress: () => set({ theme: 'day' }) },
-              { label: t.night, on: theme === 'night', onPress: () => set({ theme: 'night' }) },
+              { label: t.day, icon: 'sun', on: theme === 'day', onPress: () => set({ theme: 'day' }) },
+              { label: t.night, icon: 'moon', on: theme === 'night', onPress: () => set({ theme: 'night' }) },
             ]}
           />
         </View>

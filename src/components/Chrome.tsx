@@ -1,5 +1,5 @@
-import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, Pressable, Text, View } from 'react-native';
 import { FONT } from '../theme';
 import { Overlay, Tab, useStore } from '../store';
 import { prayersL, psaltyrL } from '../lib/lazy';
@@ -20,22 +20,14 @@ function MarksBtn() {
   );
 }
 
-/** Верхня панель вкладки: підпис, перемикач теми, пошук. */
+/** Верхня панель вкладки: підпис, закладки, пошук. Перемикач теми — в Меню та Налаштуваннях. */
 export function TopBar({ kicker }: { kicker: string }) {
-  const { p, theme, set, push, t } = useStore();
-  const night = theme === 'night';
+  const { p, push, t } = useStore();
   return (
     <View style={{ height: 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 24, paddingRight: 14 }}>
       <Kicker>{kicker}</Kicker>
       <View style={{ flexDirection: 'row', gap: 2 }}>
         <MarksBtn />
-        <Press
-          label={night ? t.toDay : t.toNight}
-          onPress={() => set({ theme: night ? 'day' : 'night' })}
-          style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
-        >
-          <Icon name={night ? 'sun' : 'moon'} color={p.text} />
-        </Press>
         <Press
           label={t.search}
           onPress={() => push({ t: 'search' })}
@@ -103,10 +95,36 @@ const TABS: { k: Tab; icon: string; label: string }[] = [
   { k: 'more', icon: 'menu', label: 'tab4' },
 ];
 
+const SLIDE = Easing.bezier(0.2, 0.7, 0.2, 1);
+
 export function TabBar() {
   const { p, tab, goTab, t } = useStore();
+  const [w, setW] = useState(0);
+  const idx = TABS.findIndex((x) => x.k === tab);
+  const x = useRef(new Animated.Value(0)).current;
+  const first = useRef(true);
+  // Ширина вкладки: панель мінус бічні поля 4 + 4, ділена на п'ять.
+  const cell = (w - 8) / TABS.length;
+  useEffect(() => {
+    if (!w) return;
+    const to = 4 + cell * idx + (cell - 28) / 2;
+    if (first.current) {
+      first.current = false;
+      x.setValue(to);
+      return;
+    }
+    // Золота риска їде до активної вкладки одним рухом, а не гасне й спалахує на місці.
+    Animated.timing(x, { toValue: to, duration: 300, easing: SLIDE, useNativeDriver: true }).start();
+  }, [idx, w, cell, x]);
   return (
-    <View style={{ flexDirection: 'row', borderTopWidth: 1, borderTopColor: p.divider, backgroundColor: p.bg, paddingTop: 6, paddingBottom: 6, paddingHorizontal: 4 }}>
+    <View
+      onLayout={(e) => setW(e.nativeEvent.layout.width)}
+      style={{ flexDirection: 'row', borderTopWidth: 1, borderTopColor: p.divider, backgroundColor: p.bg, paddingTop: 6, paddingBottom: 6, paddingHorizontal: 4 }}
+    >
+      <Animated.View
+        pointerEvents="none"
+        style={{ position: 'absolute', top: -1, left: 0, width: 28, height: 2, borderRadius: 1, backgroundColor: p.accent, transform: [{ translateX: x }] }}
+      />
       {TABS.map((x) => {
         const on = tab === x.k;
         const color = on ? p.a700 : p.n600;
@@ -127,8 +145,6 @@ export function TabBar() {
               backgroundColor: pressed ? p.mute(5) : 'transparent',
             })}
           >
-            {/* Золота риска над активною вкладкою. */}
-            <View style={{ position: 'absolute', top: -7, width: 28, height: 2, borderRadius: 1, backgroundColor: p.accent, opacity: on ? 1 : 0 }} />
             <Icon name={x.icon} color={color} size={24} />
             <Text numberOfLines={2} style={{ fontFamily: FONT.body, fontSize: 11, lineHeight: 12.5, textAlign: 'center', color }}>
               {t[x.label]}

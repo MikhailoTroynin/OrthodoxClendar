@@ -12,6 +12,8 @@ export interface Reminders {
   /** Ранкове нагадування про сьогоднішній день. */
   morn: boolean;
   mornT: string;
+  /** Вечірнє нагадування лише перед постом, святом чи днем ангела близьких. */
+  smart: boolean;
   /** Просте вечірнє нагадування про завтра: свято чи пам'ять і піст — щодня, у свій час. */
   tmr: boolean;
   tmrT: string;
@@ -30,6 +32,7 @@ export const REMINDER_DEFAULTS: Reminders = {
   eveT: '20:00',
   morn: true,
   mornT: '07:00',
+  smart: true,
   tmr: false,
   tmrT: '21:00',
   pre: false,
@@ -143,9 +146,13 @@ export async function reschedule(rm: Reminders, cal: CalendarType, lang: Lang, t
         add(at(day, rm.mornT), `${t.nTodayK}${weekdayName(day, lang)}, ${fmtDate(day, lang)}`, lines.join('\n'), day, 'morn', CATEGORY);
       }
 
-      if (rm.eve) {
-        const next = addDays(day, 1);
-        const d = dayInfo(next, cal, lang);
+      const eveNext = addDays(day, 1);
+      const eveInfo = dayInfo(eveNext, cal, lang);
+      // «Лише коли завтра щось особливе»: піст, свято або день ангела близької людини.
+      const special = eveInfo.isFast || eveInfo.rank > 0 || angelsOn(angels, eveNext).length > 0;
+      if (rm.eve && (!rm.smart || special)) {
+        const next = eveNext;
+        const d = eveInfo;
         const date = fmtDate(next, lang);
         const title =
           d.rank === 2 && d.title

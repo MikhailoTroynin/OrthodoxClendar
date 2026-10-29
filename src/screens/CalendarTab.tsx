@@ -3,6 +3,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { WS } from '../data/calendar';
 import { Body, FastIcon, H1, Heading, Icon, Kicker, Marks, NeutralTag, NUM, OutlineButton, Press, Seg, Tag } from '../components/ui';
 import { TopBar } from '../components/Chrome';
+import { SlideIn, useSwipe } from '../components/motion';
 import { dayInfo, fastKind, FastKind, fastSections, feastSections, fmtDate, memorialRows, MN, monthGrid, sameDay, toKey, weekdayName } from '../lib/calendar';
 import { useStore } from '../store';
 import { FONT, RADIUS } from '../theme';
@@ -12,14 +13,22 @@ export default function CalendarTab() {
   const [view, setView] = useState({ y: date.getFullYear(), m: date.getMonth() + 1 });
   const cells = monthGrid(view.y, view.m);
   const sel = dayInfo(date, cal, lang);
-  const shift = (n: number) =>
+  const [dir, setDir] = useState(0);
+  const shift = (n: number) => {
+    setDir(n);
     setView((v) => {
       const m = v.m + n;
       return { y: v.y + Math.floor((m - 1) / 12), m: ((m - 1 + 12) % 12) + 1 };
     });
+  };
+  // Свайп гортає місяці лише в режимі «Місяць».
+  const swipe = useSwipe(
+    () => calView === 'month' && shift(1),
+    () => calView === 'month' && shift(-1),
+  );
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1 }} {...swipe}>
       <TopBar kicker={cal === 'nj' ? t.nj : t.oj} />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 32 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 4, marginBottom: 16 }}>
@@ -47,7 +56,7 @@ export default function CalendarTab() {
         </View>
 
         {calView === 'month' ? (
-          <>
+          <SlideIn key={`${view.y}-${view.m}`} dir={dir}>
             <View style={{ flexDirection: 'row', gap: 2, marginBottom: 6 }}>
               {WS[lang].map((h) => (
                 <Text key={h} style={{ flex: 1, textAlign: 'center', fontFamily: FONT.body, fontSize: 10, letterSpacing: 0.6, textTransform: 'uppercase', color: p.mute(55) }}>
@@ -111,7 +120,7 @@ export default function CalendarTab() {
               <Body size={13} mute={70}>{[fastKind(sel) === 'paska' ? t.fk.paska : sel.fastLabel || t.fk[fastKind(sel)], sel.r2].filter(Boolean).join(' · ')}</Body>
               <OutlineButton label={t.openDay} onPress={() => openDay(date)} style={{ alignSelf: 'flex-start', marginTop: 4 }} />
             </View>
-          </>
+          </SlideIn>
         ) : calView === 'fasts' ? (
           <>
             <Body size={12.5} mute={60} style={{ marginHorizontal: 4 }}>{cal === 'oj' ? t.feastNoteOj : t.feastNote}</Body>

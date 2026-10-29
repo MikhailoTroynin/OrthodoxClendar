@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Pressable, ScrollView, Text, TextStyle, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, Pressable, ScrollView, Text, TextStyle, View } from 'react-native';
 import { MG, WS } from '../data/calendar';
-import { Body, Divider, FastIcon, GhostButton, Heading, Icon, Kicker, Marks, NUM, Press, Tag } from '../components/ui';
+import { Body, Divider, FastIcon, GhostButton, Heading, Icon, Kicker, NUM, Press, Tag } from '../components/ui';
 import { TopBar } from '../components/Chrome';
 import { DayPager } from '../components/DayPager';
 import { RefText } from '../components/Scripture';
@@ -51,61 +51,32 @@ function DayPage({ d }: { d: Date }) {
       <View style={{ marginTop: 22, minHeight: 32, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
         <Body size={12} style={{ color: p.a700, flex: 1 }}>{jline}</Body>
         {!sameDay(d, today) && (
-          <Press
-            onPress={() => setDate(today)}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 4, height: 32, paddingHorizontal: 10, borderWidth: 1, borderColor: p.accent }}
-          >
-            <Icon name="undo" size={16} color={p.a700} sw={1.6} />
-            <Text style={{ fontFamily: FONT.headingBold, fontSize: 15, color: p.a700 }}>{t.toToday}</Text>
-          </Press>
+          <FadeIn>
+            <Press
+              onPress={() => setDate(today)}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 4, height: 32, paddingHorizontal: 10, borderWidth: 1, borderColor: p.accent }}
+            >
+              <Icon name="undo" size={16} color={p.a700} sw={1.6} />
+              <Text style={{ fontFamily: FONT.headingBold, fontSize: 16, color: p.a700 }}>{t.toToday}</Text>
+            </Press>
+          </FadeIn>
         )}
       </View>
 
-      <View style={{ flexDirection: 'row', gap: 4, marginTop: 20 }}>
-        {week.map((w) => {
-          const sel = sameDay(w, d);
-          const isToday = sameDay(w, today);
-          const e = dayInfo(w, cal, lang);
-          const feast = e.rank > 0;
-          return (
-            <Pressable
-              key={toKey(w)}
-              accessibilityRole="button"
-              onPress={() => setDate(w)}
-              style={({ pressed }) => ({
-                flex: 1,
-                alignItems: 'center',
-                gap: 3,
-                paddingTop: 7,
-                paddingBottom: 6,
-                borderWidth: 1,
-                borderColor: sel ? p.accent : 'transparent',
-                borderRadius: RADIUS,
-                backgroundColor: pressed ? p.mute(6) : 'transparent',
-              })}
-            >
-              <Text style={{ fontFamily: FONT.body, fontSize: 10, letterSpacing: 0.6, textTransform: 'uppercase', color: p.mute(70) }}>
-                {WS[lang][weekdayIdx(w)]}
-              </Text>
-              <Text
-                style={[
-                  {
-                    fontFamily: isToday ? FONT.headingBold : FONT.heading,
-                    fontSize: 20,
-                    lineHeight: 22,
-                    color: sel || feast ? p.a700 : p.text,
-                    textDecorationLine: isToday ? 'underline' : 'none',
-                  },
-                  NUM,
-                ]}
-              >
-                {w.getDate()}
-              </Text>
-              <Marks feast={feast} kind={fastKind(e)} />
-            </Pressable>
-          );
-        })}
+      {/* Підсумок дня: піст і, якщо є, свято. */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+        <View style={{ height: 34, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, borderWidth: 1, borderColor: p.divider, borderRadius: RADIUS }}>
+          <FastIcon kind={kind} size={18} />
+          <Text numberOfLines={1} style={{ flexShrink: 1, fontFamily: FONT.headingBold, fontSize: 18, color: p.text }}>{fastTitle}</Text>
+        </View>
+        {!!tag && (
+          <View style={{ height: 34, justifyContent: 'center', paddingHorizontal: 10, borderWidth: 1, borderColor: p.accent, borderRadius: RADIUS }}>
+            <Text style={{ fontFamily: FONT.headingBold, fontSize: 18, color: p.a700 }}>{tag}</Text>
+          </View>
+        )}
       </View>
+
+      <WeekStrip week={week} d={d} />
 
       <Divider />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
@@ -247,5 +218,88 @@ function Reading({ label, value, onPress }: { label: string; value: string; onPr
         {value}
       </Text>
     </Pressable>
+  );
+}
+
+/** Поява за 250 мс. */
+function FadeIn({ children }: { children: React.ReactNode }) {
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(v, { toValue: 1, duration: 250, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
+  }, [v]);
+  return <Animated.View style={{ opacity: v }}>{children}</Animated.View>;
+}
+
+/** Тиждень: одна золота рамка ковзає між днями за 280 мс; значок посту лише в пісні дні. */
+function WeekStrip({ week, d }: { week: Date[]; d: Date }) {
+  const { p, lang, cal, today, setDate } = useStore();
+  const [w, setW] = useState(0);
+  const GAP = 4;
+  const cell = w ? (w - GAP * 6) / 7 : 0;
+  const sel = Math.max(0, week.findIndex((x) => sameDay(x, d)));
+  const x = useRef(new Animated.Value(0)).current;
+  const placed = useRef(false);
+  useEffect(() => {
+    if (!cell) return;
+    const to = sel * (cell + GAP);
+    if (!placed.current) {
+      placed.current = true;
+      x.setValue(to);
+    } else Animated.timing(x, { toValue: to, duration: 280, easing: Easing.bezier(0.2, 0.7, 0.2, 1), useNativeDriver: true }).start();
+  }, [sel, cell, x]);
+  return (
+    <View style={{ flexDirection: 'row', gap: GAP, marginTop: 20 }} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
+      {!!cell && (
+        <Animated.View
+          pointerEvents="none"
+          style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: cell, borderWidth: 1, borderColor: p.accent, borderRadius: RADIUS, transform: [{ translateX: x }] }}
+        />
+      )}
+      {week.map((wd) => {
+        const on = sameDay(wd, d);
+        const isToday = sameDay(wd, today);
+        const e = dayInfo(wd, cal, lang);
+        const feast = e.rank > 0;
+        const k = fastKind(e);
+        return (
+          <Pressable
+            key={toKey(wd)}
+            accessibilityRole="button"
+            onPress={() => setDate(wd)}
+            style={({ pressed }) => ({
+              flex: 1,
+              alignItems: 'center',
+              gap: 3,
+              paddingTop: 7,
+              paddingBottom: 6,
+              borderRadius: RADIUS,
+              backgroundColor: pressed ? p.mute(8) : 'transparent',
+            })}
+          >
+            <Text style={{ fontFamily: FONT.body, fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase', color: p.mute(70) }}>
+              {WS[lang][weekdayIdx(wd)]}
+            </Text>
+            <Text
+              style={[
+                {
+                  fontFamily: isToday ? FONT.headingBold : FONT.heading,
+                  fontSize: 21,
+                  lineHeight: 22,
+                  color: on || feast ? p.a700 : p.text,
+                  textDecorationLine: isToday ? 'underline' : 'none',
+                },
+                NUM,
+              ]}
+            >
+              {wd.getDate()}
+            </Text>
+            <View style={{ height: 16, flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+              {feast && <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: p.accent }} />}
+              {k !== 'meat' && <FastIcon kind={k} size={16} />}
+            </View>
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }
