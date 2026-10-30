@@ -23,7 +23,7 @@ import { Angel, angelDate, NATIVE, notifPermission, Reminders } from '../lib/not
 import { FONT, RADIUS } from '../theme';
 import { entry, Entry, fuzzySearch } from '../lib/fuzzy';
 import { bookText, speak, stopSpeaking, useSpeaking } from '../lib/speech';
-import { TlumBtn, TlumMark } from '../components/Tlum';
+import { evCode, TlumBtn, TlumMark } from '../components/Tlum';
 
 type Of<K extends Overlay['t']> = Extract<Overlay, { t: K }>;
 
@@ -617,6 +617,13 @@ function Chapter({ o }: { o: Of<'chap'> }) {
                   <Title>{chapTitle(o.b, o.c, ul)}</Title>
                   <View style={{ marginBottom: 16 }}>
                     <TlumBtn n={o.c} />
+                  </View>
+                </View>
+              ) : evCode(o.b) ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                  <Title>{chapTitle(o.b, o.c, ul)}</Title>
+                  <View style={{ marginBottom: 16 }}>
+                    <TlumBtn n={o.c} e={evCode(o.b)} />
                   </View>
                 </View>
               ) : (

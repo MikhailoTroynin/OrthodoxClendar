@@ -5,7 +5,7 @@ import { useLazy } from '../lib/lazy';
 import { useStore } from '../store';
 import { FONT } from '../theme';
 import { NUM, Press } from './ui';
-import { TlumMark } from './Tlum';
+import { evCode, TlumMark } from './Tlum';
 
 /** Відкриває місце Писання: главу з виділеними віршами. */
 export const refOverlay = (r: Ref) => ({ t: 'chap' as const, b: r.b, c: r.c, v: r.v, v2: r.c2 === r.c ? r.v2 : undefined });
@@ -69,6 +69,7 @@ function XRefs({ xs }: { xs: Ref[] }) {
 export function Verses({ vs, b, c, hl, onY, tl }: { vs: Verse[]; b: number; c?: number; hl?: [number, number]; onY?: (n: number, y: number) => void; tl?: number }) {
   const { p, fs, lang } = useStore();
   const ul = lang === 'uk';
+  const ev = evCode(b); // Євангеліє: біля віршів — значок тлумачення блж. Феофілакта
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const body = { fontFamily: FONT.body, fontSize: fs, lineHeight: fs * 1.6, color: p.text } as const;
   let prevC = c;
@@ -102,6 +103,7 @@ export function Verses({ vs, b, c, hl, onY, tl }: { vs: Verse[]; b: number; c?: 
                   {v.n}
                 </Text>
                 {!!tl && <TlumMark n={tl} v={v.n} size={fs * 0.7} />}
+                {!tl && !!ev && vc !== undefined && <TlumMark e={ev} n={vc} v={v.n} size={fs * 0.7} />}
                 {'  '}
                 {v.t}
               </Text>
