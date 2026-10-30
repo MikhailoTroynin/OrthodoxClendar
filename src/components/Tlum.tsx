@@ -1,9 +1,11 @@
-// Тлумачення псалмів Євфимія Зигабена: значок біля псалма й вірша і сторінка з тлумаченням,
+// Тлумачення псалмів Євфимія Зигабена та Євангелія блж. Феофілакта: значок біля псалма й вірша і сторінка з тлумаченням,
 // що розгортається від середини в боки, як розкрита книга.
 import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Animated, BackHandler, Easing, Pressable, ScrollView, Text, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { KATH_RANGE, TL, TL_LOAD, TlumPsalms, TlumSeg } from '../data/tlum';
+import { EV_BOOK, TE, TE_LOAD } from '../data/tlumEv';
+import { BOOKS, bookName } from '../lib/bible';
 import { lazy, Lazy, useLazy } from '../lib/lazy';
 import { useStore } from '../store';
 import { FONT, NUM, RADIUS } from '../theme';
@@ -14,11 +16,21 @@ const LOADERS: Record<number, Lazy<{ Z: TlumPsalms }>> = Object.fromEntries(
   Object.entries(TL_LOAD).map(([k, l]) => [k, lazy(l)]),
 );
 
-/** Чи є тлумачення псалма n (або його вірша v). */
-export const hasTlum = (n: number, v?: number) => !!TL[n] && (v === undefined || TL[n].includes(v));
+const LOADERS_EV: Record<string, Lazy<{ Z: TlumSeg[] }>> = Object.fromEntries(
+  Object.entries(TE_LOAD).map(([k, l]) => [k, lazy(l)]),
+);
+
+/** Чи є тлумачення псалма n (або його вірша v); з e — глави n Євангелія e (mt, mk, lk, jn). */
+export const hasTlum = (n: number, v?: number, e?: string) => {
+  const vs = e ? TE[`${e}:${n}`] : TL[n];
+  return !!vs && (v === undefined || vs.includes(v));
+};
+
+/** Код Євангелія (mt, mk, lk, jn) для книги Біблії b — або undefined, якщо це не Євангеліє. */
+export const evCode = (b: number) => EV_BOOK[BOOKS[b][0]];
 
 // Відкрите тлумачення: один на весь застосунок, показується над усіма екранами (TlumHost).
-type Open = { n: number; v?: number } | null;
+type Open = { n: number; v?: number; e?: string } | null;
 let open: Open = null;
 const subs = new Set<() => void>();
 const setOpen = (o: Open) => {
@@ -31,8 +43,8 @@ const useOpen = () =>
     () => open,
   );
 
-/** Відкриває тлумачення псалма n, прокручене до вірша v. */
-export const openTlum = (n: number, v?: number) => hasTlum(n) && setOpen({ n, v });
+/** Відкриває тлумачення псалма n (або глави n Євангелія e), прокручене до вірша v. */
+export const openTlum = (n: number, v?: number, e?: string) => hasTlum(n, undefined, e) && setOpen({ n, v, e });
 
 /** Мнемонічний значок тлумачення: розгорнута книга з променем над нею. */
 export function TlumGlyph({ size = 16, color }: { size?: number; color: string }) {
@@ -45,12 +57,12 @@ export function TlumGlyph({ size = 16, color }: { size?: number; color: string }
   );
 }
 
-/** Кнопка «Тлумачення» біля назви псалма. */
-export function TlumBtn({ n }: { n: number }) {
+/** Кнопка «Тлумачення» біля назви псалма чи глави Євангелія. */
+export function TlumBtn({ n, e }: { n: number; e?: string }) {
   const { p, t } = useStore();
-  if (!hasTlum(n)) return null;
+  if (!hasTlum(n, undefined, e)) return null;
   return (
-    <Press label={`${t.tlum} · ${t.psalm} ${n}`} onPress={() => openTlum(n)} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 6, paddingHorizontal: 8, borderRadius: 14, borderWidth: 1, borderColor: p.a300 }}>
+    <Press label={`${t.tlum} · ${e ? n : `${t.psalm} ${n}`}`} onPress={() => openTlum(n, undefined, e)} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 6, paddingHorizontal: 8, borderRadius: 14, borderWidth: 1, borderColor: p.a300 }}>
       <TlumGlyph size={15} color={p.a700} />
       <Text style={{ fontFamily: FONT.body, fontSize: 12, color: p.a700 }}>{t.tlum}</Text>
     </Press>
@@ -58,11 +70,11 @@ export function TlumBtn({ n }: { n: number }) {
 }
 
 /** Маленький значок після номера вірша (усередині Text): дотик відкриває тлумачення вірша. */
-export function TlumMark({ n, v, size }: { n: number; v: number; size: number }) {
+export function TlumMark({ n, v, size, e }: { n: number; v: number; size: number; e?: string }) {
   const { p } = useStore();
-  if (!hasTlum(n, v)) return null;
+  if (!hasTlum(n, v, e)) return null;
   return (
-    <Text onPress={() => openTlum(n, v)} accessibilityRole="button" suppressHighlighting>
+    <Text onPress={() => openTlum(n, v, e)} accessibilityRole="button" suppressHighlighting>
       {' '}
       <View style={{ width: size, height: size * 0.8, justifyContent: 'flex-end' }}>
         <TlumGlyph size={size} color={p.accent} />
@@ -130,25 +142,30 @@ export function TlumHost() {
   );
 }
 
-function Page({ o, close, page, text, spine }: { o: { n: number; v?: number }; close: () => void; page: Animated.Value; text: Animated.Value; spine: Animated.Value }) {
-  const { p, t, fs } = useStore();
-  const L = LOADERS[kathOf(o.n)];
+function Page({ o, close, page, text, spine }: { o: NonNullable<Open>; close: () => void; page: Animated.Value; text: Animated.Value; spine: Animated.Value }) {
+  const { p, t, fs, lang } = useStore();
+  const L: Lazy<{ Z: any }> = o.e ? LOADERS_EV[`${o.e}:${o.n}`] : LOADERS[kathOf(o.n)];
   const ready = useLazy(L);
-  const segs = ready ? L()!.Z[o.n] ?? [] : [];
+  const segs: TlumSeg[] = ready ? (o.e ? L()!.Z : L()!.Z[o.n]) ?? [] : [];
   const scroll = useRef<ScrollView>(null);
   const ys = useRef<Record<number, number>>({});
   const target = o.v === undefined ? -1 : segs.findIndex((s) => covers(s, o.v!));
   useEffect(() => {
     ys.current = {};
     scroll.current?.scrollTo({ y: 0, animated: false });
-  }, [o.n]);
+  }, [o.n, o.e]);
   const onY = (i: number, y: number) => {
     ys.current[i] = y;
     if (i === target) setTimeout(() => scroll.current?.scrollTo({ y: Math.max(0, y - 10), animated: false }), 30);
   };
   const body = { fontFamily: FONT.body, fontSize: fs - 1, lineHeight: (fs - 1) * 1.62, color: p.text } as const;
-  const prev = Object.keys(TL).map(Number).filter((x) => x < o.n).pop();
-  const next = Object.keys(TL).map(Number).find((x) => x > o.n);
+  // Сусідні псалми (або глави цього Євангелія) з тлумаченням.
+  const ids = o.e ? Object.keys(TE).filter((k) => k.startsWith(`${o.e}:`)).map((k) => +k.slice(3)) : Object.keys(TL).map(Number);
+  const prev = ids.filter((x) => x < o.n).pop();
+  const next = ids.find((x) => x > o.n);
+  const book = o.e ? BOOKS.findIndex((b) => EV_BOOK[b[0]] === o.e) : -1;
+  const title = o.e ? `${bookName(book, lang === 'uk')} ${o.n}` : `${t.psalm} ${o.n}`;
+  const lab = (x: number) => (o.e ? `${t.chapter} ${x}` : `${t.psalm} ${x}`);
   // Корінець книги: тонка золота риска, з якої розгортається сторінка.
   const spineOp = Animated.multiply(spine, page.interpolate({ inputRange: [0, 0.7, 1], outputRange: [1, 0.6, 0] }));
   return (
@@ -171,15 +188,15 @@ function Page({ o, close, page, text, spine }: { o: { n: number; v?: number }; c
         <Animated.View pointerEvents="none" style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 28, marginLeft: -14, backgroundColor: p.a100, opacity: page.interpolate({ inputRange: [0, 0.6, 1], outputRange: [0.9, 0.5, 0] }) }} />
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 18, paddingRight: 4, paddingTop: 6, borderBottomWidth: 1, borderBottomColor: p.divider }}>
           <TlumGlyph size={18} color={p.a700} />
-          <Kicker style={{ flex: 1, marginLeft: 8 }}>{t.tlumBy}</Kicker>
+          <Kicker style={{ flex: 1, marginLeft: 8 }}>{o.e ? t.tlumByEv : t.tlumBy}</Kicker>
           <Press label="×" onPress={close} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="x" size={20} color={p.mute(65)} />
           </Press>
         </View>
         <Animated.View style={{ flex: 1, opacity: text, transform: [{ translateY: text.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }}>
           <ScrollView ref={scroll} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 30 }}>
-            <Text style={{ fontFamily: FONT.heading, fontSize: 30, lineHeight: 34, color: p.text, marginBottom: 4 }}>{`${t.psalm} ${o.n}`}</Text>
-            <Text style={{ fontFamily: FONT.body, fontStyle: 'italic', fontSize: 13, color: p.mute(60), marginBottom: 14 }}>{t.tlumSub}</Text>
+            <Text style={{ fontFamily: FONT.heading, fontSize: 30, lineHeight: 34, color: p.text, marginBottom: 4 }}>{title}</Text>
+            <Text style={{ fontFamily: FONT.body, fontStyle: 'italic', fontSize: 13, color: p.mute(60), marginBottom: 14 }}>{o.e ? t.tlumSubEv : t.tlumSub}</Text>
             {!ready && <Text style={{ ...body, color: p.mute(50) }}>…</Text>}
             {segs.map((s, i) => {
               const lit = i === target;
@@ -189,7 +206,7 @@ function Page({ o, close, page, text, spine }: { o: { n: number; v?: number }; c
                   onLayout={(e) => onY(i, e.nativeEvent.layout.y)}
                   style={{ marginBottom: 12, paddingVertical: lit ? 8 : 0, paddingHorizontal: lit ? 10 : 0, marginHorizontal: lit ? -10 : 0, backgroundColor: lit ? p.a100 : 'transparent', borderRadius: RADIUS }}
                 >
-                  {s.v !== '0' && (
+                  {s.v !== '0' && s.v !== segs[i - 1]?.v && (
                     <Text style={[{ fontFamily: FONT.headingBold, fontSize: 15, color: p.a700, letterSpacing: 0.4, marginTop: 4, marginBottom: 2 }, NUM]}>{vLabel(s, t)}</Text>
                   )}
                   {!!s.h && (
@@ -203,8 +220,8 @@ function Page({ o, close, page, text, spine }: { o: { n: number; v?: number }; c
             })}
             {ready && (
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10, marginTop: 10 }}>
-                {prev ? <OutlineButton label={`← ${t.psalm} ${prev}`} onPress={() => setOpen({ n: prev })} /> : <View />}
-                {next ? <OutlineButton label={`${t.psalm} ${next} →`} onPress={() => setOpen({ n: next })} /> : <View />}
+                {prev ? <OutlineButton label={`← ${lab(prev)}`} onPress={() => setOpen({ n: prev, e: o.e })} /> : <View />}
+                {next ? <OutlineButton label={`${lab(next)} →`} onPress={() => setOpen({ n: next, e: o.e })} /> : <View />}
               </View>
             )}
           </ScrollView>
