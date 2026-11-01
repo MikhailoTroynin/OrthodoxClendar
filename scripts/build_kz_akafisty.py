@@ -190,8 +190,14 @@ def _civil(word, use_lexicon=True, prev_key='^', next_key='$'):
         return r
     if r.how == 'civil-rule' and w.endswith('е') and pk in LOC and not w.endswith(('ие', 'ее')):
         r.out = cased(out, strip_ac(out)[:-1] + 'і') if ACUTE not in out else cased(out, out[:-1] + 'і')
-    if strip_ac(r.out).lower().endswith('ех') and len(plain) > 4 and not r.out.endswith('ех' + ACUTE):
-        r.out = r.out[:-2] + 'іх'
+    # місц. мн. -ѣхъ, у «гражданці» -ех → -іх (на крилі́х, во грісі́х). Не чіпаємо -ехъ іменників ІІІ відміни й на -тель
+    # (во бра́нех, в болі́знех, на путе́х, во страсте́х, святи́телех) і форм, знайдених в індексі ЦС-форм. Наголос зберігаємо:
+    # раніше заміна r.out[:-2] при наголосі на «е» («путе́х») відрізала «́х» і давала «путеіх».
+    pl_out = strip_ac(r.out).lower()
+    if pl_out.endswith('ех') and len(plain) > 4 and r.how != 'civil-index' \
+            and not re.search(r'(ст|тел|[щчжшн]|ер|пут|люд|сл|зв[іе]р|кон)ех$', pl_out):
+        k = r.out.rfind('е')
+        r.out = r.out[:k] + 'і' + r.out[k + 1:]
     return r
 
 
