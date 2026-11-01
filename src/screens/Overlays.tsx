@@ -298,7 +298,7 @@ function Sec({ o }: { o: Of<'sec'> }) {
             <Press
               onPress={() => {
                 setQ(qt);
-                searchCat = 'all';
+                searchCats = [];
                 push({ t: 'search' });
               }}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14, paddingVertical: 8 }}
@@ -787,8 +787,8 @@ const SCATS: SCat[] = ['fe', 'day', 'ak', 'kn', 'pr', 'tr', 'bib', 'ps'];
 const PRAYER_CATS: SCat[] = ['ak', 'kn', 'pr', 'tr'];
 /** Скільки результатів показати в групі, коли шукаємо в усьому; решта — за кнопкою «Показати всі». */
 const GROUP_MAX = 5;
-/** Обрана категорія лишається, коли повертаєшся з результату назад до пошуку. */
-let searchCat: SCat | 'all' = 'all';
+/** Обрані категорії (теги під полем) лишаються, коли повертаєшся з результату назад до пошуку. Порожньо — шукаємо всюди. */
+let searchCats: SCat[] = [];
 /** До якої категорії пошуку належить молитва: за назвою (акафіст, канон, тропар) і розділом. */
 const prayerCat = (s: Section, it: Section['items'][number]): SCat => {
   const ws = words(it.u);
@@ -802,11 +802,14 @@ function Search() {
   const { p, t, lang, cal, q, setQ, openDay, openFeasts, push, today } = useStore();
   const ul = lang === 'uk';
   const li = ul ? 0 : 1;
-  const [cat, setCatS] = useState<SCat | 'all'>(searchCat);
-  const setCat = (c: SCat | 'all') => {
-    searchCat = c;
-    setCatS(c);
+  const [sel, setSelS] = useState<SCat[]>(searchCats);
+  const setSel = (cs: SCat[]) => {
+    searchCats = SCATS.filter((c) => cs.includes(c));
+    setSelS(searchCats);
   };
+  const toggle = (c: SCat) => setSel(sel.includes(c) ? sel.filter((x) => x !== c) : [...sel, c]);
+  const all = sel.length === 0;
+  const selPr = sel.filter((c) => PRAYER_CATS.includes(c));
   const ql = q.trim().toLowerCase();
   // Пошук охоплює календар, молитвослов і Псалтир: довантажуємо їх, результати доповнюються в міру готовності.
   useLazy(...yearsL, prayersL, psaltyrL);
@@ -825,7 +828,7 @@ function Search() {
     seenPr.add(id);
     results[c].push({ title: ul ? it.u : it.e, sub: ul ? s.u : s.e, go: () => push({ t: 'read', s: si, j }) });
   };
-  const want = (c: SCat) => cat === 'all' || cat === c;
+  const want = (c: SCat) => all || sel.includes(c);
   if (ql.length >= 2) {
     if (want('day')) {
       // Повний календар (2026 і 2027): шукаємо по всій пам'яті кожного дня, спершу поточний рік.
@@ -852,10 +855,10 @@ function Search() {
           results.fe.push({ title: f[lang], sub: fmtMD(f[cal][0], f[cal][1], lang), go: openFeasts });
       });
     // Молитви — нечітким пошуком: «Николаю» знайде «Миколаю», «акафист» — «акафіст».
-    // В обраній категорії шукаємо лише серед її молитов, тож ліміт не з'їдають інші.
-    if (cat === 'all') fuzzySearch(es, q.trim(), 120).forEach(addPrayer);
-    else if (PRAYER_CATS.includes(cat)) {
-      const ks = cats.flatMap((c, k) => (c === cat ? [k] : []));
+    // В обраних категоріях шукаємо лише серед їхніх молитов, тож ліміт не з'їдають інші.
+    if (all) fuzzySearch(es, q.trim(), 120).forEach(addPrayer);
+    else if (selPr.length) {
+      const ks = cats.flatMap((c, k) => (selPr.includes(c) ? [k] : []));
       fuzzySearch(ks.map((k) => es[k]), q.trim(), 120).forEach((n) => addPrayer(ks[n]));
     }
     if (want('bib')) {
@@ -880,11 +883,11 @@ function Search() {
         });
       });
     }
-  } else if (cat !== 'all' && PRAYER_CATS.includes(cat)) {
-    // Без запиту в категорії молитвослова — увесь її перелік: усі акафісти, усі канони тощо.
-    cats.forEach((c, k) => c === cat && addPrayer(k));
+  } else if (selPr.length) {
+    // Без запиту в категоріях молитвослова — увесь їхній перелік: усі акафісти, усі канони тощо.
+    cats.forEach((c, k) => selPr.includes(c) && addPrayer(k));
   }
-  const labels = t.sCats as Record<SCat | 'all', string>;
+  const labels = t.sCats as Record<SCat, string>;
   const total = SCATS.reduce((n, c) => n + results[c].length, 0);
   const rows = (rs: { title: string; sub: string; go: () => void }[]) => (
     <View style={card(p)}>
@@ -893,23 +896,36 @@ function Search() {
       ))}
     </View>
   );
-  const chip = (c: SCat | 'all') => {
-    const on = cat === c;
-    const n = c === 'all' ? total : results[c].length;
+  // Категорія, яку ще можна обрати; поки нічого не обрано — з кількістю знайденого в ній.
+  const chip = (c: SCat) => {
+    const n = results[c].length;
     return (
       <Press
         key={c}
-        onPress={() => setCat(c)}
+        onPress={() => toggle(c)}
         label={labels[c]}
-        style={{ paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: on ? p.accent : p.divider, backgroundColor: on ? p.a100 : 'transparent', borderRadius: RADIUS }}
+        style={{ paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: p.divider, borderRadius: RADIUS }}
       >
-        <Text style={{ fontFamily: FONT.body, fontSize: 13, color: on ? p.a700 : p.text }}>
+        <Text style={{ fontFamily: FONT.body, fontSize: 13, color: p.text }}>
           {labels[c]}
-          {ql.length >= 2 && cat === 'all' && c !== 'all' && n > 0 ? ` · ${n}` : ''}
+          {ql.length >= 2 && all && n > 0 ? ` · ${n}` : ''}
         </Text>
       </Press>
     );
   };
+  // Обрана категорія — тег-хмарка з хрестиком: натиск знімає її.
+  const tag = (c: SCat) => (
+    <Press
+      key={c}
+      onPress={() => toggle(c)}
+      label={`${labels[c]} ×`}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 12, paddingRight: 8, paddingVertical: 6, borderWidth: 1, borderColor: p.accent, backgroundColor: p.a100, borderRadius: 999 }}
+    >
+      <Text style={{ fontFamily: FONT.body, fontSize: 13, color: p.a700 }}>{labels[c]}</Text>
+      <Icon name="x" size={14} color={p.a700} />
+    </Press>
+  );
+  const groups = (all ? SCATS : sel).filter((c) => results[c].length);
   return (
     <>
       <BackBar kicker={t.search} />
@@ -918,17 +934,17 @@ function Search() {
           autoFocus
           value={q}
           onChangeText={setQ}
-          placeholder={cat === 'all' ? t.searchPh : (t.sCatPh as string).replace('%', labels[cat])}
+          placeholder={t.searchPh}
           placeholderTextColor={p.mute(45)}
           returnKeyType="search"
           autoCorrect={false}
           style={{ minHeight: 46, paddingHorizontal: 12, borderWidth: 1, borderColor: p.accent, borderRadius: RADIUS, color: p.text, fontFamily: FONT.body, fontSize: 16 }}
         />
+        {!all && <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>{sel.map(tag)}</View>}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ marginTop: 12, marginHorizontal: -24 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 24 }}>
-          {chip('all')}
-          {SCATS.map(chip)}
+          {SCATS.filter((c) => !sel.includes(c)).map(chip)}
         </ScrollView>
-        {ql.length < 2 && cat === 'all' && (
+        {ql.length < 2 && all && (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
             {(t.sgs as string[]).map((s) => (
               <Press key={s} onPress={() => setQ(s)} style={{ paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: p.divider }}>
@@ -937,24 +953,24 @@ function Search() {
             ))}
           </View>
         )}
-        {ql.length < 2 && cat !== 'all' && !PRAYER_CATS.includes(cat) && <Body size={14} mute={60} style={{ marginTop: 20 }}>{t.sCatHint}</Body>}
+        {ql.length < 2 && !all && !selPr.length && <Body size={14} mute={60} style={{ marginTop: 20 }}>{t.sCatHint}</Body>}
         {ql.length >= 2 && total === 0 && <Body size={14} mute={60} style={{ marginTop: 20 }}>{t.noRes}</Body>}
-        {cat === 'all'
-          ? SCATS.filter((c) => results[c].length).map((c) => {
+        {sel.length !== 1
+          ? groups.map((c) => {
               const rs = results[c];
               return (
                 <View key={c} style={{ marginTop: 22 }}>
                   <Kicker style={{ marginBottom: 8 }}>{`${labels[c]} · ${rs.length}`}</Kicker>
                   {rows(rs.slice(0, GROUP_MAX))}
                   {rs.length > GROUP_MAX && (
-                    <Press onPress={() => setCat(c)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6, paddingVertical: 8 }}>
+                    <Press onPress={() => setSel([c])} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6, paddingVertical: 8 }}>
                       <Text style={{ fontFamily: FONT.body, fontSize: 14, color: p.a700 }}>{t.sShowAll + rs.length}</Text>
                     </Press>
                   )}
                 </View>
               );
             })
-          : results[cat].length > 0 && <View style={{ marginTop: 16 }}>{rows(results[cat])}</View>}
+          : results[sel[0]].length > 0 && <View style={{ marginTop: 16 }}>{rows(results[sel[0]])}</View>}
       </Scroll>
     </>
   );
