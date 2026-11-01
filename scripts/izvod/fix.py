@@ -148,6 +148,7 @@ def match_case(orig, rep):
 def apply_round(dry, log):
     findings, _ = check.run()
     fx_glob, fx_ctx = load_fixes()
+    ck_known = check.Checker().known
     by_unit = defaultdict(list)
     for f in findings:
         if f['sev'] == 'error' and f.get('sug'):
@@ -160,7 +161,7 @@ def apply_round(dry, log):
                 if kind != 't':
                     continue
                 ws = words_of(text)
-                if not check.is_cs(text, ws):
+                if not check.is_cs(text, ws, ck_known):
                     continue
                 pl = [plain(w) for w in ws]
                 for i, p in enumerate(pl):

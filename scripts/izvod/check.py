@@ -78,7 +78,28 @@ UK_MARK = set('що щоб який яка які яке якого якій я�
               'моєї твоєї дай допоможи прошу просимо'.split())
 
 
-def is_cs(t, ws):
+_UK = None
+
+
+def uk_vocab():
+    """Словник сучасної української з текстів самого додатка: Біблія (пер. Патріарха Філарета), тлумачення, календар,
+    інтерфейс. Потрібен, щоб відрізнити ЦС-абзац без наголосів від українського перекладу."""
+    global _UK
+    if _UK is None:
+        import glob as _g
+        from izvodlib import DATA as _D
+        _UK = set()
+        for f in _g.glob(os.path.join(_D, 'bible', 'b', '*.ts')) + _g.glob(os.path.join(_D, 'tlum', '*.ts')) + \
+                _g.glob(os.path.join(_D, 'tlumEv', '*.ts')) + [os.path.join(_D, x) for x in ('calendar2026.ts', 'calendar2027.ts', 'strings.ts')]:
+            if os.path.exists(f):
+                _UK.update(plain(w) for w in words_of(open(f, encoding='utf-8').read()))
+    return _UK
+
+
+def is_cs(t, ws, known=None):
+    """Чи абзац церковнослов'янський. Ознаки: наголоси (≥ 25 % слів), ЦС-маркери (яко, єси, -аго…) і — якщо передано
+    known (Checker.known) — частка слів, відомих лише ЦС-словникам (немає в українській лексиці додатка): ≥ 40 %
+    при ≤ 10 % суто українських слів і щонайменше 5 словах («Воскресеніє Христово видівше…» без наголосів)."""
     if not ws:
         return False
     acc = sum(ACC in w for w in ws)
@@ -87,7 +108,16 @@ def is_cs(t, ws):
     pl = [plain(w) for w in ws]
     cs = sum(w in CS_MARK for w in pl) + sum(w.endswith(('аго', 'яго', 'ися')) for w in pl)
     uk = sum(w in UK_MARK for w in pl)
-    return cs > uk and cs >= 1
+    if cs > uk and cs >= 1:
+        return True
+    if known is not None:
+        lw = [w for w in pl if len(w) > 2]
+        if len(lw) >= 5:
+            V = uk_vocab()
+            cs_only = sum(1 for w in lw if known(w) and w not in V)
+            uk_only = sum(1 for w in lw if w in V and not known(w))
+            return cs_only >= 0.4 * len(lw) and uk_only <= 0.1 * len(lw)
+    return False
 
 
 # --- правила --------------------------------------------------------------------------------------------
@@ -137,6 +167,9 @@ def rule_checks(w, p, g_has, pref=lambda x: 0):
         out.append(('troytsya', None, 'Троица → Тройця'))
     if p == 'мя':
         out.append(('mya', "м'я", "займенник мя → м'я"))
+    if p == 'тайн':
+        # род. мн. та́инъ → та́їн (у корпусі віра.укр: таїн 28, тайн 1); знайдено звіркою kz-текстів з віра.укр
+        out.append(('tain', 'таїн', 'род. мн. та́инъ → та́їн'))
     return out
 
 
@@ -252,6 +285,13 @@ KIND_UK = {'yat': 'ѣ → і', 'ie': 'е/є', 'ji': 'і/ї', 'ii': 'и/і в о�
 PREP_LOC = {'в', 'во', 'о', 'об', 'при', 'на'}            # місцевий → -ості
 PREP_GEN = {'от', 'из', 'із', 'без', 'до', 'кромі', 'ради', 'для', 'у', 'вмісто', 'ізнутрь', 'посреді', 'внутрь'}  # родовий → -ости
 PREP_DAT = {'к', 'ко', 'по'}                               # давальний → -ості
+# узгодження займенників (Checker.agree)
+AG_GEN = {'от', 'ото', 'из', 'із', 'ізо', 'без', 'безо', 'до', 'у'}
+AG_DAT = {'к', 'ко'}
+AG_LOC = {'о', 'об', 'обо', 'при'}
+AG_LOCV = {'в', 'во', 'на', 'по'}
+AG_ALL = AG_GEN | AG_DAT | AG_LOC | AG_LOCV | {'ради'}
+AG_POSS = set('моєй моєя твоєй твоєя своєй своєя нашей нашея вашей вашея'.split())
 
 
 class Checker:
@@ -416,6 +456,47 @@ class Checker:
             return ('case', want, why)
         return None
 
+    def agree(s, pl, i):
+        """Закінчення, яке визначає прийменник (перевірено на корпусі віра.укр, selftest.py):
+          - тебе/тебі, себе/себі: після к, ко, в, во, о, об, при, по — дав./місц. «-і»; після от, из, без, до, у і перед «ради» — «-е»
+            (на корпусі: 425 з 427 збігів; обидва винятки — описки сайту «от Тебі»);
+          - моєй/моєя, твоєй/твоєя, своєй/своєя, нашей/нашея, вашей/вашея: після прийменника (або прийменник + іменник
+            ж. р. на -і/-и) родового відмінка — «-ея», дав./місц. — «-ей» (148 з 148);
+          - іменник одразу після к, ко, об, при — «-і», якщо форма на «-і» є в словнику (34 з 36 — тому лише на вичитку).
+        → (код, підказка, пояснення, серйозність) | None."""
+        p = pl[i]
+        prv = pl[i - 1] if i else '^'
+        pp = pl[i - 2] if i > 1 else '^'
+        nxt = pl[i + 1] if i + 1 < len(pl) else '$'
+        if p in ('тебе', 'тебі', 'себе', 'себі'):
+            st = p[:-1]
+            if prv in AG_DAT | AG_LOC | {'в', 'во', 'по'}:
+                want, why = st + 'і', f'після «{prv}» — давальний/місцевий відмінок: {st}і'
+            elif prv in AG_GEN or nxt == 'ради':
+                want, why = st + 'е', f'після «{prv if prv in AG_GEN else "ради"}» — родовий відмінок: {st}е'
+            else:
+                return None
+            return ('agree', want, why, 'error') if want != p else None
+        if p in AG_POSS:
+            st = p[:-1]
+            cand = [prv]
+            if pp in AG_ALL and prv not in AG_ALL and prv[-1:] in 'иі' and not (nxt[-1:] in 'иеі' and nxt not in ('і', 'и')):
+                cand.append(pp)  # в утро́бі моє́й, от ю́ности моєя́ (але не «в служе́ніє твоєя́ сла́ви»)
+            for x in cand:
+                if x in AG_GEN:
+                    want = st + 'я'; why = f'після «{x}» — родовий відмінок: -{p[-2]}я'
+                elif x in AG_DAT | AG_LOC | AG_LOCV:
+                    want = st + 'й'; why = f'після «{x}» — давальний/місцевий відмінок: -{p[-2]}й'
+                else:
+                    continue
+                return ('agree', want, why, 'error') if want != p else None
+            return None
+        if prv in AG_DAT | {'об', 'обо', 'при'} and len(p) > 3 and p.endswith('и') and not p.endswith('ии'):
+            q = p[:-1] + 'і'
+            if s.known(q):
+                return ('agree', q, f'після «{prv}» — давальний/місцевий відмінок: -і', 'review')
+        return None
+
     def check_para(s, ws):
         """Слова абзацу → [(індекс, код, підказка-plain|None, пояснення, серйозність)]."""
         pl = [plain(w) for w in ws]
@@ -432,15 +513,21 @@ class Checker:
                 if code != 'isus' and n_own >= 3 and s.uni.get(sug or '', 0) < 5 * n_own:
                     continue  # форма неодноразово є в еталоні — правило має виняток (рідкісна форма може бути опискою)
                 hit = (code, sug, why); break
-            if not hit and p not in s.uni and nxt != '$' and VOKO.search(w) and not s.known(p[:-1] + 'а') \
+            if not hit and p not in s.uni and nxt != '$' and VOKO.search(w) and (not s.known(p[:-1] + 'а') or (p[:-1] in s.uni and not any(s.known(p[:-1] + e) for e in ('ий', 'ая', 'ую', 'ое', 'оє')))) \
                     and ((p[-2] == 'в' and nxt[:1] in 'вф') or (p[-2] == 'к' and nxt[:1] in 'кгх')):
                 # збій навички cs-kyiv-translit: правило «въ/къ → во/ко перед тим самим звуком» не бачить наголосу
-                # (U+0301 — не \w) і вважає кінцеве -в/-к наголошеного слова прийменником: враго́в ви́димих → враго́во
+                # (U+0301 — не \w) і вважає кінцеве -в/-к наголошеного слова прийменником: враго́в ви́димих → враго́во;
+                # «челові́ко ко», «покро́во всім»: основа (челові́к, покро́в) — відоме слово, а не прикметник/прислівник
                 hit = ('vo-ko', p[:-1], f'зайве «о»: «{w[:-1]}» — не прийменник (збій правила во/ко після наголосу)')
+            if not hit and w[:1].isupper() and re.search('[нр]ск$', p):
+                # назви міст: -скъ → -ськ, як -ськ- у прикметниках (Бря́нськ, Смоле́нськ, Курськ); звірка з віра.укр
+                hit = ('sk-end', p[:-2] + 'ськ', 'кінцеве -ск у назві → -ськ (Брянськ, Смоленськ)')
             if not hit and re.search('[^аеєиіїоуюя]еіх$', p):
                 hit = ('eih', p[:-3] + 'ех', 'місцевий відмінок множини -ехъ → -ех')
             if not hit:
                 hit = s.grammar(pl, i)
+            if not hit:
+                hit = s.agree(pl, i)
             if not hit:
                 hit = s.lex(p, w)
             if not hit and len(p) > 4 and p.endswith('ей') and not s.known(p) and p[-3] in 'нтвлрдскгхмбпз' \
@@ -469,7 +556,13 @@ class Checker:
 
 
 def with_case(orig, sug):
-    """Перенести регістр і наголос з orig на підказку (plain)."""
+    """Перенести регістр і наголос з orig на підказку (plain); наголос, що опинився після приголосної
+    (твоєя́ → твоєй́), переноситься на попередню голосну (твоє́й)."""
+    r = _with_case(orig, sug)
+    return re.sub('([' + VOW + '])([^' + VOW + ACC + ']+)' + ACC, lambda m: m.group(1) + ACC + m.group(2), r)
+
+
+def _with_case(orig, sug):
     letters = [c for c in orig if c != ACC]
     out = []
     accpos = [i for i, c in enumerate([c for c in orig]) if c == ACC]
@@ -521,7 +614,7 @@ def run(srcs=None):
             if kind != 't':
                 continue
             ws = words_of(text)
-            if not is_cs(text, ws):
+            if not is_cs(text, ws, ck.known):
                 stats['uk-paras'] += 1
                 continue
             stats['words'] += len(ws)
