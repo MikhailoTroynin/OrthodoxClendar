@@ -6,7 +6,9 @@
 Використання:
   python3 -I scripts/build_kz_akafisty.py <src.db> <каталог translit/scripts> <каталог виводу> [report.json]
 Назви (укр. та англ.) — scripts/kozlovskiy/akafisty_titles.tsv; ручні виправлення слів —
-scripts/kozlovskiy/fixes/<id>.json ({"<слово №>": "форма"}) і scripts/kozlovskiy/fixes_global.tsv."""
+scripts/kozlovskiy/fixes/<id>.json ({"<слово №>": "форма"}) і scripts/kozlovskiy/fixes_global.tsv.
+Акафісти, яких немає в джерелі, — scripts/kozlovskiy/extra/<id>.json ({"id", "g" — група виводу, "u", "e", "secs"});
+id ≥ 1000, щоб не перетинатися з _id джерела; книга стає в кінець своєї групи."""
 import html, json, os, re, sqlite3, sys
 
 DB, TR, OUT = sys.argv[1:4]
@@ -328,6 +330,11 @@ def main():
         b, amb, unk = build(aid, u, e, db)
         books.append((aid, GROUP[g], b))
         rep[aid] = {'ambig': amb, 'unknown': unk}
+    ext = os.path.join(HERE, 'kozlovskiy', 'extra')
+    for fn in sorted(os.listdir(ext)) if os.path.isdir(ext) else []:
+        d = json.load(open(os.path.join(ext, fn), encoding='utf8'))
+        at = max((i + 1 for i, (_, g, _) in enumerate(books) if g == d['g']), default=len(books))
+        books.insert(at, (d['id'], d['g'], {'u': d['u'], 'e': d['e'], 'secs': d['secs'], 'notes': []}))
     # шарди ≤ ~450 КБ, не перетинають меж груп
     shards, cur, size, last = [], [], 0, None
     for aid, g, b in books:
