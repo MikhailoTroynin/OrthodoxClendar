@@ -22,7 +22,7 @@ import { dayInfo, entryFor, fmtDate, fmtMD, addDays, searchYear, toKey, ymd, FUL
 import { JAR_URL, Mark, Overlay, markKey, useStore } from '../store';
 import { Angel, angelDate, NATIVE, notifPermission, Reminders } from '../lib/notify';
 import { FONT, RADIUS } from '../theme';
-import { entry, Entry, fuzzySearch } from '../lib/fuzzy';
+import { entry, Entry, fuzzySearch, words } from '../lib/fuzzy';
 import { bookText, speak, stopSpeaking, useSpeaking } from '../lib/speech';
 import { evCode, TlumBtn, TlumMark } from '../components/Tlum';
 
@@ -298,6 +298,7 @@ function Sec({ o }: { o: Of<'sec'> }) {
             <Press
               onPress={() => {
                 setQ(qt);
+                searchCat = 'all';
                 push({ t: 'search' });
               }}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14, paddingVertical: 8 }}
@@ -779,64 +780,136 @@ function Jesus() {
   );
 }
 
+/** Категорії пошуку в порядку показу: і чипи над полем, і групи результатів, коли категорію не обрано. */
+type SCat = 'fe' | 'day' | 'ak' | 'kn' | 'pr' | 'tr' | 'bib' | 'ps';
+const SCATS: SCat[] = ['fe', 'day', 'ak', 'kn', 'pr', 'tr', 'bib', 'ps'];
+/** Категорії молитвослова: у них і без запиту можна переглянути весь перелік. */
+const PRAYER_CATS: SCat[] = ['ak', 'kn', 'pr', 'tr'];
+/** Скільки результатів показати в групі, коли шукаємо в усьому; решта — за кнопкою «Показати всі». */
+const GROUP_MAX = 5;
+/** Обрана категорія лишається, коли повертаєшся з результату назад до пошуку. */
+let searchCat: SCat | 'all' = 'all';
+/** До якої категорії пошуку належить молитва: за назвою (акафіст, канон, тропар) і розділом. */
+const prayerCat = (s: Section, it: Section['items'][number]): SCat => {
+  const ws = words(it.u);
+  if (ws.some((w) => w.startsWith('акафист'))) return 'ak';
+  if (ws.some((w) => w.startsWith('канон'))) return 'kn';
+  if (s.u === 'Тропарі й кондаки' || /^(тропар|кондак|величан)/.test(ws[0] ?? '')) return 'tr';
+  return 'pr';
+};
+
 function Search() {
-  const { p, t, lang, cal, q, setQ, openDay, openFeasts, setDate, push, today } = useStore();
+  const { p, t, lang, cal, q, setQ, openDay, openFeasts, push, today } = useStore();
   const ul = lang === 'uk';
   const li = ul ? 0 : 1;
+  const [cat, setCatS] = useState<SCat | 'all'>(searchCat);
+  const setCat = (c: SCat | 'all') => {
+    searchCat = c;
+    setCatS(c);
+  };
   const ql = q.trim().toLowerCase();
   // Пошук охоплює календар, молитвослов і Псалтир: довантажуємо їх, результати доповнюються в міру готовності.
   useLazy(...yearsL, prayersL, psaltyrL);
   const MB = prayersL()?.MB ?? [];
   const PSALTYR = psaltyrL()?.PSALTYR ?? [];
-  const results: { title: string; sub: string; go: () => void }[] = [];
+  const results: Record<SCat, { title: string; sub: string; go: () => void }[]> = { fe: [], day: [], ak: [], kn: [], pr: [], tr: [], bib: [], ps: [] };
+  const { flat, es } = prayerFlat(MB);
+  const cats = flat.map((x) => prayerCat(x.s, x.it));
+  // Одна й та сама молитва буває в кількох розділах — у межах категорії показуємо її один раз.
+  const seenPr = new Set<string>();
+  const addPrayer = (k: number) => {
+    const { s, si, it, j } = flat[k];
+    const c = cats[k];
+    const id = `${c}|${it.u}|${JSON.stringify(it.mv ?? it.x ?? '')}`;
+    if (seenPr.has(id)) return;
+    seenPr.add(id);
+    results[c].push({ title: ul ? it.u : it.e, sub: ul ? s.u : s.e, go: () => push({ t: 'read', s: si, j }) });
+  };
+  const want = (c: SCat) => cat === 'all' || cat === c;
   if (ql.length >= 2) {
-    // Повний календар (2026 і 2027): шукаємо по всій пам'яті кожного дня, спершу поточний рік.
-    const y = today.getFullYear();
-    const seen = new Set<string>();
-    [...FULL_YEARS].sort((a, b) => Number(b === y) - Number(a === y) || a - b).forEach((yr) =>
-      searchYear(yr, cal, ql, 40).forEach(({ text, date }) => {
-        seen.add(toKey(date));
-        results.push({ title: text, sub: fmtDate(date, lang), go: () => openDay(date) });
-      }),
-    );
-    // Ручні дані (вересень і жовтень): назва й іменини, зокрема для днів поза повним календарем.
-    for (let i = -20; i <= 40; i++) {
-      const dt = addDays(ymd(y, 9, 15), i);
-      if (seen.has(toKey(dt))) continue;
-      const e = entryFor(dt, cal);
-      if (e && ((e[li] as string).toLowerCase().includes(ql) || (e[li + 2] as string).toLowerCase().includes(ql)))
-        results.push({ title: e[li] as string, sub: fmtDate(dt, lang), go: () => openDay(dt) });
+    if (want('day')) {
+      // Повний календар (2026 і 2027): шукаємо по всій пам'яті кожного дня, спершу поточний рік.
+      const y = today.getFullYear();
+      const seen = new Set<string>();
+      [...FULL_YEARS].sort((a, b) => Number(b === y) - Number(a === y) || a - b).forEach((yr) =>
+        searchYear(yr, cal, ql, 40).forEach(({ text, date }) => {
+          seen.add(toKey(date));
+          results.day.push({ title: text, sub: fmtDate(date, lang), go: () => openDay(date) });
+        }),
+      );
+      // Ручні дані (вересень і жовтень): назва й іменини, зокрема для днів поза повним календарем.
+      for (let i = -20; i <= 40; i++) {
+        const dt = addDays(ymd(y, 9, 15), i);
+        if (seen.has(toKey(dt))) continue;
+        const e = entryFor(dt, cal);
+        if (e && ((e[li] as string).toLowerCase().includes(ql) || (e[li + 2] as string).toLowerCase().includes(ql)))
+          results.day.push({ title: e[li] as string, sub: fmtDate(dt, lang), go: () => openDay(dt) });
+      }
     }
-    FE.forEach((f) => {
-      if (f[lang].toLowerCase().includes(ql))
-        results.push({ title: f[lang], sub: `${t.sFeasts} · ${fmtMD(f[cal][0], f[cal][1], lang)}`, go: openFeasts });
-    });
-    // Молитви — нечітким пошуком: «Николаю» знайде «Миколаю», «акафист» — «акафіст».
-    const { flat, es } = prayerFlat(MB);
-    fuzzySearch(es, q.trim(), 80).forEach((k) => {
-      const { s, si, it, j } = flat[k];
-      results.push({ title: ul ? it.u : it.e, sub: ul ? s.u : s.e, go: () => push({ t: 'read', s: si, j }) });
-    });
-    // Посилання на Писання («Ін. 3:16», «Gal 5:22–6:2») і назви книг Біблії.
-    parseRefs(q.trim()).forEach((r) =>
-      results.push({ title: r.label, sub: `${bookName(r.b, ul)} · ${t.scripture}`, go: () => push(refOverlay(r)) }),
-    );
-    BOOKS.forEach((_, i) => {
-      const n = bookName(i, ul);
-      if (n.toLowerCase().includes(ql)) results.push({ title: n, sub: t.scripture, go: () => push({ t: 'book', b: bookItem(i) }) });
-    });
-    // «Псалом 50», «пс 50», «psalm 50» — точно цей псалом; інакше — збіг у назвах сторінок і розділів Псалтиря.
-    const psN = ql.match(/^(?:psalm|ps|псалом|пс)\.?\s*(\d{1,3})$/)?.[1];
-    PSALTYR.forEach((b, i) => {
-      const go = () => push(i >= 2 && i <= 21 ? { t: 'kath', k: i - 1 } : { t: 'ps', i });
-      const n = ul ? b.u : b.e;
-      if (n.toLowerCase().includes(ql)) results.push({ title: n, sub: t.psalter, go });
-      b.secs.forEach((x) => {
-        if (x.h && (psN ? x.h === `Псалом ${psN}` : x.h.toLowerCase().includes(ql))) results.push({ title: x.h, sub: `${t.psalter} · ${n}`, go });
+    if (want('fe'))
+      FE.forEach((f) => {
+        if (f[lang].toLowerCase().includes(ql))
+          results.fe.push({ title: f[lang], sub: fmtMD(f[cal][0], f[cal][1], lang), go: openFeasts });
       });
-    });
+    // Молитви — нечітким пошуком: «Николаю» знайде «Миколаю», «акафист» — «акафіст».
+    // В обраній категорії шукаємо лише серед її молитов, тож ліміт не з'їдають інші.
+    if (cat === 'all') fuzzySearch(es, q.trim(), 120).forEach(addPrayer);
+    else if (PRAYER_CATS.includes(cat)) {
+      const ks = cats.flatMap((c, k) => (c === cat ? [k] : []));
+      fuzzySearch(ks.map((k) => es[k]), q.trim(), 120).forEach((n) => addPrayer(ks[n]));
+    }
+    if (want('bib')) {
+      // Посилання на Писання («Ін. 3:16», «Gal 5:22–6:2») і назви книг Біблії.
+      parseRefs(q.trim()).forEach((r) =>
+        results.bib.push({ title: r.label, sub: bookName(r.b, ul), go: () => push(refOverlay(r)) }),
+      );
+      BOOKS.forEach((_, i) => {
+        const n = bookName(i, ul);
+        if (n.toLowerCase().includes(ql)) results.bib.push({ title: n, sub: t.scripture, go: () => push({ t: 'book', b: bookItem(i) }) });
+      });
+    }
+    if (want('ps')) {
+      // «Псалом 50», «пс 50», «psalm 50» — точно цей псалом; інакше — збіг у назвах сторінок і розділів Псалтиря.
+      const psN = ql.match(/^(?:psalm|ps|псалом|пс)\.?\s*(\d{1,3})$/)?.[1];
+      PSALTYR.forEach((b, i) => {
+        const go = () => push(i >= 2 && i <= 21 ? { t: 'kath', k: i - 1 } : { t: 'ps', i });
+        const n = ul ? b.u : b.e;
+        if (n.toLowerCase().includes(ql)) results.ps.push({ title: n, sub: t.psalter, go });
+        b.secs.forEach((x) => {
+          if (x.h && (psN ? x.h === `Псалом ${psN}` : x.h.toLowerCase().includes(ql))) results.ps.push({ title: x.h, sub: n, go });
+        });
+      });
+    }
+  } else if (cat !== 'all' && PRAYER_CATS.includes(cat)) {
+    // Без запиту в категорії молитвослова — увесь її перелік: усі акафісти, усі канони тощо.
+    cats.forEach((c, k) => c === cat && addPrayer(k));
   }
-  void setDate;
+  const labels = t.sCats as Record<SCat | 'all', string>;
+  const total = SCATS.reduce((n, c) => n + results[c].length, 0);
+  const rows = (rs: { title: string; sub: string; go: () => void }[]) => (
+    <View style={card(p)}>
+      {rs.map((r, i) => (
+        <NavRow key={i} title={r.title} sub={r.sub} onPress={r.go} last={i === rs.length - 1} />
+      ))}
+    </View>
+  );
+  const chip = (c: SCat | 'all') => {
+    const on = cat === c;
+    const n = c === 'all' ? total : results[c].length;
+    return (
+      <Press
+        key={c}
+        onPress={() => setCat(c)}
+        label={labels[c]}
+        style={{ paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: on ? p.accent : p.divider, backgroundColor: on ? p.a100 : 'transparent', borderRadius: RADIUS }}
+      >
+        <Text style={{ fontFamily: FONT.body, fontSize: 13, color: on ? p.a700 : p.text }}>
+          {labels[c]}
+          {ql.length >= 2 && cat === 'all' && c !== 'all' && n > 0 ? ` · ${n}` : ''}
+        </Text>
+      </Press>
+    );
+  };
   return (
     <>
       <BackBar kicker={t.search} />
@@ -845,11 +918,17 @@ function Search() {
           autoFocus
           value={q}
           onChangeText={setQ}
-          placeholder={t.searchPh}
+          placeholder={cat === 'all' ? t.searchPh : (t.sCatPh as string).replace('%', labels[cat])}
           placeholderTextColor={p.mute(45)}
+          returnKeyType="search"
+          autoCorrect={false}
           style={{ minHeight: 46, paddingHorizontal: 12, borderWidth: 1, borderColor: p.accent, borderRadius: RADIUS, color: p.text, fontFamily: FONT.body, fontSize: 16 }}
         />
-        {ql.length < 2 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ marginTop: 12, marginHorizontal: -24 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 24 }}>
+          {chip('all')}
+          {SCATS.map(chip)}
+        </ScrollView>
+        {ql.length < 2 && cat === 'all' && (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
             {(t.sgs as string[]).map((s) => (
               <Press key={s} onPress={() => setQ(s)} style={{ paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: p.divider }}>
@@ -858,12 +937,24 @@ function Search() {
             ))}
           </View>
         )}
-        {ql.length >= 2 && results.length === 0 && <Body size={14} mute={60} style={{ marginTop: 20 }}>{t.noRes}</Body>}
-        <View style={{ marginTop: 12 }}>
-          {results.map((r, i) => (
-            <NavRow key={i} title={r.title} sub={r.sub} onPress={r.go} last={i === results.length - 1} />
-          ))}
-        </View>
+        {ql.length < 2 && cat !== 'all' && !PRAYER_CATS.includes(cat) && <Body size={14} mute={60} style={{ marginTop: 20 }}>{t.sCatHint}</Body>}
+        {ql.length >= 2 && total === 0 && <Body size={14} mute={60} style={{ marginTop: 20 }}>{t.noRes}</Body>}
+        {cat === 'all'
+          ? SCATS.filter((c) => results[c].length).map((c) => {
+              const rs = results[c];
+              return (
+                <View key={c} style={{ marginTop: 22 }}>
+                  <Kicker style={{ marginBottom: 8 }}>{`${labels[c]} · ${rs.length}`}</Kicker>
+                  {rows(rs.slice(0, GROUP_MAX))}
+                  {rs.length > GROUP_MAX && (
+                    <Press onPress={() => setCat(c)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6, paddingVertical: 8 }}>
+                      <Text style={{ fontFamily: FONT.body, fontSize: 14, color: p.a700 }}>{t.sShowAll + rs.length}</Text>
+                    </Press>
+                  )}
+                </View>
+              );
+            })
+          : results[cat].length > 0 && <View style={{ marginTop: 16 }}>{rows(results[cat])}</View>}
       </Scroll>
     </>
   );
