@@ -23,3 +23,4 @@ python3 -I scripts/kozlovskiy/gen_md.py "$W"       # → $W/CHECKLIST.md
 Назви — `molytvy_titles.tsv`, переклад заголовків і рубрик — `molytvy_rubrics.py`, переклад абзаців сучасною російською — `translated/pr_*.json` (`{"<id>": {"<номер абзацу>": "текст"}}`).
 Щоб побачити, які абзаци ще схожі на сучасну російську і не перекладені: `RU_DUMP=$W/ru python3 -I scripts/build_kz_molytvy.py "$W/ext/src.db" <каталог scripts cs-kyiv-translit> /tmp/x` (потім `<id>.tsv` у `$W/ru`; визначення — `rusc.py`).
 
+Після збирання запустіть перевірку й виправлення Київського ізводу: `python3 -I scripts/izvod/fix.py`, потім `python3 -I scripts/izvod/check.py` (див. [`scripts/izvod`](../izvod/README.md)).
