@@ -9,7 +9,8 @@ import { BOOKS, bookName } from '../lib/bible';
 import { lazy, Lazy, useLazy } from '../lib/lazy';
 import { useStore } from '../store';
 import { FONT, NUM, RADIUS } from '../theme';
-import { Icon, Kicker, OutlineButton, Press } from './ui';
+import { Icon, Kicker, Press } from './ui';
+import { NavBar } from './NavBar';
 
 const kathOf = (n: number) => KATH_RANGE.findIndex(([a, b]) => a <= n && n <= b) + 1;
 const LOADERS: Record<number, Lazy<{ Z: TlumPsalms }>> = Object.fromEntries(
@@ -143,7 +144,7 @@ export function TlumHost() {
 }
 
 function Page({ o, close, page, text, spine }: { o: NonNullable<Open>; close: () => void; page: Animated.Value; text: Animated.Value; spine: Animated.Value }) {
-  const { p, t, fs, lang } = useStore();
+  const { p, t, fs, lang, bd, set } = useStore();
   const L: Lazy<{ Z: any }> = o.e ? LOADERS_EV[`${o.e}:${o.n}`] : LOADERS[kathOf(o.n)];
   const ready = useLazy(L);
   const segs: TlumSeg[] = ready ? (o.e ? L()!.Z : L()!.Z[o.n]) ?? [] : [];
@@ -163,9 +164,11 @@ function Page({ o, close, page, text, spine }: { o: NonNullable<Open>; close: ()
   const ids = o.e ? Object.keys(TE).filter((k) => k.startsWith(`${o.e}:`)).map((k) => +k.slice(3)) : Object.keys(TL).map(Number);
   const prev = ids.filter((x) => x < o.n).pop();
   const next = ids.find((x) => x > o.n);
-  const book = o.e ? BOOKS.findIndex((b) => EV_BOOK[b[0]] === o.e) : -1;
+  const book = BOOKS.findIndex((b) => (o.e ? EV_BOOK[b[0]] === o.e : b[0] === 'ps'));
+  // «Позначити» на сторінці тлумачення позначає прочитаною саму главу (псалом), як і на сторінці глави.
+  const key = `${book}.${o.n}`;
+  const read = bd.includes(key);
   const title = o.e ? `${bookName(book, lang === 'uk')} ${o.n}` : `${t.psalm} ${o.n}`;
-  const lab = (x: number) => (o.e ? `${t.chapter} ${x}` : `${t.psalm} ${x}`);
   // Корінець книги: тонка золота риска, з якої розгортається сторінка.
   const spineOp = Animated.multiply(spine, page.interpolate({ inputRange: [0, 0.7, 1], outputRange: [1, 0.6, 0] }));
   return (
@@ -218,13 +221,12 @@ function Page({ o, close, page, text, spine }: { o: NonNullable<Open>; close: ()
                 </View>
               );
             })}
-            {ready && (
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10, marginTop: 10 }}>
-                {prev ? <OutlineButton label={`← ${lab(prev)}`} onPress={() => setOpen({ n: prev, e: o.e })} /> : <View />}
-                {next ? <OutlineButton label={`${lab(next)} →`} onPress={() => setOpen({ n: next, e: o.e })} /> : <View />}
-              </View>
-            )}
           </ScrollView>
+          <NavBar
+            prev={prev ? () => setOpen({ n: prev, e: o.e }) : undefined}
+            next={next ? () => setOpen({ n: next, e: o.e }) : undefined}
+            mark={{ done: read, label: read ? t.chRead : t.chMark, onPress: () => set({ bd: read ? bd.filter((x) => x !== key) : [...bd, key] }) }}
+          />
         </Animated.View>
       </Animated.View>
     </View>
