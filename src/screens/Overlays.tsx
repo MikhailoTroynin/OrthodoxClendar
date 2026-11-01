@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, Linking, PanResponder, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Linking, PanResponder, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { FE, LIVES } from '../data/calendar';
 import type { MvBook } from '../data/molytvoslov';
@@ -7,6 +7,7 @@ import type { Section } from '../data/prayers';
 import { KATH, ROM, secNum } from '../data/prayerLists';
 import { PL, VERS } from '../data/strings';
 import { BackBar } from '../components/Chrome';
+import { NavBar } from '../components/NavBar';
 import { SlideIn, useSwipe } from '../components/motion';
 import { Anchor, MarkBtn, ReadScroll, ReadScrollHandle, useToast } from '../components/ReadScroll';
 import { Body, Divider, Heading, Icon, Kicker, NavRow, NUM, OutlineButton, Press, Seg, Switch, card } from '../components/ui';
@@ -350,12 +351,11 @@ function ReaderGate({ o }: { o: Of<'read'> }) {
 }
 
 function Reader({ o }: { o: Of<'read'> }) {
-  const { p, t, lang, fs, rt, set } = useStore();
+  const { p, t, lang, fs, rt, set, replace } = useStore();
   const ul = lang === 'uk';
   const li = ul ? 0 : 1;
   const { MB, T, mvBook } = prayersL()!;
-  // Ранкове й вечірнє правило можна позначити прочитаним на сьогодні.
-  const rule = o.s === 0 && o.j < 2;
+  // Кожну молитву можна позначити прочитаною на сьогодні (для ранкового й вечірнього правила це видно й у вкладці).
   const dk = toKey(new Date());
   const rk = `${o.s}-${o.j}`;
   const readToday = !!rt[dk]?.[rk];
@@ -424,15 +424,12 @@ function Reader({ o }: { o: Of<'read'> }) {
           </View>
         )}
         {!it.full && <Body size={12.5} mute={55} style={{ marginTop: 18 }}>{t.outlineNote}</Body>}
-        {rule && (
-          <View style={{ marginTop: 24, alignSelf: 'flex-start' }}>
-            <OutlineButton
-              label={readToday ? `✓ ${t.readToday}` : t.markToday}
-              onPress={() => set({ rt: { [dk]: { ...rt[dk], [rk]: !readToday } } })}
-            />
-          </View>
-        )}
       </ReadScroll>
+      <NavBar
+        prev={o.j > 0 ? () => replace({ t: 'read', s: o.s, j: o.j - 1 }) : undefined}
+        next={o.j < s.items.length - 1 ? () => replace({ t: 'read', s: o.s, j: o.j + 1 }) : undefined}
+        mark={{ done: readToday, label: readToday ? t.chRead : t.chMark, onPress: () => set({ rt: { [dk]: { ...rt[dk], [rk]: !readToday } } }) }}
+      />
     </>
   );
 }
@@ -533,49 +530,6 @@ function ChapStrip({ b, c, last, go }: { b: number; c: number; last: number; go:
   );
 }
 
-/** Кнопка «Позначити»/«Прочитано»: фон з'являється за 300 мс, галочка вискакує зі збільшенням .4→1. */
-function ReadBtn({ done, onPress, label }: { done: boolean; onPress: () => void; label: string }) {
-  const { p } = useStore();
-  const bg = useRef(new Animated.Value(done ? 1 : 0)).current;
-  const pop = useRef(new Animated.Value(done ? 1 : 0)).current;
-  useEffect(() => {
-    Animated.timing(bg, { toValue: done ? 1 : 0, duration: 300, easing: Easing.out(Easing.quad), useNativeDriver: false }).start();
-    if (done) {
-      pop.setValue(0.4);
-      Animated.timing(pop, { toValue: 1, duration: 320, easing: Easing.out(Easing.back(2)), useNativeDriver: true }).start();
-    }
-  }, [done, bg, pop]);
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ selected: done }}
-      onPress={onPress}
-      style={({ pressed }) => ({ flex: 1, minWidth: 0, borderRadius: RADIUS, backgroundColor: pressed ? p.accentA(8) : 'transparent' })}
-    >
-      <Animated.View
-        style={{
-          height: 44,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 6,
-          borderWidth: 1,
-          borderColor: p.accent,
-          borderRadius: RADIUS,
-          backgroundColor: bg.interpolate({ inputRange: [0, 1], outputRange: [p.accentA(0), p.a100] }),
-        }}
-      >
-        {done && (
-          <Animated.View style={{ opacity: pop.interpolate({ inputRange: [0.4, 1], outputRange: [0, 1] }), transform: [{ scale: pop }] }}>
-            <Icon name="check" size={18} color={p.a700} sw={2} />
-          </Animated.View>
-        )}
-        <Text numberOfLines={1} style={{ fontFamily: FONT.headingBold, fontSize: 16, color: p.a700 }}>{label}</Text>
-      </Animated.View>
-    </Pressable>
-  );
-}
-
 /** Глава Біблії: вірші з номерами й паралельними місцями, смужка глав і нижня панель переходу. */
 function Chapter({ o }: { o: Of<'chap'> }) {
   const { p, t, lang, push, replace, bd, set } = useStore();
@@ -653,15 +607,11 @@ function Chapter({ o }: { o: Of<'chap'> }) {
             </View>
           </SlideIn>
         </ScrollView>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 8, borderTopWidth: 1, borderTopColor: p.divider, backgroundColor: p.bg }}>
-          <Press label={t.prevCh} onPress={() => prev && go(prev, -1)} style={{ height: 44, justifyContent: 'center', paddingHorizontal: 8, opacity: prev ? 1 : 0.35 }}>
-            <Text style={{ fontFamily: FONT.headingBold, fontSize: 16, color: p.a700 }}>{`‹ ${t.prevCh}`}</Text>
-          </Press>
-          <ReadBtn done={read} label={read ? t.chRead : t.chMark} onPress={() => set({ bd: read ? bd.filter((x) => x !== key) : [...bd, key] })} />
-          <Press label={t.nextCh} onPress={() => next && go(next, 1)} style={{ height: 44, justifyContent: 'center', paddingHorizontal: 8, opacity: next ? 1 : 0.35 }}>
-            <Text style={{ fontFamily: FONT.headingBold, fontSize: 16, color: p.a700 }}>{`${t.nextCh} ›`}</Text>
-          </Press>
-        </View>
+        <NavBar
+          prev={prev ? () => go(prev, -1) : undefined}
+          next={next ? () => go(next, 1) : undefined}
+          mark={{ done: read, label: read ? t.chRead : t.chMark, onPress: () => set({ bd: read ? bd.filter((x) => x !== key) : [...bd, key] }) }}
+        />
       </View>
     </>
   );
@@ -693,17 +643,10 @@ function Passage({ o }: { o: Of<'pass'> }) {
 }
 
 function Kathisma({ o }: { o: Of<'kath'> }) {
-  const { t, kd, set, p, fs, lang, push } = useStore();
+  const { t, kd, set, p, fs, lang, push, replace } = useStore();
   const done = kd.includes(o.k);
   const { PSALTYR, kathIdx } = psaltyrL()!;
   const rs = useRef<ReadScrollHandle>(null);
-  const mark = (
-    <OutlineButton
-      label={done ? t.marked : t.markRead}
-      onPress={() => set({ kd: done ? kd.filter((x) => x !== o.k) : [...kd, o.k] })}
-      style={{ alignSelf: 'flex-start' }}
-    />
-  );
   return (
     <>
       <BackBar right={<SizeBtns mark={() => rs.current?.addMark()} read={() => [`${t.kathisma} ${o.k}`, ...bookText(PSALTYR[kathIdx(o.k)])]} />} />
@@ -716,19 +659,23 @@ function Kathisma({ o }: { o: Of<'kath'> }) {
           <Text style={{ fontFamily: FONT.body, fontSize: 14, color: p.a700, textDecorationLine: 'underline' }}>{lang === 'uk' ? PSALTYR[1].u : PSALTYR[1].e}</Text>
         </Press>
         <PrayerBook b={PSALTYR[kathIdx(o.k)]} fs={fs} />
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 }}>
-          {mark}
-          {o.k < 20 && <OutlineButton label={`${t.kathisma} ${o.k + 1} →`} onPress={() => push({ t: 'kath', k: o.k + 1 })} />}
-        </View>
       </ReadScroll>
+      <NavBar
+        prev={() => replace(psStep({ t: 'kath', k: o.k }, -1, PSALTYR.length))}
+        next={() => replace(psStep({ t: 'kath', k: o.k }, 1, PSALTYR.length))}
+        mark={{ done, label: done ? t.chRead : t.chMark, onPress: () => set({ kd: done ? kd.filter((x) => x !== o.k) : [...kd, o.k] }) }}
+      />
     </>
   );
 }
 
 /** Інші сторінки Слідуваного Псалтиря: як читати, молитви перед і після читання, пісні Писання. */
 function PsPage({ o }: { o: Of<'ps'> }) {
-  const { t, fs, lang } = useStore();
+  const { t, fs, lang, replace } = useStore();
+  const n = psaltyrL()!.PSALTYR.length;
   const b = psaltyrL()!.PSALTYR[o.i];
+  const prev = psStep({ t: 'ps', i: o.i }, -1, n);
+  const next = psStep({ t: 'ps', i: o.i }, 1, n);
   const rs = useRef<ReadScrollHandle>(null);
   return (
     <>
@@ -739,8 +686,19 @@ function PsPage({ o }: { o: Of<'ps'> }) {
         {lang !== 'uk' && <Body size={12.5} mute={60} style={{ marginBottom: 14 }}>{t.fullText}</Body>}
         <PrayerBook b={b} fs={fs} />
       </ReadScroll>
+      <NavBar prev={prev.t === 'ps' && prev.i === o.i ? undefined : () => replace(prev)} next={next.t === 'ps' && next.i === o.i ? undefined : () => replace(next)} />
     </>
   );
+}
+
+/** Сусідня сторінка Слідуваного Псалтиря в порядку читання: як читати → молитви перед читанням → кафизми 1–20 →
+ *  молитви після читання → пісні Писання. На краях повертає ту саму сторінку. */
+type PsNav = { t: 'kath'; k: number } | { t: 'ps'; i: number };
+function psStep(x: PsNav, d: number, n: number): PsNav {
+  // Позиція в ланцюжку: 0, 1 — перші сторінки; 2..21 — кафизми; 22, 23 — дві останні сторінки (n−2, n−1).
+  const pos = x.t === 'kath' ? x.k + 1 : x.i < 2 ? x.i : 22 + x.i - (n - 2);
+  const q = Math.max(0, Math.min(23, pos + d));
+  return q < 2 ? { t: 'ps', i: q } : q < 22 ? { t: 'kath', k: q - 1 } : { t: 'ps', i: n - 2 + q - 22 };
 }
 
 function Pom() {
