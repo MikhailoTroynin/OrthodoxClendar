@@ -384,7 +384,10 @@ export function mountReview(host: ReviewHost) {
       onClose?.();
     };
     const esc = (e: KeyboardEvent) => e.key === 'Escape' && close();
-    back.onmousedown = (e) => e.target === back && close();
+    // Лише блок: стрілка з `false` у onmousedown скасовує фокусування полів у вікні.
+    back.onmousedown = (e) => {
+      if (e.target === back) close();
+    };
     document.addEventListener('keydown', esc);
     document.body.append(back);
     return close;
