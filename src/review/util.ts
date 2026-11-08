@@ -17,6 +17,7 @@ export function errText(e: unknown): string {
     'auth/email-already-in-use': 'Такий логін уже існує',
     'auth/weak-password': 'Пароль має містити щонайменше 6 символів',
     'auth/operation-not-allowed': 'У Firebase не увімкнено вхід за паролем',
+    'auth/configuration-not-found': 'У Firebase ще не увімкнено Authentication (Get started → Email/Password)',
     'permission-denied': 'Недостатньо прав',
     unavailable: 'Сервер недоступний. Перевірте з’єднання',
   };
