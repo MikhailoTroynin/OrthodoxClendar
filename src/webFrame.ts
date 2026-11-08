@@ -9,7 +9,8 @@ const BEZEL = 14;
 // Вужче за це вікно вважаємо телефоном/планшетом і показуємо застосунок як є.
 const MIN_FRAME_WIDTH = 700;
 
-export function shouldFramePhone(): boolean {
+/** Окреме вікно верхнього рівня у вебі (не всередині iframe і без ?noframe). */
+function topLevelWeb(): boolean {
   if (Platform.OS !== 'web' || typeof window === 'undefined') return false;
   let embedded = true;
   try {
@@ -17,10 +18,18 @@ export function shouldFramePhone(): boolean {
   } catch {
     embedded = true;
   }
-  if (embedded) return false;
-  if (/[?&]noframe\b/.test(window.location.search)) return false;
+  return !embedded && !/[?&]noframe\b/.test(window.location.search);
+}
+
+export function shouldFramePhone(): boolean {
+  if (!topLevelWeb()) return false;
   const coarse = window.matchMedia?.('(pointer: coarse)').matches;
   return window.innerWidth >= MIN_FRAME_WIDTH && !coarse;
+}
+
+/** Телефон/вузьке вікно: застосунок на весь екран, але в iframe — щоб поверх працювало рецензування. */
+export function shouldFrameMobile(): boolean {
+  return topLevelWeb() && !shouldFramePhone();
 }
 
 export function mountPhoneFrame(): void {
@@ -98,5 +107,44 @@ export function mountPhoneFrame(): void {
   // Вхід і рецензування — окремим модулем, щоб не обтяжувати сам застосунок.
   import('./review/ui')
     .then((m) => m.mountReview({ frame, stage, refit: fit }))
+    .catch((e) => console.warn('Рецензування недоступне', e));
+}
+
+export function mountMobileFrame(): void {
+  const css = `
+    html, body { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; background: #f6f1ea; }
+    #root { display: none; }
+    .mf-root { position: fixed; left: 0; right: 0; top: 0; height: 100%; display: flex; flex-direction: column; }
+    .mf-app { position: relative; flex: 1 1 0; min-height: 0; }
+    .mf-app iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+  `;
+  const style = document.createElement('style');
+  style.textContent = css;
+  document.head.appendChild(style);
+
+  const frame = document.createElement('iframe');
+  frame.title = document.title;
+  frame.src = window.location.href;
+  const app = document.createElement('div');
+  app.className = 'mf-app';
+  app.appendChild(frame);
+  const root = document.createElement('div');
+  root.className = 'mf-root';
+  root.appendChild(app);
+  document.body.appendChild(root);
+
+  // Висота — за видимою областю (з урахуванням екранної клавіатури).
+  const vv = window.visualViewport;
+  const fit = () => {
+    root.style.height = (vv ? vv.height : window.innerHeight) + 'px';
+    root.style.top = (vv ? vv.offsetTop : 0) + 'px';
+  };
+  fit();
+  window.addEventListener('resize', fit);
+  vv?.addEventListener('resize', fit);
+  vv?.addEventListener('scroll', fit);
+
+  import('./review/ui')
+    .then((m) => m.mountReview({ frame, stage: root, refit: fit, mobile: true }))
     .catch((e) => console.warn('Рецензування недоступне', e));
 }
