@@ -36,8 +36,11 @@ export function mountPhoneFrame(): void {
       padding: ${BEZEL}px; box-sizing: border-box; border-radius: 56px;
       background: linear-gradient(145deg, #2b2b2e, #0d0d0f);
       box-shadow: 0 0 0 2px #4a4a50, 0 0 0 4px #1a1a1c, 0 30px 80px rgba(0,0,0,.6);
-      transform-origin: center center;
+      transform-origin: top left;
     }
+    .pf-stage { display: flex; align-items: center; gap: 28px; }
+    .pf-holder { position: relative; flex: none; }
+    .pf-holder > .pf-phone { position: absolute; left: 0; top: 0; }
     .pf-phone::before, .pf-phone::after {
       content: ''; position: absolute; width: 4px; border-radius: 2px; background: #3a3a3f;
     }
@@ -63,17 +66,37 @@ export function mountPhoneFrame(): void {
   screen.appendChild(frame);
   phone.appendChild(screen);
 
+  // Ряд: [телефон] [панель рецензування]. Обгортка має розмір уже зменшеного корпусу.
+  const holder = document.createElement('div');
+  holder.className = 'pf-holder';
+  holder.appendChild(phone);
+  const stage = document.createElement('div');
+  stage.className = 'pf-stage';
+  stage.appendChild(holder);
+
   const root = document.getElementById('root') ?? document.body;
   root.style.display = 'flex';
   root.style.alignItems = 'center';
   root.style.justifyContent = 'center';
-  root.replaceChildren(phone);
+  root.replaceChildren(stage);
 
-  // Якщо вікно нижче за телефон — пропорційно зменшуємо корпус.
+  // Якщо вікно нижче (або вужче) за телефон із панеллю — пропорційно зменшуємо корпус.
+  const W = SCREEN_W + BEZEL * 2;
+  const H = SCREEN_H + BEZEL * 2;
   const fit = () => {
-    const scale = Math.min(1, (window.innerHeight - 32) / (SCREEN_H + BEZEL * 2));
+    const side = stage.children.length > 1 ? (stage.lastElementChild as HTMLElement) : null;
+    const sideW = side ? side.offsetWidth + 28 : 0;
+    const scale = Math.min(1, (window.innerHeight - 32) / H, (window.innerWidth - 32 - sideW) / W);
     phone.style.transform = scale < 1 ? `scale(${scale})` : '';
+    holder.style.width = W * scale + 'px';
+    holder.style.height = H * scale + 'px';
+    if (side) side.style.height = H * scale + 'px';
   };
   fit();
   window.addEventListener('resize', fit);
+
+  // Вхід і рецензування — окремим модулем, щоб не обтяжувати сам застосунок.
+  import('./review/ui')
+    .then((m) => m.mountReview({ frame, stage, refit: fit }))
+    .catch((e) => console.warn('Рецензування недоступне', e));
 }

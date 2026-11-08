@@ -1,0 +1,47 @@
+// Правила Firestore для рецензування веб-версії (GitHub Pages).
+// Застосувати: консоль Firebase → Firestore Database → Rules → вставити цей файл → Publish.
+// ВАЖЛИВО: адреса адміністратора нижче має збігатися з ADMIN_LOGIN і LOGIN_DOMAIN у src/review/config.ts.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function hasProfile() {
+      return request.auth != null && exists(/databases/$(db)/documents/users/$(request.auth.uid));
+    }
+    function me() {
+      return get(/databases/$(db)/documents/users/$(request.auth.uid)).data;
+    }
+    function active() {
+      return hasProfile() && me().active == true;
+    }
+    function admin() {
+      return active() && me().role == 'admin';
+    }
+
+    // Логіни. Керує лише адміністратор. Профіль без запису тут = немає доступу,
+    // тож самостійна реєстрація через API нічого не дає.
+    match /users/{uid} {
+      allow read: if active() || (request.auth != null && request.auth.uid == uid);
+      allow update, delete: if admin();
+      allow create: if admin()
+        // Перший вхід адміністратора: він створює собі профіль сам.
+        || (request.auth != null && request.auth.uid == uid
+            && request.auth.token.email == 'admin@review.orthodoxcalendar.app'
+            && request.resource.data.role == 'admin' && request.resource.data.active == true);
+    }
+
+    // Коментарі: бачать і пишуть усі активні; відповідати й позначати «Виправлено» може кожен,
+    // змінювати чи видаляти сам коментар — автор або адміністратор.
+    match /comments/{id} {
+      allow read: if active();
+      allow create: if active()
+        && request.resource.data.authorUid == request.auth.uid
+        && request.resource.data.quote is string && request.resource.data.quote.size() <= 1000
+        && request.resource.data.text is string && request.resource.data.text.size() <= 5000;
+      allow update: if active() && (
+        resource.data.authorUid == request.auth.uid || admin()
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['resolved', 'resolvedBy', 'resolvedAt', 'replies'])
+      );
+      allow delete: if active() && (resource.data.authorUid == request.auth.uid || admin());
+    }
+  }
+}
