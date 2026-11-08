@@ -89,6 +89,39 @@ const CSS = `
   .rv-user.off .n { opacity: .5; }
   .rv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .rv-sep { border: 0; border-top: 1px solid #3d3226; margin: 6px 0; width: 100%; }
+
+  /* ---- телефон: нижня панель замість бічної ---- */
+  .rv-side.rv-mobile { width: 100%; box-sizing: border-box; gap: 8px; padding: 0 12px 10px; background: #1f1913; color: #f1e7d6;
+    border-top: 1px solid #4a3d2c; border-radius: 16px 16px 0 0; box-shadow: 0 -8px 28px rgba(0,0,0,.35);
+    font-size: 15px; position: relative; z-index: 10; }
+  .rv-mobile .rv-grip { flex: none; height: 22px; margin: 0 -12px; display: flex; align-items: center; justify-content: center;
+    cursor: grab; touch-action: none; }
+  .rv-mobile .rv-grip::before { content: ''; width: 42px; height: 5px; border-radius: 3px; background: #5a4a35; }
+  .rv-mobile .rv-bar { flex: none; }
+  .rv-mobile .rv-acts-top { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; }
+  .rv-mobile .rv-body { overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; margin: 0 -12px; padding: 0 12px 8px; }
+  .rv-mobile .rv-list { flex: none; overflow: visible; padding-right: 0; }
+  .rv-mobile .rv-btn.sm { padding: 8px 12px; font-size: 14px; border-radius: 9px; }
+  .rv-mobile .rv-tabs { flex: none; position: sticky; top: 0; z-index: 1; box-shadow: 0 6px 10px #1f1913; }
+  .rv-mobile .rv-tabs button { padding: 9px 4px; font-size: 13.5px; }
+  .rv-mobile textarea, .rv-mobile input { font-size: 16px; }
+  .rv-mobile .rv-card { padding: 12px; }
+  .rv-mobile .rv-quote, .rv-mobile .rv-sugg { font-size: 14px; }
+  .rv-mobile .rv-x { width: 38px; height: 38px; padding: 0; font-size: 18px; line-height: 1; flex: none; }
+  .rv-launch { position: fixed; z-index: 40; right: 12px; bottom: 78px; font: 600 14px system-ui, -apple-system, sans-serif;
+    border: 1px solid #c9a45c; border-radius: 22px; padding: 10px 15px; cursor: pointer;
+    background: rgba(42, 35, 27, .92); color: #f6efe2; box-shadow: 0 4px 16px rgba(0,0,0,.35); -webkit-tap-highlight-color: transparent; }
+  .rv-launch b { display: inline-block; min-width: 20px; margin-left: 4px; padding: 1px 6px; border-radius: 10px;
+    background: #d6b06a; color: #1c1712; font-size: 12.5px; text-align: center; }
+  .rv-fab.mobile { font-size: 15px; padding: 10px 16px; border-radius: 22px; }
+  @media (max-width: 560px) {
+    .rv-modal { padding: 16px; }
+    .rv-modal input, .rv-modal select { font-size: 16px; padding: 9px 10px; }
+    .rv-grid { grid-template-columns: 1fr; }
+    .rv-user { flex-wrap: wrap; }
+    .rv-user .n { flex-basis: 100%; }
+    .rv-row .rv-btn { padding: 10px 16px; }
+  }
 `;
 
 const fmt = (t: number) =>
@@ -98,6 +131,8 @@ export interface ReviewHost {
   frame: HTMLIFrameElement;
   stage: HTMLElement;
   refit: () => void;
+  /** Телефон: застосунок на весь екран, рецензування — у нижній панелі. */
+  mobile?: boolean;
 }
 
 export function mountReview(host: ReviewHost) {
@@ -121,14 +156,64 @@ export function mountReview(host: ReviewHost) {
   const drafts = new Map<string, string>();
   let listErr = '';
 
-  const side = h('div.rv-side');
+  const mobile = !!host.mobile;
+  const side = h('div.rv-side' + (mobile ? '.rv-mobile' : ''));
   const bar = h('div.rv-bar');
-  const body = h('div', { style: 'display:flex;flex-direction:column;gap:10px;flex:1;min-height:0' });
+  const body = h('div.rv-body', { style: 'display:flex;flex-direction:column;gap:10px;flex:1;min-height:0' });
   side.append(bar, body);
   host.stage.append(side);
   host.refit();
 
-  const fab = h('button.rv-fab', { type: 'button' }, '💬 Коментувати') as HTMLButtonElement;
+  // ---------- телефон: кнопка і нижня панель ----------
+  type Sheet = 'closed' | 'half' | 'full';
+  let sheet: Sheet = 'closed';
+  const launch = h('button.rv-launch', { type: 'button' }) as HTMLButtonElement;
+  if (mobile) {
+    const grip = h('div.rv-grip', { title: 'Потягніть, щоб змінити розмір' });
+    side.prepend(grip);
+    let y0: number | null = null;
+    grip.onpointerdown = (e) => {
+      y0 = e.clientY;
+      grip.setPointerCapture(e.pointerId);
+    };
+    grip.onpointerup = (e) => {
+      if (y0 === null) return;
+      const dy = e.clientY - y0;
+      y0 = null;
+      if (dy > 50) setSheet(sheet === 'full' ? 'half' : 'closed');
+      else if (dy < -50) setSheet('full');
+      else if (Math.abs(dy) < 10) setSheet(sheet === 'full' ? 'half' : 'full');
+    };
+    grip.onpointercancel = () => (y0 = null);
+    launch.onclick = () => (me ? setSheet('half') : openLogin());
+    document.body.append(launch);
+    window.visualViewport?.addEventListener('resize', () => applySheet());
+    window.addEventListener('resize', () => applySheet());
+  }
+
+  function setSheet(v: Sheet) {
+    sheet = v;
+    applySheet();
+  }
+
+  function applySheet() {
+    if (!mobile) return;
+    const open = sheet !== 'closed' && !!me;
+    side.style.display = open ? 'flex' : 'none';
+    launch.style.display = open ? 'none' : '';
+    const n = comments.filter((c) => !c.resolved).length;
+    launch.replaceChildren(...(me ? ['💬 Коментарі', h('b', {}, String(n))] : ['💬 Увійти']));
+    launch.title = me ? 'Коментарі рецензентів' : 'Вхід для рецензентів';
+    if (!open) return;
+    const vv = window.visualViewport;
+    const vh = vv ? vv.height : window.innerHeight;
+    // Відкрита клавіатура: панель майже на весь екран, щоб поле введення не ховалось.
+    const kb = vh < window.innerHeight * 0.75;
+    const H = kb || sheet === 'full' ? vh - (kb ? 64 : 110) : vh * 0.45;
+    side.style.height = Math.round(Math.max(180, H)) + 'px';
+  }
+
+  const fab = h('button.rv-fab' + (mobile ? '.mobile' : ''), { type: 'button' }, '💬 Коментувати') as HTMLButtonElement;
   fab.onmousedown = (e) => e.preventDefault();
   fab.onclick = () => {
     const s = hl?.selection();
@@ -136,8 +221,10 @@ export function mountReview(host: ReviewHost) {
     pending = s.anchor;
     fab.style.display = 'none';
     hl?.document.getSelection()?.removeAllRanges();
+    if (mobile) setSheet('half');
     renderBody();
-    (body.querySelector('.rv-compose textarea') as HTMLTextAreaElement | null)?.focus();
+    (body.querySelector('.rv-compose textarea') as HTMLTextAreaElement | null)?.focus({ preventScroll: mobile });
+    if (mobile) body.scrollTop = 0;
   };
   document.body.append(fab);
 
@@ -145,22 +232,27 @@ export function mountReview(host: ReviewHost) {
 
   // ---------- iframe ----------
   const attach = () => {
-    if (hl || !host.frame.contentDocument?.body) return;
+    const doc = host.frame.contentDocument;
+    // Поки застосунок не завантажився, в iframe порожній about:blank — до нього не чіпляємось.
+    if (!doc?.body || doc.location.href === 'about:blank' || hl?.document === doc) return;
     hl = new Highlighter(host.frame);
     hl.onFound = (ids) => {
       const changed = ids.size !== found.size || [...ids].some((x) => !found.has(x));
       found = ids;
       if (changed) renderList();
     };
-    hl.onPick = (id) => select(id, false);
+    hl.onPick = (id) => {
+      if (mobile && sheet === 'closed') setSheet('half');
+      select(id, false);
+    };
     hl.setSelectable(!!me);
     syncTargets();
     const d = hl.document;
     const upd = () => placeFab();
     d.addEventListener('selectionchange', upd);
     d.addEventListener('scroll', upd, true);
-    window.addEventListener('resize', upd);
   };
+  window.addEventListener('resize', () => placeFab());
   if (host.frame.contentDocument?.readyState === 'complete') attach();
   host.frame.addEventListener('load', attach);
 
@@ -172,9 +264,16 @@ export function mountReview(host: ReviewHost) {
     }
     const fr = host.frame.getBoundingClientRect();
     const k = fr.width / (host.frame.clientWidth || fr.width);
-    let top = fr.top + s.rect.top * k - 40;
-    if (top < fr.top + 4) top = fr.top + s.rect.bottom * k + 8;
-    top = Math.min(Math.max(top, fr.top + 4), fr.bottom - 40);
+    let top: number;
+    if (mobile) {
+      // На телефоні над виділенням — системне меню (копіювати тощо), тож кнопку ставимо під ним.
+      top = fr.top + s.rect.bottom * k + 30;
+      if (top > fr.bottom - 52) top = fr.top + s.rect.top * k - 56;
+    } else {
+      top = fr.top + s.rect.top * k - 40;
+      if (top < fr.top + 4) top = fr.top + s.rect.bottom * k + 8;
+    }
+    top = Math.min(Math.max(top, fr.top + 4), fr.bottom - (mobile ? 52 : 40));
     fab.style.display = 'block';
     const left = Math.min(Math.max(fr.left + (s.rect.left + s.rect.width / 2) * k - fab.offsetWidth / 2, fr.left + 4), fr.right - fab.offsetWidth - 4);
     fab.style.left = left + 'px';
@@ -192,7 +291,11 @@ export function mountReview(host: ReviewHost) {
     const c = comments.find((x) => x.id === id);
     if (c && c.resolved && filter === 'open') filter = 'all';
     renderList();
-    if (id && reveal) hl?.reveal(id);
+    if (id && reveal && mobile) {
+      // Панель — на пів екрана, щоб фрагмент у застосунку було видно; після зміни розміру iframe — прокрутка.
+      if (sheet === 'full') setSheet('half');
+      setTimeout(() => hl?.reveal(id), 350);
+    } else if (id && reveal) hl?.reveal(id);
     if (id && !reveal) body.querySelector(`[data-id="${id}"]`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
@@ -204,6 +307,24 @@ export function mountReview(host: ReviewHost) {
       return;
     }
     const admin = me.role === 'admin';
+    if (mobile) {
+      bar.append(
+        h('div.rv-who', { title: me.login }, h('b', {}, me.name), admin ? ' · адміністратор' : ' · рецензент'),
+        h('button.rv-btn.rv-x', { type: 'button', title: 'Згорнути', onclick: () => setSheet('closed') }, '✕'),
+        h(
+          'div.rv-acts-top',
+          {},
+          ...(admin
+            ? [
+                h('button.rv-btn.sm', { type: 'button', onclick: openUsers }, 'Користувачі'),
+                h('button.rv-btn.sm', { type: 'button', onclick: exportJson }, 'Експорт'),
+              ]
+            : []),
+          h('button.rv-btn.sm', { type: 'button', onclick: () => svc?.signOutUser() }, 'Вийти'),
+        ),
+      );
+      return;
+    }
     bar.append(
       h('div.rv-who', { title: me.login }, h('b', {}, me.name), me.role === 'admin' ? ' · адміністратор' : ' · рецензент'),
       ...(admin
@@ -221,7 +342,16 @@ export function mountReview(host: ReviewHost) {
     body.replaceChildren();
     if (!me) return;
     if (pending) body.append(composer(pending));
-    else body.append(h('div.rv-hint', {}, 'Виділіть слово чи фрагмент тексту в застосунку і натисніть «💬 Коментувати».'));
+    else
+      body.append(
+        h(
+          'div.rv-hint',
+          {},
+          mobile
+            ? 'Натисніть і втримуйте слово в застосунку, щоб виділити фрагмент, і торкніться «💬 Коментувати».'
+            : 'Виділіть слово чи фрагмент тексту в застосунку і натисніть «💬 Коментувати».',
+        ),
+      );
     const tabs = h('div.rv-tabs');
     const n = (f: Filter) => comments.filter((c) => (f === 'all' ? true : f === 'open' ? !c.resolved : c.resolved)).length;
     for (const [f, label] of [
@@ -373,6 +503,7 @@ export function mountReview(host: ReviewHost) {
     const counts = [comments.filter((c) => !c.resolved).length, comments.filter((c) => c.resolved).length, comments.length];
     const labels = ['Відкриті', 'Виправлені', 'Усі'];
     tabs.forEach((b, i) => (b.textContent = `${labels[i]} (${counts[i]})`));
+    applySheet();
   }
 
   // ---------- модальні вікна ----------
@@ -423,7 +554,10 @@ export function mountReview(host: ReviewHost) {
         const s = await loadSvc();
         loginWaiter = (ok, e2) => {
           loginWaiter = null;
-          if (ok) close();
+          if (ok) {
+            close();
+            if (mobile) setSheet('half');
+          }
           else {
             err.textContent = errText(e2);
             go.disabled = false;
@@ -562,12 +696,15 @@ export function mountReview(host: ReviewHost) {
     }
     syncTargets();
     placeFab();
+    if (!p) sheet = 'closed';
     renderBar();
     renderBody();
+    applySheet();
     host.refit();
   }
 
   renderBar();
+  applySheet();
   if (isConfigured()) {
     // Відновити сесію, якщо користувач уже входив у цьому браузері.
     loadSvc().then((s) =>
